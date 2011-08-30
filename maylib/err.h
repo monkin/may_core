@@ -63,5 +63,7 @@ int err_is(const err_t *);
 
 ERR_DECLARE(e_arguments);
 
+#define err_seq()
+
 #endif /* MAY_ERR_H */
 

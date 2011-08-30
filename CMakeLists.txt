@@ -1,6 +1,7 @@
 project(may-doc)
 cmake_minimum_required(VERSION 2.6)
-set (CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS "-g -Wall")
+set(CMAKE_BUILD_TYPE Debug)
 add_subdirectory(maylib)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/maylib)

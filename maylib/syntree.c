@@ -1,7 +1,10 @@
 
 #include "syntree.h"
 
-syntree_t syntree_create(heap_t h, str_t s) {
+syntree_t syntree_create(str_t s) {
+	heap_t h = heap_create(64*1024);
+	if(err())
+		return 0;
 	syntree_t r = heap_alloc(h, sizeof(struct syntree_node_s));
 	if(r) {
 		r->heap = h;
@@ -9,12 +12,15 @@ syntree_t syntree_create(heap_t h, str_t s) {
 		r->parent = 0;
 		r->max_position = r->position = str_begin(s);
 		r->str = s;
+		return r;
+	} else {
+		heap_delete(h);
+		return 0;
 	}
-	return r;
 }
 
 syntree_t syntree_transaction(syntree_t st) {
-	syntree_t r = heap_alloc(st->heap, sizeof(struct syntree_node_s));
+	syntree_t r = heap_alloc(st->heap, sizeof(struct syntree_s));
 	if(r) {
 		r->heap = st->heap;
 		r->position = st->position;
@@ -39,10 +45,12 @@ syntree_t syntree_commit(syntree_t st) {
 }
 
 syntree_t syntree_rollback(syntree_t st) {
-	return st->parent;
+	syntree_t r = st->parent;
+	heap_release_to(st->heap, st);
+	return r;
 }
 
-syntree_t syntree_named_start(syntree_t st, int nm) {
+void syntree_named_start(syntree_t st, int nm) {
 	syntree_node_t nd = heap_alloc(st->heap, sizeof(struct syntree_node_s));
 	if(nd) {
 		nd->is_start = 1;
@@ -57,10 +65,9 @@ syntree_t syntree_named_start(syntree_t st, int nm) {
 		} else
 			st->last = st->first = nd;
 	}
-	return st;
 }
 
-syntree_t syntree_named_end(syntree_t st) {
+void syntree_named_end(syntree_t st) {
 	syntree_node_t nd = heap_alloc(st->heap, sizeof(struct syntree_node_s));
 	if(nd) {
 		nd->is_start = 0;
@@ -75,7 +82,7 @@ syntree_t syntree_named_end(syntree_t st) {
 		} else
 			st->last = st->first = nd;
 	}
-	return st;
+	return;
 }
 
 syntree_node_t syntree_begin(syntree_t st) {
@@ -118,12 +125,18 @@ str_t syntree_value(syntree_node_t stn) {
 	return 0;
 }
 
-syntree_t syntree_seek(syntree_t st, str_it_t pos) {
+void syntree_seek(syntree_t st, str_it_t pos) {
 	assert(pos<=str_end(st->str));
 	st->position = pos; 
 	if(pos>st->max_position)
 		st->max_position = pos;
-	return st;
+	return;
+}
+
+syntree_t syntree_delete(syntree_t st) {
+	if(st)
+		heap_delete(st->heap);
+	return 0;
 }
 
 

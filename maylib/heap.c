@@ -1,6 +1,10 @@
 #include "heap.h"
 #include "mem.h"
 #include <assert.h>
+#include <stdbool.h>
+
+ERR_DEFINE(e_heap_invalid_size, "Heap size is less than you try to release.", 0);
+ERR_DEFINE(e_heap_invalid_pointer, "Pointer referers to memory out of heap.", 0);
 
 heap_t heap_create(size_t block_size) {
 	heap_t res;
@@ -14,6 +18,7 @@ heap_t heap_create(size_t block_size) {
 		res->first.size = block_size;
 		res->first.used = 0;
 		res->first.next = 0;
+		res->first.previous = 0;
 	}
 	return res;
 }
@@ -32,11 +37,11 @@ heap_t heap_delete(heap_t h) {
 }
 
 void *heap_slow_alloc(heap_t h, size_t sz) {
-	heap_block_t *b;
 	size_t block_sz = (sz*16<=h->block_size) ? h->block_size : sz*16;
-	b = h->last->next = mem_alloc(sizeof(heap_s) + block_sz);
+	heap_block_t *b = h->last->next = mem_alloc(sizeof(heap_s) + block_sz);
 	if(!err()) {
-		h->last = h->last->next;
+		b->previous = h->last;
+		h->last = b;
 		b->size = block_sz;
 		b->used = sz;
 		b->next = 0;
@@ -45,6 +50,35 @@ void *heap_slow_alloc(heap_t h, size_t sz) {
 	return 0;
 }
 
+void heap_release(heap_t h, size_t sz) {
+	heap_block_t *i = h->last;
+	while(i ? i->used<sz : false) {
+		i = i->previous;
+		sz -= i->used;
+	}
+	if(i) {
+		heap_block_t *j;
+		i->used -= sz;
+		for(j=i->next; j; j=j->next)
+			mem_free(j);
+		i->next = 0;
+	} else
+		err_set(e_heap_invalid_size);
+}
+
+void heap_release_to(heap_t h, void *p) {
+	heap_block_t *i = h->last;
+	while(i ? p<i->data || p>=(i->data+i->used) : false)
+		i = i->previous;
+	if(i) {
+		heap_block_t *j;
+		i->used = ((char *)p) - i->data;
+		for(j=i->next; j; j=j->next)
+			mem_free(j);
+		i->next = 0;
+	} else
+		err_set(e_heap_invalid_pointer);
+}
 
 
 

@@ -4,7 +4,7 @@
 #include "maylib/err.h"
 #include "maylib/heap.h"
 #include "maylib/str.h"
-#include "syntree.h"
+#include "maylib/syntree.h"
 
 ERR_DECLARE(e_xcss_syntax);
 
@@ -22,7 +22,7 @@ typedef enum {
 	XCSS_NODE_COMMENT = 11
 } xcss_node_type_t;
 
-syntree_t xcss_to_syntree(heap_t, str_t);
+syntree_t xcss_to_syntree(str_t);
 
 
 #endif /* MAY_PARSER_H */

@@ -1,6 +1,6 @@
 
 #include "parser.h"
-#include "syntree.h"
+#include "maylib/syntree.h"
 #include "maylib/err.h"
 #include "maylib/str.h"
 #include "maylib/heap.h"
@@ -377,7 +377,7 @@ static void xcss_process_node(heap_t h,
 			cnt = read_file(h, fname);
 			if(err())
 				return;
-			st = xcss_to_syntree(h, cnt);
+			st = xcss_to_syntree(cnt);
 			if(err())
 				return;
 			for(i=syntree_begin(st); i; i=syntree_next(i)) {
@@ -445,7 +445,7 @@ int main(int nargs, char **args) {
 		if(err())
 			goto error;
 	}
-	st = xcss_to_syntree(h, cnt);
+	st = xcss_to_syntree(cnt);
 	if(err())
 		goto error;
 	ns = ns_create(h, ns);
@@ -454,6 +454,7 @@ int main(int nargs, char **args) {
 		if(err())
 			goto error;
 	}
+	st = syntree_delete(st);
 	h = heap_delete(h);
 	if(out!=stdout)
 		fclose(out);

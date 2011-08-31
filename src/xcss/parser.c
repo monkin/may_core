@@ -408,9 +408,9 @@ static void xcss_parse(syntree_t res) {
 }
 
 
-syntree_t xcss_to_syntree(heap_t h, str_t xcss) {
+syntree_t xcss_to_syntree(str_t xcss) {
 	str_it_t i, e;
-	syntree_t res = syntree_create(h, xcss);
+	syntree_t res = syntree_create(xcss);
 	if(err())
 		return 0;
 	e = str_end(xcss);

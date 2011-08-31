@@ -27,17 +27,18 @@ struct syntree_s {
 
 typedef struct syntree_s *syntree_t;
 
-syntree_t syntree_create(heap_t, str_t);
+syntree_t syntree_create(str_t);
+syntree_t syntree_delete(syntree_t);
 
 syntree_t syntree_transaction(syntree_t);
 syntree_t syntree_commit(syntree_t);
 syntree_t syntree_rollback(syntree_t);
-syntree_t syntree_named_start(syntree_t, int);
-syntree_t syntree_named_end(syntree_t);
+void syntree_named_start(syntree_t, int);
+void syntree_named_end(syntree_t);
 
 #define syntree_position(st) ((st)->position)
 #define syntree_str(st) ((st)->str)
-syntree_t syntree_seek(syntree_t, str_it_t);
+void syntree_seek(syntree_t, str_it_t);
 #define syntree_eof(st) ((st)->position==str_end(syntree_str(st)))
 
 syntree_node_t syntree_begin(syntree_t);

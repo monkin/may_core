@@ -2,7 +2,9 @@
 #include "parser.h"
 #include "heap.h"
 
-/*syntree_t parser_process(heap_t, parser_t, str_t); */
+bool parser_process(parser_t p, syntree_t r) {
+	return p->fn(r, p->data);
+}
 
 static bool p_crange(syntree_t st, void *d) {
 	if(!err()) {

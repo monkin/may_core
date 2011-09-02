@@ -416,8 +416,10 @@ syntree_t xcss_to_syntree(str_t xcss) {
 	e = str_end(xcss);
 	while(syntree_position(res)!=e) {
 		xcss_parse(res);
-		if(err())
+		if(err()) {
+			syntree_delete(res);
 			return 0;
+		}
 	}
 	return res;
 }

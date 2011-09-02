@@ -139,5 +139,15 @@ syntree_t syntree_delete(syntree_t st) {
 	return 0;
 }
 
+size_t syntree_error_line(syntree_t st) {
+	if(syntree_eof(st))
+		return 0;
+	str_it_t i;
+	size_t line = 1;
+	for(i=str_begin(st->str); i<st->max_position; i++)
+		if(*i=='\n')
+			line++;
+	return line;
+}
 
 

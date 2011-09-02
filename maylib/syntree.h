@@ -48,4 +48,7 @@ syntree_node_t syntree_child(syntree_node_t);
 #define syntree_name(stn) ((stn)->name)
 str_t syntree_value(syntree_node_t);
 
+size_t syntree_error_line(syntree_t);
+
+
 #endif /* MAY_SYNTREE_H */

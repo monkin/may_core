@@ -20,6 +20,7 @@ str_t str_create(heap_t h, size_t sz) {
 }
 
 str_t str_from_cs(heap_t h, const char *s) {
+	assert(h);
 	str_t r = str_create(h, strlen(s));
 	if(r)
 		memcpy(r->data, s, r->length);
@@ -27,6 +28,7 @@ str_t str_from_cs(heap_t h, const char *s) {
 }
 
 str_t str_from_int(heap_t h, int i) {
+	assert(h);
 	str_t r = str_create(h, INT_BUFFER_LEN);
 	if(r) {
 		r->length = snprintf(r->data, INT_BUFFER_LEN + 1, "%d", i);
@@ -40,13 +42,14 @@ str_t str_from_int(heap_t h, int i) {
 }
 
 str_t str_from_double(heap_t h, double d) {
+	assert(h);
 	str_t r = str_create(h, DOUBLE_BUFFER_LEN);
 	if(r) {
-		r->length = snprintf(r->data, DOUBLE_BUFFER_LEN + 1, "%f", d);
+		r->length = snprintf(r->data, DOUBLE_BUFFER_LEN + 1, "%g", d);
 		if(r->length > DOUBLE_BUFFER_LEN) {
 			r = str_create(h, r->length+1);
 			if(r)
-				r->length = snprintf(r->data, r->length + 1, "%f", d);
+				r->length = snprintf(r->data, r->length + 1, "%g", d);
 		}
 	}
 	return r;

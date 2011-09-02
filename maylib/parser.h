@@ -17,7 +17,7 @@ struct parser_s {
 typedef struct parser_s *parser_t;
 
 
-syntree_t parser_process(heap_t, parser_t, str_t);
+bool parser_process(parser_t p, syntree_t r);
 
 parser_t parser_crange(heap_t, char, char);
 parser_t parser_cset(heap_t, const char *);

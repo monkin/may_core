@@ -461,7 +461,10 @@ int main(int nargs, char **args) {
 	return 0;
 error:
 	err_reset();
+	syntree_delete(st);
 	heap_delete(h);
+	if(out!=stdout)
+		fclose(out);
 	return -1;
 }
 

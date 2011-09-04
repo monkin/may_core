@@ -30,5 +30,8 @@ parser_t parser_rep(heap_t, parser_t, size_t, size_t);
 parser_t parser_maybe(heap_t, parser_t);
 parser_t parser_named(heap_t, int, parser_t);
 
+parser_t parser_forward(heap_t);
+parser_t parser_forward_set(parser_t, parser_t);
+
 #endif /* MAY_PARSER_H */
 

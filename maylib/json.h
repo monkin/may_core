@@ -44,7 +44,7 @@ typedef struct json_value_s *json_value_t;
 parser_t json_parser(heap_t);
 json_value_t json_to_value(heap_t, syntree_t);
 str_t json_to_string(heap_t, json_value_t);
-void json_to_file(FILE *, json_value_t);
+void json_to_file(ios_t, json_value_t);
 
 enum {
 	JSON_FORMATF_FLAG = 0x0100,
@@ -59,7 +59,7 @@ enum {
 #define JSON_FORMAT_SPACE_4 json_format(1, 0, 4)
 #define JSON_FORMAT_SPACE_8 json_format(1, 0, 8)
 
-#define json_value_type(jt) (jt)->value_type &
+#define json_value_type(jt) (jt)->value_type
 
 typedef struct jbuilder_ss {
 	size_t state;

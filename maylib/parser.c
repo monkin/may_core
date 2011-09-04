@@ -310,4 +310,23 @@ parser_t parser_named(heap_t h, int nm, parser_t p) {
 	return 0;
 }
 
+parser_t parser_forward(heap_t h) {
+	if(!err()) {
+		parser_t r = heap_alloc(h, sizeof(struct parser_s));
+		if(!err()) {
+			r->data = 0;
+			r->fn = 0;
+			return r;
+		}
+	}
+	return 0;
+}
+parser_t parser_forward_set(parser_t p1, parser_t p2) {
+	if(!err()) {
+		*p1=*p2;
+		return p1;
+	} else
+		return 0;
+}
+
 

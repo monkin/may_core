@@ -1,6 +1,7 @@
 
 #include "stream.h"
 #include "mem.h"
+#include <string.h>
 
 ERR_DEFINE(e_ios_error, "IO error.", 0);
 ERR_DEFINE(e_ios_invalid_mode, "Invalid file open mode.", e_ios_error);
@@ -14,13 +15,17 @@ typedef struct {
 
 typedef ios_f_s *ios_f_t;
 
-static void ios_f_write(void *f, void *dt, size_t sz) {
-	if(!fwrite(dt, sz, 1, ((ios_f_t) f)->file))
+static size_t ios_f_write(void *f, void *dt, size_t sz, size_t cnt) {
+	size_t r = fwrite(dt, sz, cnt, ((ios_f_t) f)->file);
+	if(r!=cnt)
 		err_set(e_ios_error);
+	return r;
 }
-static void ios_f_read(void *f, void *dt, size_t sz) {
-	if(!fread(dt, sz, 1, ((ios_f_t) f)->file))
+static size_t ios_f_read(void *f, void *dt, size_t sz, size_t cnt) {
+	size_t r = fread(dt, sz, cnt, ((ios_f_t) f)->file);
+	if(r!=cnt)
 		err_set(e_ios_error);
+	return r;
 }
 bool ios_f_eof(void *f) {
 	return feof(((ios_f_t) f)->file);
@@ -126,6 +131,7 @@ typedef struct {
 	ios_s descriptor;
 	size_t size;
 	size_t position;
+	size_t block_count;
 	ios_mem_block_t last;
 	ios_mem_block_t current;
 	ios_mem_block_s first;
@@ -133,8 +139,64 @@ typedef struct {
 
 typedef ios_mem_s *ios_mem_t;
 
-void ios_m_write(void *, void *, size_t);
-void ios_m_read(void *, void *, size_t);
+size_t ios_m_write(void *ms, void *dt, size_t sz, size_t cnt) {
+	ios_mem_t m = (ios_mem_t) ms;
+	size_t fsz = sz*cnt;
+	while(m->block_count*IOS_MEM_BLOCK_SIZE < m->position+fsz) {
+		m->last->next = mem_alloc(sizeof(ios_mem_block_s));
+		if(err()) {
+			err_clear();
+			break;
+		}
+		m->last->next->prev = m->last;
+		m->last->next->next = 0;
+		m->last = m->last->next;
+		m->block_count++;
+	}
+	size_t succ_cnt = (m->block_count*IOS_MEM_BLOCK_SIZE - m->position) / sz;
+	if(succ_cnt>cnt)
+		succ_cnt = cnt;
+	while(fsz>0) {
+		size_t boff = m->position % IOS_MEM_BLOCK_SIZE;
+		size_t sw = IOS_MEM_BLOCK_SIZE-boff;
+		memcpy(m->current->data + boff, dt, sw);
+		fsz -= sw;
+		dt = ((char *) dt) + sw;
+		m->position += sw;
+		if(m->position>m->size)
+			m->size = m->position;
+		if(fsz!=0)
+			m->current = m->current->next;
+	}
+	if(succ_cnt!=cnt)
+		err_set(e_out_of_memory);
+	return succ_cnt;
+}
+size_t ios_m_read(void *ms, void *dt, size_t sz, size_t cnt) {
+	ios_mem_t m = (ios_mem_t) ms;
+	if(sz*cnt+m->position > m->size)
+		cnt = (m->size - m->position) / sz;
+	sz *= cnt;
+	char *i = dt;
+	while(sz) {
+		size_t boff = m->position % IOS_MEM_BLOCK_SIZE;
+		size_t sr = IOS_MEM_BLOCK_SIZE - boff;
+		if(sz >= sr) {
+			memcpy(dt, m->current->data+boff, sr);
+			m->position += sr;
+			if(m->current->next)
+				m->current = m->current->next;
+			dt = ((char *) dt) + sr;
+			sz -= sr;
+		} else {
+			memcpy(dt, m->current->data+boff, sz);
+			m->position += sz;
+			dt = ((char *) dt) + sz;
+			sz = 0;
+		}
+	}
+	return cnt;
+}
 bool ios_m_eof(void *ms) {
 	return ((ios_mem_t) ms)->position == ((ios_mem_t) ms)->size;
 }
@@ -203,28 +265,49 @@ void ios_m_close(void *ms) {
 	}
 }
 
+static ios_table_s ios_m_vtable = { ios_m_write, ios_m_read, ios_m_eof, ios_m_tell, ios_m_seek, ios_m_flush, ios_m_close };
+
 ios_t ios_mem_create() {
 	ios_mem_t r = mem_alloc(sizeof(ios_mem_s));
 	if(err())
 		return 0;
 	r->descriptor.data = r;
+	r->descriptor.vtable = &ios_m_vtable;
 	r->size = 0;
 	r->position = 0;
 	r->current = r->last = &r->first;
 	r->first.next = r->first.prev = 0;
+	r->block_count = 1;
 	return &r->descriptor;
 }
 
+str_t ios_mem_to_string(ios_t ms, heap_t h) {
+	ios_mem_t m = (ios_mem_t) ms;
+	size_t 	sz = m->size;
+	str_t r = str_create(h, sz);
+	if(err())
+		return 0;
+	str_it_t sp = str_begin(r);
+	ios_mem_block_t i = &m->first;
+	while(sz) {
+		size_t cps = sz>=IOS_MEM_BLOCK_SIZE ? IOS_MEM_BLOCK_SIZE : sz;
+		memcpy(sp, i->data, cps);
+		sp += cps;
+		sz -= cps;
+		i = i->next;
+	}
+	return r;
+}
 
 // Common functions
 
-void ios_write(ios_t s, void *p, size_t sz) {
+size_t ios_write(ios_t s, void *p, size_t sz, size_t cnt) {
 	err_reset();
-	s->vtable->write(s->data, p, sz);
+	return s->vtable->write(s->data, p, sz, cnt);
 }
-void ios_read(ios_t s, void * p, size_t sz) {
+size_t ios_read(ios_t s, void * p, size_t sz, size_t cnt) {
 	err_reset();
-	s->vtable->read(s->data, p, sz);
+	return s->vtable->read(s->data, p, sz, cnt);
 }
 bool ios_eof(ios_t s) {
 	err_reset();
@@ -242,3 +325,4 @@ ios_t ios_close(ios_t s) {
 	s->vtable->close(s->data);
 	return 0;
 }
+

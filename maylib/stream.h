@@ -14,8 +14,8 @@ ERR_DECLARE(e_ios_invalid_mode);
 #define IOS_SEEK_END SEEK_END
 
 typedef struct {
-	void (* write)(void *, void *, size_t);
-	void (* read)(void *, void *, size_t);
+	size_t (* write)(void *, void *, size_t, size_t);
+	size_t (* read)(void *, void *, size_t, size_t);
 	bool (* eof)(void *);
 	long long (* tell)(void *);
 	void (* seek)(void *, long long, int);
@@ -50,13 +50,12 @@ str_t ios_mem_to_string(ios_t, heap_t);
 
 ios_t ios_file_create(str_t, ios_mode_t);
 
-void ios_write(ios_t, void *, size_t);
-void ios_read(ios_t, void *, size_t);
+size_t ios_write(ios_t, void *, size_t, size_t);
+size_t ios_read(ios_t, void *, size_t, size_t);
 bool ios_eof(ios_t);
 long long ios_tell(ios_t);
 void ios_seek(ios_t, long long, int);
 ios_t ios_close(ios_t);
-
 
 #endif /* MAY_STREAM_H */
 

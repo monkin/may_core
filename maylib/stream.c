@@ -6,7 +6,7 @@
 ERR_DEFINE(e_ios_error, "IO error.", 0);
 ERR_DEFINE(e_ios_invalid_mode, "Invalid file open mode.", e_ios_error);
 
-// File streams.
+/* File streams. */
 
 typedef struct {
 	FILE *file;
@@ -113,7 +113,7 @@ ios_t ios_std_err() {
 	return &ios_std_ins;
 }
 
-// Memory streams
+/* Memory streams */
 
 enum {
 	IOS_MEM_BLOCK_SIZE = 64*1024
@@ -299,7 +299,7 @@ str_t ios_mem_to_string(ios_t ms, heap_t h) {
 	return r;
 }
 
-// Common functions
+/* Common functions */
 
 size_t ios_write(ios_t s, void *p, size_t sz, size_t cnt) {
 	err_reset();

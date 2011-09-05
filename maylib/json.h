@@ -8,13 +8,12 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+ERR_DECLARE(e_json_error);
+ERR_DECLARE(e_json_invalid_state);
+
 struct json_value_ss;
-
-typedef struct json_array_ss {
-	size_t size;
-	struct json_value_ss *values;
-} json_array_s;
-
+struct json_array_ss;
+typedef struct json_array_ss json_array_s;
 typedef json_array_s *json_array_t;
 
 typedef enum {
@@ -29,7 +28,7 @@ typedef enum {
 
 
 typedef struct json_value_ss {
-	long value_type;
+	char value_type;
 	union {
 		str_t string;
 		double number;
@@ -38,6 +37,11 @@ typedef struct json_value_ss {
 	} value;
 	struct json_value_ss *parent;
 } json_value_s;
+
+struct json_array_ss {
+	json_value_s value;
+	json_array_t *next;
+};
 
 typedef struct json_value_s *json_value_t;
 
@@ -61,34 +65,65 @@ enum {
 
 #define json_value_type(jt) (jt)->value_type
 
+struct jbuilder_vtable_ss;
+typedef struct jbuilder_vtable_ss *jbuilder_vtable_t;
+
 typedef struct jbuilder_ss {
-	size_t state;
-	heap_t heap;
-	FILE *file;
-	sbuilder_t sbuilder;
-	size_t states_size;
-	char *states;
+	jbuilder_vtable_t vtable;
+	void *data;
 } jbuilder_s;
 
 typedef jbuilder_s *jbuilder_t;
 
-jbuilder_t jbuilder_create(ios_t, int format);
-jbuilder_t jbuilder_delete(jbuilder_t);
-void jbuilder_array(jbuilder_t);
-void jbuilder_array_end(jbuilder_t);
-void jbuilder_object(jbuilder_t);
-void jbuilder_object_end(jbuilder_t);
-void jbuilder_key(jbuilder_t, str_t);
-void jbuilder_key_cs(jbuilder_t, const char *);
-void jbuilder_number(jbuilder_t, double);
-void jbuilder_numberi(jbuilder_t, long long);
-void jbuilder_string(jbuilder_t, str_t);
-void jbuilder_bool(jbuilder_t, bool);
-void jbuilder_null(jbuilder_t);
+typedef struct jbuilder_vtable_ss {
+	void (*array)(void *);
+	void (*array_end)(void *);
+	void (*object)(void *);
+	void (*object_end)(void *);
+	void (*key)(void *, str_t);
+	void (*key_cs)(void *, const char *);
+	void (*number)(void *, double);
+	void (*number_i)(void *, long long);
+	void (*string)(void *, str_t);
+	void (*string_cs)(void *, const char *);
+	void (*x_bool)(void *, bool);
+	void (*x_null)(void *);
+	void (*x_delete)(void *);
+} jbuilder_vtable_s;
+
+jbuilder_t jbuilder_create_s(ios_t, int format);
+jbuilder_t jbuilder_create_v(heap_t h);
+
+/*jbuilder_t jbuilder_delete(jbuilder_t);*/
+#define jbuilder_delete(jb) ((jb)->vtable->x_delete((jb)->data), 0)
+/*void jbuilder_array(jbuilder_t);*/
+#define jbuilder_array(jb) ((jb)->vtable->array((jb)->data))
+/*void jbuilder_array_end(jbuilder_t);*/
+#define jbuilder_array_end(jb) ((jb)->vtable->array_end((jb)->data))
+/*void jbuilder_object(jbuilder_t);
+void jbuilder_object_end(jbuilder_t);*/
+#define jbuilder_object(jb) ((jb)->vtable->object((jb)->data))
+#define jbuilder_object_end(jb) ((jb)->vtable->object_end((jb)->data))
+/*void jbuilder_key(jbuilder_t, str_t);
+void jbuilder_key_cs(jbuilder_t, const char *);*/
+#define jbuilder_key(jb, s) ((jb)->vtable->key((jb)->data, s))
+#define jbuilder_key_cs(jb, s) ((jb)->vtable->key_cs((jb)->data, s))
+/*void jbuilder_number(jbuilder_t, double);
+void jbuilder_number_i(jbuilder_t, long long);*/
+#define jbuilder_number(jb, n) ((jb)->vtable->number((jb)->data, n))
+#define jbuilder_number_i(jb, n) ((jb)->vtable->number_i((jb)->data, n))
+/*void jbuilder_string(jbuilder_t, str_t);
+void jbuilder_string_cs(jbuilder_t, const char *);*/
+#define jbuilder_string(jb, s) ((jb)->vtable->string((jb)->data, s))
+#define jbuilder_string_cs(jb, s) ((jb)->vtable->string_cs((jb)->data, s))
+/*void jbuilder_bool(jbuilder_t, bool);*/
+#define jbuilder_bool(jb, b) ((jb)->vtable->x_bool((jb)->data, b))
+/*void jbuilder_null(jbuilder_t);*/
+#define jbuilder_null(jb) ((jb)->vtable->x_null((jb)->data))
 /*void jbuilder_true(jbuilder_t);
 void jbuilder_false(jbuilder_t);*/
-#define jbuilder_true(jb) jbuilder_bool((jb), true)
-#define jbuilder_false(jb) jbuilder_bool((jb), false)
+#define jbuilder_true(jb) jbuilder_bool((jb)->data, true)
+#define jbuilder_false(jb) jbuilder_bool((jb)->data, false)
 
 #endif /* MAY_JSON_H */
 

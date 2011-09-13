@@ -15,7 +15,7 @@ typedef struct {
 
 typedef ios_f_s *ios_f_t;
 
-static size_t ios_f_write(void *f, void *dt, size_t sz, size_t cnt) {
+static size_t ios_f_write(void *f, const void *dt, size_t sz, size_t cnt) {
 	size_t r = fwrite(dt, sz, cnt, ((ios_f_t) f)->file);
 	if(r!=cnt)
 		err_set(e_ios_error);
@@ -139,7 +139,7 @@ typedef struct {
 
 typedef ios_mem_s *ios_mem_t;
 
-size_t ios_m_write(void *ms, void *dt, size_t sz, size_t cnt) {
+size_t ios_m_write(void *ms, const void *dt, size_t sz, size_t cnt) {
 	ios_mem_t m = (ios_mem_t) ms;
 	size_t fsz = sz*cnt;
 	while(m->block_count*IOS_MEM_BLOCK_SIZE < m->position+fsz) {
@@ -301,7 +301,7 @@ str_t ios_mem_to_string(ios_t ms, heap_t h) {
 
 /* Common functions */
 
-size_t ios_write(ios_t s, void *p, size_t sz, size_t cnt) {
+size_t ios_write(ios_t s, const void *p, size_t sz, size_t cnt) {
 	err_reset();
 	return s->vtable->write(s->data, p, sz, cnt);
 }

@@ -1,5 +1,6 @@
 
 #include "json.h"
+#include <string.h>
 
 ERR_DEFINE(e_json_error, "JSON error.", 0);
 ERR_DEFINE(e_json_invalid_state, "JSON Builder error.", e_json_error);
@@ -230,7 +231,6 @@ typedef struct {
 	jbuilder_s builder;
 	ios_t stream;
 	int format;
-	bool complete;
 	size_t states_capacity;
 	size_t states_size;
 	char *states;
@@ -261,6 +261,66 @@ static void jb_s_indent(jb_s_t jb) {
 	}
 }
 
+static void jb_s_write_string(jb_s_t jb, const char *s, const char *e) {
+	ios_write(jb->stream, "\"", 1, 1);
+	if(err())
+		return;
+	const char *i = s;
+	const char *j = s;
+	if(i) {
+		while(i<e) {
+			bool loop = true;
+			while(loop) {
+				switch(*j) {
+				case '\n':
+				case '\r':
+				case '\t':
+				case '\\':
+				case '\"':
+					loop = false;
+					break;
+				default:
+					j++;
+				}
+				if(j==e)
+					break;
+			}
+			if(j!=i) {
+				ios_write(jb->stream, i, j-i-1, 1);
+				if(err())
+					return;
+			}
+			if(i==e)
+				return;
+			switch(*j) {
+			case '\n':
+				ios_write(jb->stream, "\\n", 2, 1);
+				break;
+			case '\r':
+				ios_write(jb->stream, "\\r", 2, 1);
+				break;
+			case '\t':
+				ios_write(jb->stream, "\\t", 2, 1);
+				break;
+			case '\\':
+				ios_write(jb->stream, "\\\\", 2, 1);
+				break;
+			case '\"':
+				ios_write(jb->stream, "\\\"", 2, 1);
+				break;
+			}
+			if(err())
+				return;
+			if(*j)
+				j++;
+			i = j;
+			if(i==e)
+				break;
+		}
+	}
+	ios_write(jb->stream, "\"", 1, 1);
+}
+
 static void jb_s_endl(jb_s_t jb) {
 	if(jb->format & JSON_FORMATF_FLAG)
 		ios_write(jb->stream, "\n", 1, 1);
@@ -272,9 +332,21 @@ static void jb_s_endl(jb_s_t jb) {
 	case JB_S_IN_OBJECT:               \
 	case JB_S_IN_OBJECT_FST:           \
 		err_set(e_json_invalid_state); \
-		return; \
-	} \
-} 
+		return;                \
+	case JB_S_IN_OBJECT_VALUE: \
+		jb->states[jb->states_size-1] = JB_S_IN_OBJECT; \
+		break;             \
+	case JB_S_IN_ARRAY:    \
+		ios_write(jb->stream, ",", 1, 1);     \
+		if(err()) return;                     \
+		if(jb->format & JSON_FORMATF_FLAG) {  \
+			jb_s_endl(jb);    \
+			if(err()) return; \
+			jb_s_indent(jb);  \
+			if(err()) return; \
+		} \
+	}	  \
+}
 
 void jb_s_array(void *jbs) {
 	err_reset();
@@ -348,85 +420,200 @@ void jb_s_object_end(void *jbs) {
 		err_set(e_json_invalid_state);
 	}
 }
-void jb_s_key(void *jbs, str_t v) {
-	err_reset();
-	jb_s_t jb = (jb_s_t) jbs;
-	switch(jb->states[jb->states_size-1]) {
-	case JB_S_IN_OBJECT:
-	case JB_S_IN_OBJECT_FST:
-		break;
-	default:
-		err_set(e_json_invalid_state);
-		return;
-	}
-}
 void jb_s_key_cs(void *jbs, const char *v) {
 	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	switch(jb->states[jb->states_size-1]) {
 	case JB_S_IN_OBJECT:
+		ios_write(jb->stream, ",", 1, 1);
+		if(err())
+			return;
+		jb_s_endl(jb);
+		if(err())
+			return;
+		jb_s_indent(jb);
+		if(err())
+			return;
 	case JB_S_IN_OBJECT_FST:
+		jb_s_write_string(jb, v, v+strlen(v));
+		if(err())
+			return;
+		if(jb->format & JSON_FORMATF_FLAG)
+			ios_write(jb->stream, ": ", 2, 1);
+		else
+			ios_write(jb->stream, ":", 1, 1);
+		if(err())
+			return;
+		jb->states[jb->states_size-1] = JB_S_IN_OBJECT_VALUE;
 		break;
 	default:
 		err_set(e_json_invalid_state);
-		return;
+	}
+}
+void jb_s_key(void *jbs, str_t v) {
+	err_reset();
+	jb_s_t jb = (jb_s_t) jbs;
+	switch(jb->states[jb->states_size-1]) {
+	case JB_S_IN_OBJECT:
+		ios_write(jb->stream, ",", 1, 1);
+		if(err())
+			return;
+		jb_s_endl(jb);
+		if(err())
+			return;
+		jb_s_indent(jb);
+		if(err())
+			return;
+	case JB_S_IN_OBJECT_FST:
+		jb_s_write_string(jb, str_begin(v), str_end(v));
+		if(err())
+			return;
+		if(jb->format & JSON_FORMATF_FLAG)
+			ios_write(jb->stream, ": ", 2, 1);
+		else
+			ios_write(jb->stream, ":", 1, 1);
+		if(err())
+			return;
+		jb->states[jb->states_size-1] = JB_S_IN_OBJECT_VALUE;
+		break;
+	default:
+		err_set(e_json_invalid_state);
 	}
 }
 void jb_s_number(void *jbs, double v) {
 	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	JB_S_TRY_INSERT_VALUE;
+	char buff[128];
+	snprintf(buff, 128, "%g", v);
+	size_t sl = strlen(buff);
+	ios_write(jb->stream, buff, sl, 1);
 }
 void jb_s_number_i(void *jbs, long long v) {
 	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	JB_S_TRY_INSERT_VALUE;
+	char buff[128];
+	snprintf(buff, 128, "%lld", v);
+	size_t sl = strlen(buff);
+	ios_write(jb->stream, buff, sl, 1);
 }
 void jb_s_string(void *jbs, str_t v) {
 	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	JB_S_TRY_INSERT_VALUE;
+	jb_s_write_string(jb, str_begin(v), str_end(v));
 }
 void jb_s_string_cs(void *jbs, const char *v) {
 	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	JB_S_TRY_INSERT_VALUE;
-
+	jb_s_write_string(jbs, v, v+strlen(v));
 }
 void jb_s_x_bool(void *jbs, bool v) {
 	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	JB_S_TRY_INSERT_VALUE;
+	ios_write(jb->stream, v ? "true" : "false", v ? 4 : 5, 1);
 }
 void jb_s_x_null(void *jbs) {
 	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	JB_S_TRY_INSERT_VALUE;
+	ios_write(jb->stream, "null", 4, 1);
 }
 void jb_s_x_delete(void *jbs) {
 	mem_free(((jb_s_t) jbs)->states);
 	mem_free(jbs);
 }
 
-
+static jbuilder_vtable_s jb_s_vtable = {
+	jb_s_array, jb_s_array_end, jb_s_object,
+	jb_s_object_end, jb_s_key, jb_s_key_cs,
+	jb_s_number, jb_s_number_i, jb_s_string,
+	jb_s_string_cs, jb_s_x_bool, jb_s_x_null,
+	jb_s_x_delete
+};
 
 jbuilder_t jbuilder_create_s(ios_t s, int format) {
 	jb_s_t r = mem_alloc(sizeof(jb_s_s));
 	if(err())
 		return 0;
 	r->builder.data = r;
+	r->builder.vtable = &jb_s_vtable;
 	r->stream = s;
 	r->format = format;
-	r->complete = false;
 	r->states_capacity = r->states_size = 0;
 	r->states = 0;
 	return &r->builder;
 }
 
-typedef struct {
+/* jbuilder_v */
 
+typedef struct {
+	jbuilder_s builder;
+	heap_t heap;
+	json_value_t current;
+	str_t key;
 } jb_v_s;
 
-jbuilder_t jbuilder_create_v(heap_t h);
+typedef jb_v_s *jb_v_t;
+
+
+void jb_v_array(void *jbv) {
+	
+}
+void jb_v_array_end(void *jbv) {
+	
+}
+void jb_v_object(void *jbv) {
+	
+}
+void jb_v_object_end(void *jbv) {
+	
+}
+void jb_v_key(void *jbv, str_t v) {
+	
+}
+void jb_v_key_cs(void *jbv, const char *v) {
+	
+}
+void jb_v_number(void *jbv, double v) {
+	
+}
+void jb_v_number_i(void *jbv, long long v) {
+	
+}
+void jb_v_string(void *jbv, str_t v) {
+	
+}
+void jb_v_string_cs(void *jbv, const char *v) {
+	
+}
+void jb_v_x_bool(void *jbv, bool v) {
+	
+}
+void jb_v_x_null(void *jbv) {
+	
+}
+void jb_v_x_delete(void *jbv) {
+	
+}
+
+jbuilder_t jbuilder_create_v() {
+	heap_t h = heap_create(64*1024);
+	if(err())
+		return 0;
+	jb_v_t r = heap_alloc(h, sizeof(jb_v_s));
+	if(err()) {
+		heap_delete(h);
+		return 0;
+	}
+	r->builder.data = r;
+	r->heap = h;
+	r->current = 0;
+	r->key = 0;
+	return &r->builder;
+}
 
 

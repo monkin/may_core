@@ -18,12 +18,12 @@ typedef json_array_s *json_array_t;
 
 typedef enum {
 	JSON_NULL = 0,
-	JSON_STRING = 1,
-	JSON_NUMBER = 2,
-	JSON_ARRAY = 3,
-	JSON_OBJECT = 4,
-	JSON_FALSE = 5,
-	JSON_TRUE = 6
+	JSON_STRING,
+	JSON_NUMBER,
+	JSON_ARRAY,
+	JSON_OBJECT,
+	JSON_FALSE,
+	JSON_TRUE
 } json_vtype_t;
 
 
@@ -38,20 +38,22 @@ typedef struct json_value_ss {
 	struct json_value_ss *parent;
 } json_value_s;
 
-typedef struct json_array_item_ss {
-	json_value_s value;
-	struct json_array_item_ss *next;
-} json_array_item_s;
-
+struct json_array_item_ss;
+typedef struct json_array_item_ss json_array_item_s;
 typedef json_array_item_s *json_array_item_t;
+
+struct json_array_item_ss {
+	json_value_s value;
+	json_array_item_t next;
+};
 
 struct json_array_ss {
 	size_t size;
-	json_array_item_t *first;
-	json_array_item_t *last;
+	json_array_item_t first;
+	json_array_item_t last;
 };
 
-typedef struct json_value_s *json_value_t;
+typedef struct json_value_ss *json_value_t;
 
 parser_t json_parser(heap_t);
 json_value_t json_to_value(heap_t, syntree_t);
@@ -100,7 +102,7 @@ typedef struct jbuilder_vtable_ss {
 } jbuilder_vtable_s;
 
 jbuilder_t jbuilder_create_s(ios_t, int format);
-jbuilder_t jbuilder_create_v();
+jbuilder_t jbuilder_create_v(heap_t);
 
 /*jbuilder_t jbuilder_delete(jbuilder_t);*/
 #define jbuilder_delete(jb) ((jb)->vtable->x_delete((jb)->data), 0)

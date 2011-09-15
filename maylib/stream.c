@@ -38,7 +38,7 @@ void ios_f_seek(void *f, long long pos, int origin) {
 		err_set(e_ios_error);
 }
 void ios_f_flush(void *f) {
-	flush(((ios_f_t) f)->file);
+	fflush(((ios_f_t) f)->file);
 }
 void ios_f_close(void *f) {
 	close(((ios_f_t) f)->file);
@@ -106,11 +106,11 @@ ios_t ios_std_in() {
 }
 ios_t ios_std_out() {
 	ios_std_outfs.file = stdout;
-	return &ios_std_ins;
+	return &ios_std_outs;
 }
 ios_t ios_std_err() {
 	ios_std_errfs.file = stderr;
-	return &ios_std_ins;
+	return &ios_std_errs;
 }
 
 /* Memory streams */

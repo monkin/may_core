@@ -253,7 +253,7 @@ static void jb_s_indent(jb_s_t jb) {
 	static char spaces[] = "                                                                ";
 	static char tabs[] = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
 	if(jb->format & JSON_FORMATF_FLAG) {
-		size_t cnt = (jb->format & JSON_FORMATF_TAB_SIZE) * jb->states_size;
+		ptrdiff_t cnt = (jb->format & JSON_FORMATF_TAB_SIZE) * jb->states_size;
 		while(cnt>0) {
 			ios_write(jb->stream, (jb->format & JSON_FORMATF_TABS) ? tabs : spaces, cnt>32 ? 32 : cnt, 1);
 			cnt-=32;
@@ -339,30 +339,24 @@ static void jb_s_endl(jb_s_t jb) {
 	case JB_S_IN_ARRAY:    \
 		ios_write(jb->stream, ",", 1, 1);     \
 		if(err()) return;                     \
-		if(jb->format & JSON_FORMATF_FLAG) {  \
+	case JB_S_IN_ARRAY_FST:                   \
+		jb->states[jb->states_size-1] = JB_S_IN_ARRAY; \
+		if(jb->format & JSON_FORMATF_FLAG) {           \
 			jb_s_endl(jb);    \
 			if(err()) return; \
 			jb_s_indent(jb);  \
 			if(err()) return; \
-		} \
-	}	  \
+		}                     \
+	} \
 }
 
 void jb_s_array(void *jbs) {
 	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	JB_S_TRY_INSERT_VALUE;
-	if(jb->states[jb->states_size-1]==JB_S_IN_ARRAY) {
-		if(jb->format & JSON_FORMATF_FLAG)
-			ios_write(jb->stream, ", ", 2, 1);
-		else
-			ios_write(jb->stream, ",", 1, 1);
-		if(err())
-			return;
-	}
-	ios_write(jb->stream, "{", 1, 1);
+	ios_write(jb->stream, "[", 1, 1);
 	if(!err())
-		jb_s_push_state(jb, JB_S_IN_OBJECT_FST);
+		jb_s_push_state(jb, JB_S_IN_ARRAY_FST);
 }
 void jb_s_array_end(void *jbs) {
 	err_reset();
@@ -389,14 +383,6 @@ void jb_s_object(void *jbs) {
 	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	JB_S_TRY_INSERT_VALUE;
-	if(jb->states[jb->states_size-1]==JB_S_IN_ARRAY) {
-		if(jb->format & JSON_FORMATF_FLAG)
-			ios_write(jb->stream, ", ", 2, 1);
-		else
-			ios_write(jb->stream, ",", 1, 1);
-		if(err())
-			return;
-	}
 	ios_write(jb->stream, "{", 1, 1);
 	if(!err())
 		jb_s_push_state(jb, JB_S_IN_OBJECT_FST);
@@ -428,13 +414,13 @@ void jb_s_key_cs(void *jbs, const char *v) {
 		ios_write(jb->stream, ",", 1, 1);
 		if(err())
 			return;
+	case JB_S_IN_OBJECT_FST:
 		jb_s_endl(jb);
 		if(err())
 			return;
 		jb_s_indent(jb);
 		if(err())
 			return;
-	case JB_S_IN_OBJECT_FST:
 		jb_s_write_string(jb, v, v+strlen(v));
 		if(err())
 			return;
@@ -458,13 +444,13 @@ void jb_s_key(void *jbs, str_t v) {
 		ios_write(jb->stream, ",", 1, 1);
 		if(err())
 			return;
+	case JB_S_IN_OBJECT_FST:
 		jb_s_endl(jb);
 		if(err())
 			return;
 		jb_s_indent(jb);
 		if(err())
 			return;
-	case JB_S_IN_OBJECT_FST:
 		jb_s_write_string(jb, str_begin(v), str_end(v));
 		if(err())
 			return;
@@ -555,61 +541,164 @@ typedef struct {
 	heap_t heap;
 	json_value_t current;
 	str_t key;
+	bool complete;
 } jb_v_s;
 
 typedef jb_v_s *jb_v_t;
 
+json_value_t jbv_insert_new(jb_v_t jb) {
+	if(jb->key) {
+		err_set(e_json_invalid_state);
+		return;
+	}
+	json_value_t v = 0;
+	if(jb->current) {
+		if(jb->current->value_type==JSON_OBJECT) {
+			v = heap_alloc(jb->heap, sizeof(json_value_s));
+			if(err())
+				return 0;
+			v->parent = jb->current;
+			map_set(jb->current->value.object, jb->key, v);
+			if(err())
+				return 0;
+			jb->key = 0;
+		} else if(jb->current->value_type==JSON_ARRAY) {
+			json_array_item_t i = heap_alloc(jb->heap, sizeof(json_array_item_s));
+			if(err())
+				return 0;
+			i->value.parent = jb->current;
+			i->next = 0;
+			json_value_t current = jb->current;
+			current->value.array->size++;
+			if(current->value.array->first) {
+				current->value.array->last->next = i;
+				current->value.array->last = i;
+			} else
+				current->value.array->first = current->value.array->last = i;
+		} else {
+			err_set(e_json_invalid_state);
+			return 0;
+		}
+	} else {
+		v = heap_alloc(jb->heap, sizeof(json_value_s));
+		if(err())
+			return 0;
+		v->parent = 0;
+		jb->current = v;
+	}
+	return v;
+}
 
 void jb_v_array(void *jbv) {
-	
+	jb_v_t jb = (jb_v_t) jbv;
+	json_value_t v = jbv_insert_new(jb);
+	if(err())
+		return;
+	v->value_type = JSON_ARRAY;
+	v->value.array = heap_alloc(jb->heap, sizeof(json_array_s));
+	if(err())
+		return;
+	v->value.array->size = 0;
+	v->value.array->first = 0;
+	v->value.array->last = 0;
+	jb->current = v;
 }
 void jb_v_array_end(void *jbv) {
-	
+	jb_v_t jb = (jb_v_t) jbv;
+	if(jb->current->parent)
+		jb->current = jb->current->parent;
+	else
+		jb->complete = true;
 }
 void jb_v_object(void *jbv) {
-	
+	jb_v_t jb = (jb_v_t) jbv;
+	json_value_t v = jbv_insert_new(jb);
+	if(err())
+		return;
+	v->value_type = JSON_OBJECT;
+	v->value.object = map_create(jb->heap);
+	jb->current = v;
 }
 void jb_v_object_end(void *jbv) {
-	
+	jb_v_t jb = (jb_v_t) jbv;
+	if(jb->current->parent)
+		jb->current = jb->current->parent;
+	else
+		jb->complete = true;
 }
 void jb_v_key(void *jbv, str_t v) {
-	
+	jb_v_t jb = (jb_v_t) jbv;
+	if(jb->key) {
+		err_set(e_json_invalid_state);
+		return;
+	}
+	jb->key = str_clone(jb->heap, v);
 }
 void jb_v_key_cs(void *jbv, const char *v) {
-	
+	jb_v_t jb = (jb_v_t) jbv;
+	if(jb->key) {
+		err_set(e_json_invalid_state);
+		return;
+	}
+	jb->key = str_from_cs(jb->heap, v);
 }
-void jb_v_number(void *jbv, double v) {
-	
+void jb_v_number(void *jbv, double n) {
+	jb_v_t jb = (jb_v_t) jbv;
+	json_value_t v = jbv_insert_new(jb);
+	if(err())
+		return;
+	v->value_type = JSON_NUMBER;
+	v->value.number = n;
 }
 void jb_v_number_i(void *jbv, long long v) {
-	
+	jb_v_number(jbv, (double) v);
 }
-void jb_v_string(void *jbv, str_t v) {
-	
+void jb_v_string(void *jbv, str_t s) {
+	jb_v_t jb = (jb_v_t) jbv;
+	json_value_t v = jbv_insert_new(jb);
+	if(err())
+		return;
+	v->value_type = JSON_STRING;
+	v->value.string = str_clone(jb->heap, s);
 }
-void jb_v_string_cs(void *jbv, const char *v) {
-	
+void jb_v_string_cs(void *jbv, const char *s) {
+	jb_v_t jb = (jb_v_t) jbv;
+	json_value_t v = jbv_insert_new(jb);
+	if(err())
+		return;
+	v->value_type = JSON_STRING;
+	v->value.string = str_from_cs(jb->heap, s);
 }
-void jb_v_x_bool(void *jbv, bool v) {
-	
+void jb_v_x_bool(void *jbv, bool b) {
+	jb_v_t jb = (jb_v_t) jbv;
+	json_value_t v = jbv_insert_new(jb);
+	if(err())
+		return;
+	v->value_type = b ? JSON_TRUE : JSON_FALSE;
 }
 void jb_v_x_null(void *jbv) {
-	
+	jb_v_t jb = (jb_v_t) jbv;
+	json_value_t v = jbv_insert_new(jb);
+	if(err())
+		return;
+	v->value_type = JSON_NULL;
 }
-void jb_v_x_delete(void *jbv) {
-	
-}
+void jb_v_x_delete(void *jbv) {}
 
-jbuilder_t jbuilder_create_v() {
-	heap_t h = heap_create(64*1024);
+static jbuilder_vtable_s jb_v_vtable = {
+	jb_v_array, jb_v_array_end, jb_v_object,
+	jb_v_object_end, jb_v_key, jb_v_key_cs,
+	jb_v_number, jb_v_number_i, jb_v_string,
+	jb_v_string_cs, jb_v_x_bool, jb_v_x_null,
+	jb_v_x_delete
+};
+
+jbuilder_t jbuilder_create_v(heap_t h) {
+	jb_v_t r = heap_alloc(h, sizeof(jb_v_s));
 	if(err())
 		return 0;
-	jb_v_t r = heap_alloc(h, sizeof(jb_v_s));
-	if(err()) {
-		heap_delete(h);
-		return 0;
-	}
 	r->builder.data = r;
+	r->builder.vtable = &jb_v_vtable;
 	r->heap = h;
 	r->current = 0;
 	r->key = 0;

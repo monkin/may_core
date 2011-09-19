@@ -17,14 +17,14 @@ typedef ios_f_s *ios_f_t;
 
 static size_t ios_f_write(void *f, const void *dt, size_t sz, size_t cnt) {
 	size_t r = fwrite(dt, sz, cnt, ((ios_f_t) f)->file);
-	if(r!=cnt)
-		err_set(e_ios_error);
+	/*if(r!=cnt)
+		err_throw(e_ios_error);*/
 	return r;
 }
 static size_t ios_f_read(void *f, void *dt, size_t sz, size_t cnt) {
 	size_t r = fread(dt, sz, cnt, ((ios_f_t) f)->file);
-	if(r!=cnt)
-		err_set(e_ios_error);
+	/*if(r!=cnt)
+		err_throw(e_ios_error);*/
 	return r;
 }
 bool ios_f_eof(void *f) {
@@ -35,7 +35,7 @@ long long ios_f_tell(void *f) {
 }
 void ios_f_seek(void *f, long long pos, int origin) {
 	if(0!=fseeko64(((ios_f_t) f)->file, pos, origin))
-		err_set(e_ios_error);
+		err_throw(e_ios_error);
 }
 void ios_f_flush(void *f) {
 	fflush(((ios_f_t) f)->file);
@@ -50,7 +50,6 @@ static ios_table_s ios_wf_vtable = { ios_f_write, 0, ios_f_eof, ios_f_tell, ios_
 static ios_table_s ios_rwf_vtable = { ios_f_write, ios_f_read, ios_f_eof, ios_f_tell, ios_f_seek, ios_f_flush, ios_f_close };
 
 ios_t ios_file_create(str_t s, ios_mode_t mode) {
-	err_reset();
 	const char *md = 0;
 	switch(mode) {
 	case IOS_MODE_R: md = "r"; break;
@@ -58,18 +57,17 @@ ios_t ios_file_create(str_t s, ios_mode_t mode) {
 	case IOS_MODE_RP: md = "r+"; break;
 	case IOS_MODE_WP: md = "w+"; break;
 	default:
-		err_set(e_ios_invalid_mode);
-		return 0;
+		err_throw(e_ios_invalid_mode);
 	}
 	FILE *f = fopen(str_begin(s), md);
-	if(!f) {
-		err_set(e_ios_error);
-		return 0;
-	}
-	char *mem = mem_alloc(sizeof(ios_s) + sizeof(ios_f_s));
-	if(err()) {
+	if(!f)
+		err_throw(e_ios_error);
+	char *mem = 0;
+	err_try {
+		mem = mem_alloc(sizeof(ios_s) + sizeof(ios_f_s));
+	} err_catch {
 		fclose(f);
-		return 0;
+		err_throw_down();
 	}
 	ios_t r = (ios_t) mem;
 	ios_f_t fr = (ios_f_t)(mem + sizeof(ios_s));
@@ -144,10 +142,6 @@ size_t ios_m_write(void *ms, const void *dt, size_t sz, size_t cnt) {
 	size_t fsz = sz*cnt;
 	while(m->block_count*IOS_MEM_BLOCK_SIZE < m->position+fsz) {
 		m->last->next = mem_alloc(sizeof(ios_mem_block_s));
-		if(err()) {
-			err_clear();
-			break;
-		}
 		m->last->next->prev = m->last;
 		m->last->next->next = 0;
 		m->last = m->last->next;
@@ -168,8 +162,6 @@ size_t ios_m_write(void *ms, const void *dt, size_t sz, size_t cnt) {
 		if(fsz!=0)
 			m->current = m->current->next;
 	}
-	if(succ_cnt!=cnt)
-		err_set(e_out_of_memory);
 	return succ_cnt;
 }
 size_t ios_m_read(void *ms, void *dt, size_t sz, size_t cnt) {
@@ -216,8 +208,7 @@ void ios_m_seek(void *ms, long long offset, int origin) {
 			}
 			return;
 		} else
-			err_set(e_ios_error);
-		break;
+			err_throw(e_ios_error);
 	case IOS_SEEK_CURRENT:
 		if((offset+m->position >= 0) && (offset+m->position <= m->size)) {
 			m->position += offset;
@@ -233,9 +224,9 @@ void ios_m_seek(void *ms, long long offset, int origin) {
 					m->current = m->current->prev;
 				}
 			}
+			return;
 		} else
-			err_set(e_ios_error);
-		break;
+			err_throw(e_ios_error);
 	case IOS_SEEK_END:
 		if(offset<0 && (-offset)<=m->size) {
 			offset = -offset;
@@ -246,10 +237,9 @@ void ios_m_seek(void *ms, long long offset, int origin) {
 			}
 			return;
 		} else
-			err_set(e_ios_error);
-		break;
+			err_throw(e_ios_error);
 	default:
-		err_set(e_ios_error);
+		err_throw(e_ios_error);
 	}
 }
 void ios_m_flush(void *ms) {}
@@ -269,8 +259,6 @@ static ios_table_s ios_m_vtable = { ios_m_write, ios_m_read, ios_m_eof, ios_m_te
 
 ios_t ios_mem_create() {
 	ios_mem_t r = mem_alloc(sizeof(ios_mem_s));
-	if(err())
-		return 0;
 	r->descriptor.data = r;
 	r->descriptor.vtable = &ios_m_vtable;
 	r->size = 0;
@@ -285,8 +273,6 @@ str_t ios_mem_to_string(ios_t ms, heap_t h) {
 	ios_mem_t m = (ios_mem_t) ms;
 	size_t 	sz = m->size;
 	str_t r = str_create(h, sz);
-	if(err())
-		return 0;
 	str_it_t sp = str_begin(r);
 	ios_mem_block_t i = &m->first;
 	while(sz) {
@@ -302,23 +288,18 @@ str_t ios_mem_to_string(ios_t ms, heap_t h) {
 /* Common functions */
 
 size_t ios_write(ios_t s, const void *p, size_t sz, size_t cnt) {
-	err_reset();
 	return s->vtable->write(s->data, p, sz, cnt);
 }
 size_t ios_read(ios_t s, void * p, size_t sz, size_t cnt) {
-	err_reset();
 	return s->vtable->read(s->data, p, sz, cnt);
 }
 bool ios_eof(ios_t s) {
-	err_reset();
 	return s->vtable->eof(s->data);
 }
 long long ios_tell(ios_t s) {
-	err_reset();
 	return s->vtable->tell(s->data);
 }
 void ios_seek(ios_t s, long long pos, int origin) {
-	err_reset();
 	s->vtable->seek(s->data, pos, origin);
 }
 ios_t ios_close(ios_t s) {

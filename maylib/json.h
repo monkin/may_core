@@ -26,6 +26,19 @@ typedef enum {
 	JSON_TRUE
 } json_vtype_t;
 
+enum json_syntree_names_e {
+	JSON_ST_STRING,
+	JSON_ST_STRING_SIMPLE,
+	JSON_ST_STRING_ESC,
+	JSON_ST_NUMBER,
+	JSON_ST_TRUE,
+	JSON_ST_FALSE,
+	JSON_ST_NULL,
+	JSON_ST_PAIR,
+	JSON_ST_OBJECT,
+	JSON_ST_ARRAY
+};
+
 
 typedef struct json_value_ss {
 	char value_type;
@@ -55,23 +68,24 @@ struct json_array_ss {
 
 typedef struct json_value_ss *json_value_t;
 
-parser_t json_parser(heap_t);
-json_value_t json_to_value(heap_t, syntree_t);
-str_t json_to_string(heap_t, json_value_t);
-void json_to_file(ios_t, json_value_t);
-
-enum {
-	JSON_FORMATF_FLAG = 0x0100,
-	JSON_FORMATF_TABS = 0x0200,
-	JSON_FORMATF_TAB_SIZE = 0x00FF
-};
-
 #define json_format(format, use_tab, tab_size) ((format) ? JSON_FORMATF_FLAG | ((use_tab) ? JSON_FORMATF_TABS : tab_size) : 0)
 #define JSON_FORMAT_NONE 0
 #define JSON_FORMAT_TAB json_format(1, 1, 0)
 #define JSON_FORMAT_SPACE_2 json_format(1, 0, 2)
 #define JSON_FORMAT_SPACE_4 json_format(1, 0, 4)
 #define JSON_FORMAT_SPACE_8 json_format(1, 0, 8)
+
+parser_t json_parser(heap_t);
+json_value_t json_string2value(heap_t, parser_t, str_t);
+json_value_t json_tree2value(heap_t, syntree_t);
+str_t json_value2string(heap_t, json_value_t, int format);
+void json_value2stream(ios_t, json_value_t, int format);
+
+enum {
+	JSON_FORMATF_FLAG = 0x0100,
+	JSON_FORMATF_TABS = 0x0200,
+	JSON_FORMATF_TAB_SIZE = 0x00FF
+};
 
 #define json_value_type(jt) (jt)->value_type
 
@@ -103,6 +117,7 @@ typedef struct jbuilder_vtable_ss {
 
 jbuilder_t jbuilder_create_s(ios_t, int format);
 jbuilder_t jbuilder_create_v(heap_t);
+json_value_t jbuilder_value_v(jbuilder_t);
 
 /*jbuilder_t jbuilder_delete(jbuilder_t);*/
 #define jbuilder_delete(jb) ((jb)->vtable->x_delete((jb)->data), 0)

@@ -1,5 +1,7 @@
 
 #include "err.h"
+#include <stdlib.h>
+#include <assert.h>
 
 __thread const err_t *err_ = 0;
 __thread int err_line_ = 0;
@@ -20,3 +22,31 @@ int err_is(const err_t *x) {
 }
 
 ERR_DEFINE(e_arguments, "Invalid arguments.", 0);
+
+__thread size_t err_stack_size = 0;
+__thread size_t err_stack_capacity = 0;
+__thread jmp_buf *err_stack = 0;
+
+int err_stack_resize() {
+	size_t new_size = err_stack_capacity ? err_stack_capacity*2 : 128;
+	err_stack = realloc(err_stack, sizeof(jmp_buf[new_size]));
+	assert(err_stack);
+	return 1;
+}
+
+int err_stack_clear() {
+	err_stack_size = err_stack_capacity = 0;
+	free(err_stack);
+	err_stack = 0;
+	return 1;
+}
+
+void err_throw_down() {
+	if(err_stack_size)
+		longjmp(err_stack[err_stack_size-1], 1);
+	else {
+		err_reset();
+		exit(1);
+	}
+}
+

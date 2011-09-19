@@ -193,13 +193,8 @@ void *utf_convert(heap_t h, void *src, int src_enc, int dest_enc) {
 	void *res;
 	void *i;
 	int len;
-	if(!src)
-		return 0;
-	err_reset();
 	len = utf_length(src, src_enc) + 1;
 	i = res = heap_alloc(h, len*4);
-	if(err())
-		return 0;
 	while(!CHAR_IS_LAST(src, src_enc)) {
 		long c = CHAR_TO_LONG(src, src_enc);
 		src = C_OFFSET(src, CHAR_LEN(src, src_enc));

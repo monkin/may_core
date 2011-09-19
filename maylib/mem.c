@@ -10,7 +10,7 @@ void *mem_alloc(size_t sz) {
 		return 0;
 	res = malloc(sz);
 	if(!res)
-		err_set(e_out_of_memory);
+		err_throw(e_out_of_memory);
 	return res;
 }
 
@@ -26,10 +26,8 @@ void *mem_realloc(void *p, size_t sz) {
 		return 0;
 	} else {
 		void *res = realloc(p, sz);
-		if(!res) {
-			err_set(e_out_of_memory);
-			return p;
-		}
+		if(!res)
+			err_throw(e_out_of_memory);
 		return res;
 	}
 }

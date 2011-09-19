@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <assert.h>
 #include <stdio.h>
+#include <setjmp.h>
 
 typedef struct err_s {
 	const char *name;
@@ -63,7 +64,18 @@ int err_is(const err_t *);
 
 ERR_DECLARE(e_arguments);
 
-#define err_seq()
+extern __thread size_t err_stack_size;
+extern __thread size_t err_stack_capacity;
+extern __thread jmp_buf *err_stack;
+
+int err_stack_resize();
+int err_stack_clear();
+
+void err_throw_down();
+#define err_try if((err_stack_size!=err_stack_capacity || err_stack_resize()) ? !setjmp(err_stack[err_stack_size++]) : !setjmp(err_stack[err_stack_size++]))
+#define err_catch else if((--err_stack_size)==0 ? err_stack_clear() : 1)
+#define err_throw(err_name) { err_set(err_name); err_throw_down(); }
+
 
 #endif /* MAY_ERR_H */
 

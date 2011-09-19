@@ -16,7 +16,6 @@ struct parser_s {
 
 typedef struct parser_s *parser_t;
 
-
 bool parser_process(parser_t p, syntree_t r);
 
 parser_t parser_crange(heap_t, char, char);

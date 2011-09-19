@@ -2,32 +2,28 @@
 #include "syntree.h"
 
 syntree_t syntree_create(str_t s) {
-	heap_t h = heap_create(64*1024);
-	if(err())
-		return 0;
-	syntree_t r = heap_alloc(h, sizeof(struct syntree_node_s));
-	if(r) {
+	volatile heap_t h = heap_create(64*1024);
+	err_try {
+		syntree_t r = heap_alloc(h, sizeof(struct syntree_node_s));
 		r->heap = h;
 		r->first = r->last = 0;
 		r->parent = 0;
 		r->max_position = r->position = str_begin(s);
 		r->str = s;
 		return r;
-	} else {
+	} err_catch {
 		heap_delete(h);
-		return 0;
+		err_throw_down();
 	}
 }
 
 syntree_t syntree_transaction(syntree_t st) {
 	syntree_t r = heap_alloc(st->heap, sizeof(struct syntree_s));
-	if(r) {
-		r->heap = st->heap;
-		r->position = st->position;
-		r->max_position = st->max_position;
-		r->parent = st;
-		r->first = r->last = 0;
-	}
+	r->heap = st->heap;
+	r->position = st->position;
+	r->max_position = st->max_position;
+	r->parent = st;
+	r->first = r->last = 0;
 	return r;
 }
 
@@ -52,36 +48,32 @@ syntree_t syntree_rollback(syntree_t st) {
 
 void syntree_named_start(syntree_t st, int nm) {
 	syntree_node_t nd = heap_alloc(st->heap, sizeof(struct syntree_node_s));
-	if(nd) {
-		nd->is_start = 1;
-		nd->name = nm;
-		nd->value = 0;
-		nd->next = 0;
-		nd->heap = st->heap;
-		nd->position = st->position;
-		if(st->last) {
-			st->last->next = nd;
-			st->last = nd;
-		} else
-			st->last = st->first = nd;
-	}
+	nd->is_start = 1;
+	nd->name = nm;
+	nd->value = 0;
+	nd->next = 0;
+	nd->heap = st->heap;
+	nd->position = st->position;
+	if(st->last) {
+		st->last->next = nd;
+		st->last = nd;
+	} else
+		st->last = st->first = nd;
 }
 
 void syntree_named_end(syntree_t st) {
 	syntree_node_t nd = heap_alloc(st->heap, sizeof(struct syntree_node_s));
-	if(nd) {
-		nd->is_start = 0;
-		nd->name = 0;
-		nd->value = 0;
-		nd->next = 0;
-		nd->heap = st->heap;
-		nd->position = st->position;
-		if(st->last) {
-			st->last->next = nd;
-			st->last = nd;
-		} else
-			st->last = st->first = nd;
-	}
+	nd->is_start = 0;
+	nd->name = 0;
+	nd->value = 0;
+	nd->next = 0;
+	nd->heap = st->heap;
+	nd->position = st->position;
+	if(st->last) {
+		st->last->next = nd;
+		st->last = nd;
+	} else
+		st->last = st->first = nd;
 	return;
 }
 

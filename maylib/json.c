@@ -8,8 +8,6 @@ ERR_DEFINE(e_json_invalid_state, "JSON Builder error.", e_json_error);
 /* Parser */
 
 static bool parser_string_simple(syntree_t st, void *d) {
-	if(err())
-		return false;
 	if(!syntree_eof(st)) {
 		switch(syntree_position(st)[0]) {
 		case '\\':
@@ -24,8 +22,6 @@ static bool parser_string_simple(syntree_t st, void *d) {
 }
 
 static bool parser_string_esc(syntree_t st, void *d) {
-	if(err())
-		return false;
 	str_it_t e = str_end(syntree_str(st));
 	str_it_t i = syntree_position(st);
 	if((e-i)>=2) {
@@ -59,8 +55,6 @@ static bool parser_string_esc(syntree_t st, void *d) {
 }
 
 static bool parser_number(syntree_t st, void *d) {
-	if(err())
-		return false;
 	str_it_t e = str_end(syntree_str(st));
 	str_it_t i = syntree_position(st);
 	if(i==e)
@@ -129,19 +123,6 @@ static bool parser_number(syntree_t st, void *d) {
 	return true;
 }
 
-enum json_syntree_names_e {
-	JSON_ST_STRING,
-	JSON_ST_STRING_SIMPLE,
-	JSON_ST_STRING_ESC,
-	JSON_ST_NUMBER,
-	JSON_ST_TRUE,
-	JSON_ST_FALSE,
-	JSON_ST_NULL,
-	JSON_ST_PAIR,
-	JSON_ST_OBJECT,
-	JSON_ST_ARRAY
-};
-
 parser_t json_parser(heap_t h) {
 	parser_t pspaces = parser_rep(h, parser_cset(h, " \t\r\n"), 0, 0);
 	parser_t pstring = parser_named(h, JSON_ST_STRING, parser_and(h,
@@ -192,33 +173,6 @@ parser_t json_parser(heap_t h) {
 
 /* Builder */
 
-/* typedef struct jbuilder_ss {
-	jbuilder_vtable_t vtable;
-	void *data;
-} jbuilder_s;
-
-typedef jbuilder_s *jbuilder_t;
-
-typedef struct jbuilder_vtable_ss {
-	void (*array)(void *);
-	void (*array_end)(void *);
-	void (*object)(void *);
-	void (*object_end)(void *);
-	void (*key)(void *, str_t);
-	void (*key_cs)(void *, const char *);
-	void (*number)(void *, double);
-	void (*number_i)(void *, long long);
-	void (*string)(void *, str_t);
-	void (*string_cs)(void *, const char *);
-	void (*x_bool)(void *, bool);
-	void (*x_null)(void *);
-	void (*x_delete)(void *);
-} jbuilder_vtable_s;
-
-
-jbuilder_t jbuilder_create_s(ios_t, int format);
-jbuilder_t jbuilder_create_v(heap_t h); */
-
 enum {
 	JB_S_IN_ARRAY,
 	JB_S_IN_ARRAY_FST,
@@ -241,8 +195,6 @@ typedef jb_s_s *jb_s_t;
 static void jb_s_push_state(jb_s_t jb, char s) {
 	if(jb->states_capacity==jb->states_size) {
 		jb->states = mem_realloc(jb->states, sizeof(char[jb->states_capacity ? jb->states_capacity*2 : 32]));
-		if(err())
-			return;
 		jb->states_capacity = jb->states_capacity ? jb->states_capacity*2 : 32;
 	}
 	jb->states[jb->states_size] = s;
@@ -263,8 +215,6 @@ static void jb_s_indent(jb_s_t jb) {
 
 static void jb_s_write_string(jb_s_t jb, const char *s, const char *e) {
 	ios_write(jb->stream, "\"", 1, 1);
-	if(err())
-		return;
 	const char *i = s;
 	const char *j = s;
 	if(i) {
@@ -285,11 +235,8 @@ static void jb_s_write_string(jb_s_t jb, const char *s, const char *e) {
 				if(j==e)
 					break;
 			}
-			if(j!=i) {
+			if(j!=i)
 				ios_write(jb->stream, i, j-i-1, 1);
-				if(err())
-					return;
-			}
 			if(i==e)
 				return;
 			switch(*j) {
@@ -309,8 +256,6 @@ static void jb_s_write_string(jb_s_t jb, const char *s, const char *e) {
 				ios_write(jb->stream, "\\\"", 2, 1);
 				break;
 			}
-			if(err())
-				return;
 			if(*j)
 				j++;
 			i = j;
@@ -331,139 +276,100 @@ static void jb_s_endl(jb_s_t jb) {
 	switch(jb->states[jb->states_size-1]) {    \
 	case JB_S_IN_OBJECT:               \
 	case JB_S_IN_OBJECT_FST:           \
-		err_set(e_json_invalid_state); \
+		err_throw(e_json_invalid_state); \
 		return;                \
 	case JB_S_IN_OBJECT_VALUE: \
 		jb->states[jb->states_size-1] = JB_S_IN_OBJECT; \
 		break;             \
 	case JB_S_IN_ARRAY:    \
 		ios_write(jb->stream, ",", 1, 1);     \
-		if(err()) return;                     \
 	case JB_S_IN_ARRAY_FST:                   \
 		jb->states[jb->states_size-1] = JB_S_IN_ARRAY; \
 		if(jb->format & JSON_FORMATF_FLAG) {           \
 			jb_s_endl(jb);    \
-			if(err()) return; \
 			jb_s_indent(jb);  \
-			if(err()) return; \
 		}                     \
 	} \
 }
 
 void jb_s_array(void *jbs) {
-	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	JB_S_TRY_INSERT_VALUE;
 	ios_write(jb->stream, "[", 1, 1);
-	if(!err())
-		jb_s_push_state(jb, JB_S_IN_ARRAY_FST);
+	jb_s_push_state(jb, JB_S_IN_ARRAY_FST);
 }
 void jb_s_array_end(void *jbs) {
-	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	if(!jb->states)
-		err_set(e_json_invalid_state);
+		err_throw(e_json_invalid_state);
 	jb->states_size--;
 	switch(jb->states[jb->states_size]) {
 	case JB_S_IN_ARRAY:
 		jb_s_endl(jb);
-		if(err())
-			return;
 		jb_s_indent(jb);
-		if(err())
-			return;
 	case JB_S_IN_ARRAY_FST:
 		ios_write(jb->stream, "]", 1, 1);
 		break;
 	default:
-		err_set(e_json_invalid_state);
+		err_throw(e_json_invalid_state);
 	}
 }
 void jb_s_object(void *jbs) {
-	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	JB_S_TRY_INSERT_VALUE;
 	ios_write(jb->stream, "{", 1, 1);
-	if(!err())
-		jb_s_push_state(jb, JB_S_IN_OBJECT_FST);
+	jb_s_push_state(jb, JB_S_IN_OBJECT_FST);
 }
 void jb_s_object_end(void *jbs) {
-	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	jb->states_size--;
 	switch(jb->states[jb->states_size]) {
 	case JB_S_IN_OBJECT:
 		jb_s_endl(jb);
-		if(err())
-			return;
 		jb_s_indent(jb);
-		if(err())
-			return;
 	case JB_S_IN_OBJECT_FST:
 		ios_write(jb->stream, "}", 1, 1);
 		break;
 	default:
-		err_set(e_json_invalid_state);
+		err_throw(e_json_invalid_state);
 	}
 }
 void jb_s_key_cs(void *jbs, const char *v) {
-	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	switch(jb->states[jb->states_size-1]) {
 	case JB_S_IN_OBJECT:
 		ios_write(jb->stream, ",", 1, 1);
-		if(err())
-			return;
 	case JB_S_IN_OBJECT_FST:
 		jb_s_endl(jb);
-		if(err())
-			return;
 		jb_s_indent(jb);
-		if(err())
-			return;
 		jb_s_write_string(jb, v, v+strlen(v));
-		if(err())
-			return;
 		if(jb->format & JSON_FORMATF_FLAG)
 			ios_write(jb->stream, ": ", 2, 1);
 		else
 			ios_write(jb->stream, ":", 1, 1);
-		if(err())
-			return;
 		jb->states[jb->states_size-1] = JB_S_IN_OBJECT_VALUE;
 		break;
 	default:
-		err_set(e_json_invalid_state);
+		err_throw(e_json_invalid_state);
 	}
 }
 void jb_s_key(void *jbs, str_t v) {
-	err_reset();
 	jb_s_t jb = (jb_s_t) jbs;
 	switch(jb->states[jb->states_size-1]) {
 	case JB_S_IN_OBJECT:
 		ios_write(jb->stream, ",", 1, 1);
-		if(err())
-			return;
 	case JB_S_IN_OBJECT_FST:
 		jb_s_endl(jb);
-		if(err())
-			return;
 		jb_s_indent(jb);
-		if(err())
-			return;
 		jb_s_write_string(jb, str_begin(v), str_end(v));
-		if(err())
-			return;
 		if(jb->format & JSON_FORMATF_FLAG)
 			ios_write(jb->stream, ": ", 2, 1);
 		else
 			ios_write(jb->stream, ":", 1, 1);
-		if(err())
-			return;
 		jb->states[jb->states_size-1] = JB_S_IN_OBJECT_VALUE;
 		break;
 	default:
-		err_set(e_json_invalid_state);
+		err_throw(e_json_invalid_state);
 	}
 }
 void jb_s_number(void *jbs, double v) {
@@ -523,8 +429,6 @@ static jbuilder_vtable_s jb_s_vtable = {
 
 jbuilder_t jbuilder_create_s(ios_t s, int format) {
 	jb_s_t r = mem_alloc(sizeof(jb_s_s));
-	if(err())
-		return 0;
 	r->builder.data = r;
 	r->builder.vtable = &jb_s_vtable;
 	r->stream = s;
@@ -547,25 +451,17 @@ typedef struct {
 typedef jb_v_s *jb_v_t;
 
 json_value_t jbv_insert_new(jb_v_t jb) {
-	if(jb->key) {
-		err_set(e_json_invalid_state);
-		return;
-	}
+	if(jb->key)
+		err_throw(e_json_invalid_state);
 	json_value_t v = 0;
 	if(jb->current) {
 		if(jb->current->value_type==JSON_OBJECT) {
 			v = heap_alloc(jb->heap, sizeof(json_value_s));
-			if(err())
-				return 0;
 			v->parent = jb->current;
 			map_set(jb->current->value.object, jb->key, v);
-			if(err())
-				return 0;
 			jb->key = 0;
 		} else if(jb->current->value_type==JSON_ARRAY) {
 			json_array_item_t i = heap_alloc(jb->heap, sizeof(json_array_item_s));
-			if(err())
-				return 0;
 			i->value.parent = jb->current;
 			i->next = 0;
 			json_value_t current = jb->current;
@@ -575,14 +471,10 @@ json_value_t jbv_insert_new(jb_v_t jb) {
 				current->value.array->last = i;
 			} else
 				current->value.array->first = current->value.array->last = i;
-		} else {
-			err_set(e_json_invalid_state);
-			return 0;
-		}
+		} else
+			err_throw(e_json_invalid_state);
 	} else {
 		v = heap_alloc(jb->heap, sizeof(json_value_s));
-		if(err())
-			return 0;
 		v->parent = 0;
 		jb->current = v;
 	}
@@ -592,12 +484,8 @@ json_value_t jbv_insert_new(jb_v_t jb) {
 void jb_v_array(void *jbv) {
 	jb_v_t jb = (jb_v_t) jbv;
 	json_value_t v = jbv_insert_new(jb);
-	if(err())
-		return;
 	v->value_type = JSON_ARRAY;
 	v->value.array = heap_alloc(jb->heap, sizeof(json_array_s));
-	if(err())
-		return;
 	v->value.array->size = 0;
 	v->value.array->first = 0;
 	v->value.array->last = 0;
@@ -613,8 +501,6 @@ void jb_v_array_end(void *jbv) {
 void jb_v_object(void *jbv) {
 	jb_v_t jb = (jb_v_t) jbv;
 	json_value_t v = jbv_insert_new(jb);
-	if(err())
-		return;
 	v->value_type = JSON_OBJECT;
 	v->value.object = map_create(jb->heap);
 	jb->current = v;
@@ -628,25 +514,19 @@ void jb_v_object_end(void *jbv) {
 }
 void jb_v_key(void *jbv, str_t v) {
 	jb_v_t jb = (jb_v_t) jbv;
-	if(jb->key) {
-		err_set(e_json_invalid_state);
-		return;
-	}
+	if(jb->key)
+		err_throw(e_json_invalid_state);
 	jb->key = str_clone(jb->heap, v);
 }
 void jb_v_key_cs(void *jbv, const char *v) {
 	jb_v_t jb = (jb_v_t) jbv;
-	if(jb->key) {
-		err_set(e_json_invalid_state);
-		return;
-	}
+	if(jb->key)
+		err_throw(e_json_invalid_state);
 	jb->key = str_from_cs(jb->heap, v);
 }
 void jb_v_number(void *jbv, double n) {
 	jb_v_t jb = (jb_v_t) jbv;
 	json_value_t v = jbv_insert_new(jb);
-	if(err())
-		return;
 	v->value_type = JSON_NUMBER;
 	v->value.number = n;
 }
@@ -656,31 +536,23 @@ void jb_v_number_i(void *jbv, long long v) {
 void jb_v_string(void *jbv, str_t s) {
 	jb_v_t jb = (jb_v_t) jbv;
 	json_value_t v = jbv_insert_new(jb);
-	if(err())
-		return;
 	v->value_type = JSON_STRING;
 	v->value.string = str_clone(jb->heap, s);
 }
 void jb_v_string_cs(void *jbv, const char *s) {
 	jb_v_t jb = (jb_v_t) jbv;
 	json_value_t v = jbv_insert_new(jb);
-	if(err())
-		return;
 	v->value_type = JSON_STRING;
 	v->value.string = str_from_cs(jb->heap, s);
 }
 void jb_v_x_bool(void *jbv, bool b) {
 	jb_v_t jb = (jb_v_t) jbv;
 	json_value_t v = jbv_insert_new(jb);
-	if(err())
-		return;
 	v->value_type = b ? JSON_TRUE : JSON_FALSE;
 }
 void jb_v_x_null(void *jbv) {
 	jb_v_t jb = (jb_v_t) jbv;
 	json_value_t v = jbv_insert_new(jb);
-	if(err())
-		return;
 	v->value_type = JSON_NULL;
 }
 void jb_v_x_delete(void *jbv) {}
@@ -695,14 +567,20 @@ static jbuilder_vtable_s jb_v_vtable = {
 
 jbuilder_t jbuilder_create_v(heap_t h) {
 	jb_v_t r = heap_alloc(h, sizeof(jb_v_s));
-	if(err())
-		return 0;
 	r->builder.data = r;
 	r->builder.vtable = &jb_v_vtable;
 	r->heap = h;
 	r->current = 0;
 	r->key = 0;
 	return &r->builder;
+}
+
+json_value_t jbuilder_value_v(jbuilder_t jbv) {
+	err_reset();
+	jb_v_t jb = (jb_v_t) jbv->data;
+	if(!jb->complete)
+		err_throw(e_json_invalid_state);
+	return jb->current;
 }
 
 

@@ -6,9 +6,7 @@ void test_json() {
 	TEST_CHECK("json_string_builder") {
 		ios_t mems = 0;
 		heap_t h = 0;
-		printf("stack1: %i\n", (int) err_stack_size);
 		err_try {
-			printf("stack2: %i\n", (int) err_stack_size);
 			h = heap_create(0);
 			mems = ios_mem_create();
 			jbuilder_t jb = jbuilder_create_s(mems, JSON_FORMAT_NONE);
@@ -34,6 +32,5 @@ void test_json() {
 			h = heap_delete(h);
 			err_throw_down();
 		}
-		printf("stack3: %i\n", (int) err_stack_size);
 	} TEST_END;
 }

@@ -52,7 +52,7 @@ const err_t *const name = &err_ ## name ## _realisation
 /**
  * Show error, if it not processed
  */
-#define err_reset() { if(err()) { err_message("Error not processed.\n"); err_display(); err_=0; } }
+#define err_reset() { if(err()) { err_display(); err_=0; } }
 /**
  * Replase old error to new
  */
@@ -84,8 +84,8 @@ int err_stack_resize();
 int err_stack_clear();
 
 void err_throw_down();
-#define err_try if((err_stack_size==err_stack_capacity ? err_stack_resize() : 0) ? !setjmp(err_stack[err_stack_size]) : !setjmp(err_stack[err_stack_size++])) {
-#define err_catch err_stack_size--; if(!err_stack_size) err_stack_clear(); } else if((--err_stack_size)==0 ? err_stack_clear() : 1)
+#define err_try if((err_stack_size==err_stack_capacity ? err_stack_resize() : 0) ? !setjmp(err_stack[err_stack_size++]) : !setjmp(err_stack[err_stack_size++])) {
+#define err_catch err_stack_size--; if(!err_stack_size) err_stack_clear(); } else if((--err_stack_size) ? 1 : err_stack_clear())
 #define err_throw(err_name) { err_set(err_name); err_throw_down(); }
 
 

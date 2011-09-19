@@ -11,20 +11,21 @@ size_t tests_success = 0;
 size_t tests_failed = 0;
 
 #define TEST_MODULE(name) { test_module_name = name; }
-#define TEST_CHECK(name) { test_check_name = name; printf("%s.%s started\n", test_module_name, test_check_name); test_check_status = true; }
-#define TEST_LOG(str) printf("log: %s", str)
-#define TEST_ERROR  { printf("Error: %s\nMessage: %s\nFile: %s\nLine: %i\n", err_get()->name, err_get()->message, err_file(), err_line()); err_clear(); }
-#define TEST_END { \
-	if(err())      \
-		TEST_ERROR;\
+#define TEST_CHECK(name) { err_reset(); test_check_name = name; printf("\n%s.%s STARTED\n", test_module_name, test_check_name); test_check_status = true; err_try
+#define TEST_END \
+	err_catch {  \
+		test_check_status = false; \
+		err_reset();      \
+	}                     \
 	if(test_check_status) \
 		tests_success++;  \
 	else                  \
 		tests_failed++;   \
-	printf("%s.%s %s\n\n", test_module_name, test_check_name, test_check_status ? "SUCCESS" : "FAIL"); \
-	test_check_name = "none"; \
-	test_check_status = true; \
+	printf("%s.%s %s\n", test_module_name, test_check_name, test_check_status ? "SUCCESS" : "FAIL"); \
 }
+
+#define TEST_LOG(str) printf("log: %s", str)
+#define TEST_FAIL tests_success = false
 
 #include "units/heap.h"
 #include "units/str.h"
@@ -34,7 +35,8 @@ size_t tests_failed = 0;
 
 
 int main() {
-		
+	test_json();
+	printf("Results: (%i/%i) %i%%\n", (int) tests_success, (int) (tests_success + tests_failed), (int) (tests_success*100/(tests_success + tests_failed)));
 	return 0;
 }
 

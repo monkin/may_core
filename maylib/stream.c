@@ -153,6 +153,8 @@ size_t ios_m_write(void *ms, const void *dt, size_t sz, size_t cnt) {
 	while(fsz>0) {
 		size_t boff = m->position % IOS_MEM_BLOCK_SIZE;
 		size_t sw = IOS_MEM_BLOCK_SIZE-boff;
+		if(sw>fsz)
+			sw = fsz;
 		memcpy(m->current->data + boff, dt, sw);
 		fsz -= sw;
 		dt = ((char *) dt) + sw;

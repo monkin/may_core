@@ -29,6 +29,7 @@ __thread jmp_buf *err_stack = 0;
 
 int err_stack_resize() {
 	size_t new_size = err_stack_capacity ? err_stack_capacity*2 : 128;
+	err_stack_capacity = new_size;
 	err_stack = realloc(err_stack, sizeof(jmp_buf[new_size]));
 	assert(err_stack);
 	return 1;

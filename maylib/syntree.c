@@ -3,18 +3,19 @@
 
 syntree_t syntree_create(str_t s) {
 	volatile heap_t h = heap_create(64*1024);
+	syntree_t r = 0;
 	err_try {
-		syntree_t r = heap_alloc(h, sizeof(struct syntree_node_s));
+		r = heap_alloc(h, sizeof(struct syntree_node_s));
 		r->heap = h;
 		r->first = r->last = 0;
 		r->parent = 0;
 		r->max_position = r->position = str_begin(s);
 		r->str = s;
-		return r;
 	} err_catch {
 		heap_delete(h);
 		err_throw_down();
 	}
+	return r;
 }
 
 syntree_t syntree_transaction(syntree_t st) {
@@ -23,6 +24,7 @@ syntree_t syntree_transaction(syntree_t st) {
 	r->position = st->position;
 	r->max_position = st->max_position;
 	r->parent = st;
+	r->str = st->str;
 	r->first = r->last = 0;
 	return r;
 }

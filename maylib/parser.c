@@ -202,7 +202,7 @@ static bool p_named(syntree_t st, void *d) {
 
 parser_t parser_named(heap_t h, int nm, parser_t p) {
 	parser_t r = heap_alloc(h, sizeof(struct parser_s));
-	r->fn = p_rep;
+	r->fn = p_named;
 	named_tt *dt = r->data = heap_alloc(h, sizeof(rep_tt));
 	dt->parser = p;
 	dt->name = nm;

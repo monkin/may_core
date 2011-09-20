@@ -3,12 +3,12 @@
 
 void test_json() {
 	TEST_MODULE("json");
-	TEST_CHECK("json_string_builder") {
+	TEST_CHECK("to_string") {
 		ios_t mems = 0;
 		heap_t h = 0;
 		err_try {
-			h = heap_create(0);
-			mems = ios_mem_create();
+			volatile heap_t h = heap_create(0);
+			volatile ios_t mems = ios_mem_create();
 			jbuilder_t jb = jbuilder_create_s(mems, JSON_FORMAT_NONE);
 			jbuilder_object(jb);
 				jbuilder_key_cs(jb, "12");
@@ -30,6 +30,28 @@ void test_json() {
 		} err_catch {
 			mems = ios_close(mems);
 			h = heap_delete(h);
+			err_throw_down();
+		}
+	} TEST_END;
+	TEST_CHECK("parse") {
+		volatile heap_t h = 0;
+		volatile syntree_t st = 0;
+		err_try {
+			h = heap_create(0);
+			st = syntree_create(str_from_cs(h, "{\"name\": \"test\", \"items\" : [12, \"\\n\"]}"));
+			parser_t parser = json_parser(h);
+			if(parser_process(parser, st)) {
+				if(!syntree_eof(st))
+					TEST_FAIL;
+				if(syntree_name(syntree_begin(st))!=JSON_OBJECT)
+					TEST_FAIL;
+			} else
+				TEST_FAIL;
+			h = heap_delete(h);
+			st = syntree_delete(st);
+		} err_catch {
+			h = heap_delete(h);
+			st = syntree_delete(st);
 			err_throw_down();
 		}
 	} TEST_END;

@@ -289,11 +289,19 @@ str_t ios_mem_to_string(ios_t ms, heap_t h) {
 
 /* Common functions */
 
-size_t ios_write(ios_t s, const void *p, size_t sz, size_t cnt) {
+size_t ios_write_n(ios_t s, const void *p, size_t sz, size_t cnt) {
 	return s->vtable->write(s->data, p, sz, cnt);
 }
-size_t ios_read(ios_t s, void * p, size_t sz, size_t cnt) {
+size_t ios_read_n(ios_t s, void * p, size_t sz, size_t cnt) {
 	return s->vtable->read(s->data, p, sz, cnt);
+}
+void ios_write(ios_t s, const void *p, size_t sz) {
+	if(!s->vtable->write(s->data, p, sz, 1))
+		err_throw(e_ios_error);
+}
+void ios_read(ios_t s, void * p, size_t sz) {
+	if(!s->vtable->read(s->data, p, sz, 1))
+		err_throw(e_ios_error);
 }
 bool ios_eof(ios_t s) {
 	return s->vtable->eof(s->data);

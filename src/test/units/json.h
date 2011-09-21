@@ -41,10 +41,15 @@ void test_json() {
 			st = syntree_create(str_from_cs(h, "{\"name\": \"test\", \"items\" : [12, \"\\n\"]}"));
 			parser_t parser = json_parser(h);
 			if(parser_process(parser, st)) {
-				if(!syntree_eof(st))
+				if(!syntree_eof(st)) {
+					TEST_LOG("Syntax error.");
 					TEST_FAIL;
-				if(syntree_name(syntree_begin(st))!=JSON_OBJECT)
+				} else if(syntree_name(syntree_begin(st))!=JSON_ST_OBJECT) {
+					TEST_LOG("Root is not an object.");
 					TEST_FAIL;
+				} else {
+					json_value_t val = json_tree2value(h, st);
+				}
 			} else
 				TEST_FAIL;
 			h = heap_delete(h);

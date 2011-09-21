@@ -115,7 +115,6 @@ str_t syntree_value(syntree_node_t stn) {
 			}
 		}
 	}
-	assert(0);
 	return 0;
 }
 

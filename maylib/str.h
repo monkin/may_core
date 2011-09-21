@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+ERR_DECLARE(e_str_format);
+
 typedef struct {
 	size_t length;
 	char *data;
@@ -18,8 +20,11 @@ typedef char *str_it_t;
 str_t str_create(heap_t, size_t);
 
 str_t str_from_cs(heap_t, const char *s);
-str_t str_from_int(heap_t, int);
+str_t str_from_int(heap_t, long long);
 str_t str_from_double(heap_t, double);
+
+double str_to_double(str_t);
+long long str_to_int(str_t);
 
 str_t str_cat(heap_t, str_t, str_t);
 

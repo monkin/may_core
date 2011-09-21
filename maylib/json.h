@@ -147,8 +147,8 @@ void jbuilder_string_cs(jbuilder_t, const char *);*/
 #define jbuilder_null(jb) ((jb)->vtable->x_null((jb)->data))
 /*void jbuilder_true(jbuilder_t);
 void jbuilder_false(jbuilder_t);*/
-#define jbuilder_true(jb) jbuilder_bool((jb)->data, true)
-#define jbuilder_false(jb) jbuilder_bool((jb)->data, false)
+#define jbuilder_true(jb) jbuilder_bool(jb, true)
+#define jbuilder_false(jb) jbuilder_bool(jb, false)
 
 #endif /* MAY_JSON_H */
 

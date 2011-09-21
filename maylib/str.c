@@ -4,9 +4,12 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
-#define INT_BUFFER_LEN 16
+#define INT_BUFFER_LEN 64
 #define DOUBLE_BUFFER_LEN 128
+
+ERR_DEFINE(e_str_format, "Invalid string format.", 0);
 
 str_t str_create(heap_t h, size_t sz) {
 	assert(h);
@@ -24,14 +27,14 @@ str_t str_from_cs(heap_t h, const char *s) {
 	return r;
 }
 
-str_t str_from_int(heap_t h, int i) {
+str_t str_from_int(heap_t h, long long i) {
 	assert(h);
 	str_t r = str_create(h, INT_BUFFER_LEN);
-	r->length = snprintf(r->data, INT_BUFFER_LEN + 1, "%d", i);
+	r->length = snprintf(r->data, INT_BUFFER_LEN + 1, "%lli", i);
 	if(r->length > INT_BUFFER_LEN) {
 		r = str_create(h, r->length);
 		if(r)
-			r->length = snprintf(r->data, r->length + 1, "%d", i);
+			r->length = snprintf(r->data, r->length + 1, "%lli", i);
 	}
 	return r;
 }
@@ -46,6 +49,54 @@ str_t str_from_double(heap_t h, double d) {
 			r->length = snprintf(r->data, r->length + 1, "%g", d);
 	}
 	return r;
+}
+
+double str_to_double(str_t s) {
+	double r;
+	int f;
+	if(*str_end(s)) {
+		if(str_length(s)<DOUBLE_BUFFER_LEN) {
+			char buff[DOUBLE_BUFFER_LEN];
+			memcpy(buff, str_begin(s), str_length(s));
+			buff[str_length(s)] = '\0';
+			f = sscanf(buff, "%lf", &r);
+		} else {
+			char *buff = mem_alloc(str_length(s)+1);
+			memcpy(buff, str_begin(s), str_length(s));
+			buff[str_length(s)] = '\0';
+			f = sscanf(buff, "%lf", &r);
+			free(buff);
+		}
+	} else
+		f = sscanf(str_begin(s), "%lf", &r);
+	if(f!=EOF && f==(str_end(s)-str_begin(s)))
+		return r;
+	else
+		err_throw(e_str_format);
+}
+
+long long str_to_int(str_t s) {
+	long long r;
+	int f;
+	if(*str_end(s)) {
+		if(str_length(s)<INT_BUFFER_LEN) {
+			char buff[INT_BUFFER_LEN];
+			memcpy(buff, str_begin(s), str_length(s));
+			buff[str_length(s)] = '\0';
+			f = sscanf(buff, "%lld", &r);
+		} else {
+			char *buff = mem_alloc(str_length(s)+1);
+			memcpy(buff, str_begin(s), str_length(s));
+			buff[str_length(s)] = '\0';
+			f = sscanf(buff, "%lld", &r);
+			free(buff);
+		}
+	} else
+		f = sscanf(str_begin(s), "%lld", &r);
+	if(f!=EOF && f==(str_end(s)-str_begin(s)))
+		return r;
+	else
+		err_throw(e_str_format);
 }
 
 str_t str_cat(heap_t h, str_t s1, str_t s2) {

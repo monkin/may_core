@@ -24,7 +24,7 @@ size_t tests_failed = 0;
 	printf("%s.%s %s\n", test_module_name, test_check_name, test_check_status ? "SUCCESS" : "FAIL"); \
 }
 
-#define TEST_LOG(str) printf("log: %s", str)
+#define TEST_LOG(str) printf("log: %s\n", str)
 #define TEST_FAIL tests_success = false
 
 #include "units/heap.h"

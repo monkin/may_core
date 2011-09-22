@@ -5,6 +5,50 @@
 ERR_DEFINE(e_json_error, "JSON error.", 0);
 ERR_DEFINE(e_json_invalid_state, "JSON Builder error.", e_json_error);
 
+/* Value to stream */
+
+static void json_v2s(jbuilder_t jb, json_value_t v) {
+	switch(v->value_type) {
+	case JSON_NULL:
+		jbuilder_null(jb);
+		break;
+	case JSON_ARRAY: {
+		jbuilder_array(jb);
+		json_array_item_t i;
+		for(i=jb->value.array->first; i; i=i->next)
+			json_v2s(jb, &(i->value));
+		jbuilder_array_end(jb);
+		break;
+	}
+	case JSON_OBJECT: {
+		jbuilder_object(jb);
+		map_node_t i;
+		for(i=map_begin(v->value.object); i; i=map_next(i)) {
+			jbuilder_key(jb, i->key);
+			json_v2s(jb, (json_value_t) i->value);
+		}
+		jbuilder_object_end(jb);
+		break;
+	}
+	case JSON_STRING:
+		jbuilder_string(jb, v->value.string);
+		break;
+	case JSON_TRUE:
+		jbuilder_bool(jb, true);
+		break;
+	case JSON_FALSE:
+		jbuilder_bool(jb, false);
+		break;
+	}
+}
+
+void json_value2stream(ios_t s, json_value_t v, int format) {
+	jbuilder_t jb = jbuilder_create_s(s, format);
+	json_v2s(jb, v);
+}
+
+/* Tree to value */
+
 static str_t tree2value_string(syntree_node_t i, heap_t h) {
 	syntree_node_t j;
 	str_t s = str_create(h, str_length(syntree_value(i)));
@@ -589,6 +633,7 @@ json_value_t jbv_insert_new(jb_v_t jb) {
 				current->value.array->last = i;
 			} else
 				current->value.array->first = current->value.array->last = i;
+			current->value.array->size++;
 		} else
 			err_throw(e_json_invalid_state);
 	} else {

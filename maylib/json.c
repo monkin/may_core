@@ -7,6 +7,20 @@ ERR_DEFINE(e_json_invalid_state, "JSON Builder error.", e_json_error);
 
 /* Value to stream */
 
+str_t json_value2string(heap_t h, json_value_t v, int format) {
+	ios_t s = ios_mem_create();
+	str_t r = 0;
+	err_try {
+		json_value2stream(s, v, format);
+		r = ios_mem_to_string(s, h);
+		s = ios_close(s);
+	} err_catch {
+		s = ios_close(s);
+		err_throw_down();
+	}
+	return r;
+}
+
 static void json_v2s(jbuilder_t jb, json_value_t v) {
 	switch(v->value_type) {
 	case JSON_NULL:
@@ -15,7 +29,7 @@ static void json_v2s(jbuilder_t jb, json_value_t v) {
 	case JSON_ARRAY: {
 		jbuilder_array(jb);
 		json_array_item_t i;
-		for(i=jb->value.array->first; i; i=i->next)
+		for(i=v->value.array->first; i; i=i->next)
 			json_v2s(jb, &(i->value));
 		jbuilder_array_end(jb);
 		break;
@@ -398,7 +412,7 @@ static void jb_s_write_string(jb_s_t jb, const char *s, const char *e) {
 					break;
 			}
 			if(j!=i)
-				ios_write(jb->stream, i, j-i-1);
+				ios_write(jb->stream, i, j-i);
 			if(i==e)
 				return;
 			switch(*j) {

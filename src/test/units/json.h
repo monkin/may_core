@@ -22,9 +22,12 @@ void test_json() {
 			jbuilder_object_end(jb);
 			jbuilder_delete(jb);
 			str_t s = ios_mem_to_string(mems, h);
-			str_t standard = str_from_cs(h, "{\"12\":\"test\",\"tri\":\"test435\",\"qwe\":10.4,\"\t\r\n\":10492}");
-			if(str_compare(s,standard)!=0) 
+			str_t standard = str_from_cs(h, "{\"12\":\"test\\n\",\"tri\":\"test435\",\"qwe\":10.4,\"\\t\\r\\n\":10492}");
+			if(str_compare(s,standard)!=0) {
+				TEST_LOG("{\"12\":\"test\\n\",\"tri\":\"test435\",\"qwe\":10.4,\"\\t\\r\\n\":10492}");
+				TEST_LOG(str_begin(s));
 				TEST_FAIL;
+			}
 			mems = ios_close(mems);
 			h = heap_delete(h);
 		} err_catch {
@@ -33,12 +36,12 @@ void test_json() {
 			err_throw_down();
 		}
 	} TEST_END;
-	TEST_CHECK("parse") {
+	TEST_CHECK("parse/to_string") {
 		volatile heap_t h = 0;
 		volatile syntree_t st = 0;
 		err_try {
 			h = heap_create(0);
-			st = syntree_create(str_from_cs(h, "{\"name\": \"test\", \"items\" : [12, \"\\n\"]}"));
+			st = syntree_create(str_from_cs(h, "{\"name\": \"test\", \"items\" : [12, \"\\n\\u0030\"]}"));
 			parser_t parser = json_parser(h);
 			if(parser_process(parser, st)) {
 				if(!syntree_eof(st)) {
@@ -49,6 +52,13 @@ void test_json() {
 					TEST_FAIL;
 				} else {
 					json_value_t val = json_tree2value(h, st);
+					str_t s = json_value2string(h, val, JSON_FORMAT_NONE);
+					str_t standard = str_from_cs(h, "{\"name\":\"test\",\"items\":[12,\"\\n0\"]}");
+					TEST_LOG("wew");
+					if(str_compare(s,standard)!=0) {
+						TEST_LOG("json_value2string builds some invalid string.");
+						TEST_FAIL;
+					}
 				}
 			} else
 				TEST_FAIL;

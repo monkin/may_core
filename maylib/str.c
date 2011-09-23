@@ -178,6 +178,7 @@ int str_compare(str_t s1, str_t s2) {
 		return -1;
 	else if(s1->length>s2->length)
 		return 1;
+	return 0;
 }
 
 int str_equal(str_t s1, str_t s2) {

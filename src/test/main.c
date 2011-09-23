@@ -25,7 +25,7 @@ size_t tests_failed = 0;
 }
 
 #define TEST_LOG(str) printf("log: %s\n", str)
-#define TEST_FAIL tests_success = false
+#define TEST_FAIL test_check_status = false
 
 #include "units/heap.h"
 #include "units/str.h"

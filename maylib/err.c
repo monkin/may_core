@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#ifdef ERR_HAVE_BACKTRACE
+	void *err_trace_info[ERR_TRACE_INFO_SIZE];
+	size_t err_trace_size = 0;
+#endif
+
 __thread const err_t *err_ = 0;
 __thread int err_line_ = 0;
 __thread const char *err_file_ = 0;

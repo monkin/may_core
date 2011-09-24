@@ -41,7 +41,7 @@ void ios_f_flush(void *f) {
 	fflush(((ios_f_t) f)->file);
 }
 void ios_f_close(void *f) {
-	close(((ios_f_t) f)->file);
+	fclose(((ios_f_t) f)->file);
 	mem_free(((ios_f_t) f)->block);
 }
 
@@ -84,7 +84,7 @@ ios_t ios_file_create(str_t s, ios_mode_t mode) {
 }
 
 void ios_std_close(void *f) {
-	close(((ios_f_t) f)->file);
+	fclose(((ios_f_t) f)->file);
 }
 
 static ios_table_s std_rs = { 0, ios_f_read, ios_f_eof, 0, 0, ios_f_flush, ios_std_close };

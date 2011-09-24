@@ -1,6 +1,13 @@
 #ifndef MAY_ERR_H
 #define MAY_ERR_H
 
+#define ERR_HAVE_BACKTRACE
+
+#ifdef ERR_HAVE_BACKTRACE
+#	include <unistd.h>
+#endif
+
+#include <stdio.h>
 #include <stddef.h>
 #include <assert.h>
 #include <stdio.h>
@@ -17,6 +24,23 @@
 	}
  
 */
+
+#ifdef ERR_HAVE_BACKTRACE
+#	include <execinfo.h>
+#	define ERR_TRACE_INFO_SIZE 50
+	extern size_t err_trace_size;
+	extern void *err_trace_info[ERR_TRACE_INFO_SIZE];
+#	define ERR_TRACE_STORE { err_trace_size = backtrace(err_trace_info, ERR_TRACE_INFO_SIZE); }
+#	define ERR_TRACE_CLEAR { err_trace_size = 0; }
+#	define ERR_TRACE_PRINT { backtrace_symbols_fd(err_trace_info, err_trace_size, STDERR_FILENO); }
+
+#else
+#	define ERR_TRACE_STORE
+#	define ERR_TRACE_CLEAR
+#	define ERR_TRACE_PRINT
+#endif /* ERR_HAVE_BACKTRACE */
+
+
 
 typedef struct err_s {
 	const char *name;
@@ -38,7 +62,7 @@ const err_t err_ ## name ## _realisation = { # name, message, __FILE__, __LINE__
 const err_t *const name = &err_ ## name ## _realisation
 
 #ifndef NDEBUG
-#	define err_display() fprintf(stderr, "Error: %s\nMessage: %s\nFile: %s\nLine: %i\n", err_->name, err_->message, err_file_, err_line_);
+#	define err_display() { fprintf(stderr, "Error: %s\nMessage: %s\nFile: %s\nLine: %i\n", err_->name, err_->message, err_file_, err_line_); ERR_TRACE_PRINT; }
 #	define err_message(m) fprintf(stderr, "%s", m)
 #else
 #	define err_display() ;
@@ -52,15 +76,15 @@ const err_t *const name = &err_ ## name ## _realisation
 /**
  * Show error, if it not processed
  */
-#define err_reset() { if(err()) { err_display(); err_=0; } }
+#define err_reset() { if(err()) { err_display(); err_=0; }; ERR_TRACE_CLEAR; }
 /**
  * Replase old error to new
  */
-#define err_replace(name) { err_ = name; err_line_ = __LINE__; err_file_ = __FILE__; }
+#define err_replace(name) { ERR_TRACE_STORE; err_ = name; err_line_ = __LINE__; err_file_ = __FILE__; }
 /**
  * Set error information
  */
-#define err_set(name) { err_reset();  err_replace(name) }
+#define err_set(name) { ERR_TRACE_STORE; err_reset();  err_replace(name) }
 /**
  * Get error
  */
@@ -70,7 +94,7 @@ const err_t *const name = &err_ ## name ## _realisation
 /**
  * Clear error flag
  */
-#define err_clear() { err_ = 0; err_file_ = 0; err_line_ = 0; }
+#define err_clear() { ERR_TRACE_CLEAR; err_ = 0; err_file_ = 0; err_line_ = 0; }
 
 int err_is(const err_t *);
 

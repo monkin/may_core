@@ -21,7 +21,7 @@ size_t tests_failed = 0;
 		tests_success++;  \
 	else                  \
 		tests_failed++;   \
-	printf("%s.%s %s\n", test_module_name, test_check_name, test_check_status ? "SUCCESS" : "FAIL"); \
+	printf("%s.%s %s\n\n", test_module_name, test_check_name, test_check_status ? "SUCCESS" : "FAIL"); \
 }
 
 #define TEST_LOG(str) printf("log: %s\n", str)

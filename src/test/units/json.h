@@ -4,11 +4,11 @@
 void test_json() {
 	TEST_MODULE("json");
 	TEST_CHECK("to_string") {
-		ios_t mems = 0;
-		heap_t h = 0;
+		volatile ios_t mems = 0;
+		volatile heap_t h = 0;
 		err_try {
-			volatile heap_t h = heap_create(0);
-			volatile ios_t mems = ios_mem_create();
+			h = heap_create(0);
+			mems = ios_mem_create();
 			jbuilder_t jb = jbuilder_create_s(mems, JSON_FORMAT_NONE);
 			jbuilder_object(jb);
 				jbuilder_key_cs(jb, "12");
@@ -36,6 +36,78 @@ void test_json() {
 			err_throw_down();
 		}
 	} TEST_END;
+	TEST_CHECK("simple_parse") {
+		volatile heap_t h = 0;
+		volatile syntree_t st = 0;
+		err_try {
+			h = heap_create(0);
+			parser_t parser = json_parser(h);
+			void *hpos = heap_position(h);
+			
+			st = syntree_create(str_from_cs(h, "{}"));
+			if(parser_process(parser, st)) {
+				if(!syntree_eof(st)) {
+					TEST_LOG("Empty object parsing error");
+					TEST_FAIL;
+				} else if(syntree_name(syntree_begin(st))!=JSON_ST_OBJECT) {
+					TEST_LOG("Root is not an object");
+					TEST_FAIL;
+				}
+			} else
+				TEST_FAIL;
+			st = syntree_delete(st);
+			heap_release_to(h, hpos);
+			
+			st = syntree_create(str_from_cs(h, "[]"));
+			if(parser_process(parser, st)) {
+				if(!syntree_eof(st)) {
+					TEST_LOG("Empty array parsing error");
+					TEST_FAIL;
+				} else if(syntree_name(syntree_begin(st))!=JSON_ST_ARRAY) {
+					TEST_LOG("Root is not an array");
+					TEST_FAIL;
+				}
+			} else
+				TEST_FAIL;
+			st = syntree_delete(st);
+			heap_release_to(h, hpos);
+			
+			st = syntree_create(str_from_cs(h, "12"));
+			if(parser_process(parser, st)) {
+				if(!syntree_eof(st)) {
+					TEST_LOG("Number parsing error");
+					TEST_FAIL;
+				} else if(syntree_name(syntree_begin(st))!=JSON_ST_NUMBER) {
+					TEST_LOG("Root is not an number");
+					TEST_FAIL;
+				}
+			} else
+				TEST_FAIL;
+			st = syntree_delete(st);
+			heap_release_to(h, hpos);
+			
+			st = syntree_create(str_from_cs(h, "[\"test\\n\", \"\", [], {\"12\":\"13\\n\\u1234\", \"x\": {}}]"));
+			if(parser_process(parser, st)) {
+				if(!syntree_eof(st)) {
+					TEST_LOG("String parsing error");
+					TEST_FAIL;
+				}/* else if(syntree_name(syntree_begin(st))!=JSON_ST_STRING) {
+					TEST_LOG("Root is not an string");
+					TEST_FAIL;
+				}*/
+			} else
+				TEST_FAIL;
+			st = syntree_delete(st);
+			heap_release_to(h, hpos);
+			
+			h = heap_delete(h);
+			st = syntree_delete(st);
+		} err_catch {
+			h = heap_delete(h);
+			st = syntree_delete(st);
+			err_throw_down();
+		}
+	} TEST_END;
 	TEST_CHECK("parse/to_string") {
 		volatile heap_t h = 0;
 		volatile syntree_t st = 0;
@@ -45,10 +117,10 @@ void test_json() {
 			parser_t parser = json_parser(h);
 			if(parser_process(parser, st)) {
 				if(!syntree_eof(st)) {
-					TEST_LOG("Syntax error.");
+					TEST_LOG("Syntax error");
 					TEST_FAIL;
 				} else if(syntree_name(syntree_begin(st))!=JSON_ST_OBJECT) {
-					TEST_LOG("Root is not an object.");
+					TEST_LOG("Root is not an object");
 					TEST_FAIL;
 				} else {
 					json_value_t val = json_tree2value(h, st);

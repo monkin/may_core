@@ -30,15 +30,17 @@ syntree_t syntree_transaction(syntree_t st) {
 }
 
 syntree_t syntree_commit(syntree_t st) {
-	if(st->parent->last) {
-		st->parent->last->next = st->first;
-		st->parent->last = st->last;
-		st->parent->position = st->position;
-		st->parent->max_position = st->max_position;
-	} else {
-		st->parent->first = st->first;
-		st->parent->last = st->last;
+	if(st->first) {
+		if(st->parent->last) {
+			st->parent->last->next = st->first;
+			st->parent->last = st->last;
+		} else {
+			st->parent->first = st->first;
+			st->parent->last = st->last;
+		}
 	}
+	st->parent->position = st->position;
+	st->parent->max_position = st->max_position;
 	return st->parent;
 }
 

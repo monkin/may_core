@@ -42,7 +42,7 @@ static bool p_cset(syntree_t st, void *d) {
 
 parser_t parser_cset(heap_t h, const char *cs) {
 	parser_t r = heap_alloc(h, sizeof(struct parser_s));
-	r->fn = p_crange;
+	r->fn = p_cset;
 	r->data = str_from_cs(h, cs);
 	if(!err())
 		return r;
@@ -100,7 +100,7 @@ static bool p_and(syntree_t st, void *d) {
 	parser_t *data = d;
 	if(data[0]->fn(st, data[0]->data)) {
 		if(data[1]->fn(st, data[1]->data)) {
-			syntree_commit(st);
+			st = syntree_commit(st);
 			return true;
 		}
 	}
@@ -121,11 +121,11 @@ static bool p_or(syntree_t st, void *d) {
 	parser_t *data = d;
 	st = syntree_transaction(st);
 	if(data[0]->fn(st, data[0]->data)) {
-		syntree_commit(st);
+		st = syntree_commit(st);
 		return true;
 	}
 	if(data[1]->fn(st, data[1]->data)) {
-		syntree_commit(st);
+		st = syntree_commit(st);
 		return true;
 	}
 	syntree_rollback(st);
@@ -154,7 +154,7 @@ static bool p_rep(syntree_t st, void *d) {
 	for(i=0; (i<data->max_count) || (data->max_count==0); i++) {
 		if(!data->parser->fn(st, data->parser->data)) {
 			if(i>=data->min_count) {
-				syntree_commit(st);
+				st = syntree_commit(st);
 				return true;
 			} else {
 				syntree_rollback(st);
@@ -162,7 +162,7 @@ static bool p_rep(syntree_t st, void *d) {
 			}
 		}
 	}
-	syntree_commit(st);
+	st = syntree_commit(st);
 	return true;
 }
 
@@ -196,7 +196,7 @@ static bool p_named(syntree_t st, void *d) {
 		return false;
 	}
 	syntree_named_end(st);
-	syntree_commit(st);
+	st = syntree_commit(st);
 	return true;
 }
 

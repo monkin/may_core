@@ -11,7 +11,7 @@ size_t tests_success = 0;
 size_t tests_failed = 0;
 
 #define TEST_MODULE(name) { test_module_name = name; }
-#define TEST_CHECK(name) { err_reset(); test_check_name = name; printf("\n%s.%s STARTED\n", test_module_name, test_check_name); test_check_status = true; err_try
+#define TEST_CHECK(name) { err_reset(); test_check_name = name; printf("%s.%s STARTED\n", test_module_name, test_check_name); test_check_status = true; err_try
 #define TEST_END \
 	err_catch {  \
 		test_check_status = false; \
@@ -29,12 +29,14 @@ size_t tests_failed = 0;
 
 #include "units/heap.h"
 #include "units/str.h"
+#include "units/parser.h"
 #include "units/stream.h"
 #include "units/map.h"
 #include "units/json.h"
 
 
 int main() {
+	test_parser();
 	test_json();
 	printf("Results: (%i/%i) %i%%\n", (int) tests_success, (int) (tests_success + tests_failed), (int) (tests_success*100/(tests_success + tests_failed)));
 	return 0;

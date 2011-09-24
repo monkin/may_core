@@ -67,7 +67,7 @@ static str_t tree2value_string(syntree_node_t i, heap_t h) {
 	syntree_node_t j;
 	str_t s = str_create(h, str_length(syntree_value(i)));
 	str_it_t p = str_begin(s);
-	for(j=syntree_child(i); i; j=syntree_next(j)) {
+	for(j=syntree_child(i); j; j=syntree_next(j)) {
 		str_t v = syntree_value(j);
 		switch(syntree_name(j)) {
 		case JSON_ST_STRING_SIMPLE:
@@ -214,7 +214,7 @@ static bool parser_string_esc(syntree_t st, void *d) {
 				syntree_seek(st, i+2);
 				return true;
 			case 'u':
-				if((i-e)>=6) {
+				if((e-i)>=6) {
 					str_it_t j;
 					for(j=i+2; j<i+6; j++) {
 						char c = *j;
@@ -301,9 +301,9 @@ static bool parser_number(syntree_t st, void *d) {
 
 parser_t json_parser(heap_t h) {
 	parser_t pspaces = parser_rep(h, parser_cset(h, " \t\r\n"), 0, 0);
-	parser_t pstring = parser_named(h, JSON_ST_STRING, parser_and(h,
+	parser_t pstring = parser_and(h,
 		parser_string(h, "\""), 
-		parser_and(h,
+		parser_named(h, JSON_ST_STRING, parser_and(h,
 			parser_rep(h,
 				parser_or(h,
 					parser_named(h, JSON_ST_STRING_SIMPLE, parser_fn(h, parser_string_simple, 0)),
@@ -316,33 +316,31 @@ parser_t json_parser(heap_t h) {
 	parser_t pnull = parser_named(h, JSON_ST_NULL, parser_string(h, "null"));
 	parser_t f_pobject = parser_forward(h);
 	parser_t f_parray = parser_forward(h);
-	parser_t pvalue = parser_or(h,
+	parser_t pvalue = parser_and(h, parser_and(h, pspaces, parser_or(h,
 		parser_or(h,
 			parser_or(h, pstring, pnumber),
 			parser_or(h, pnull, f_pobject)),
 		parser_or(h,
 			ptrue,
-			parser_or(h, f_parray, pfalse)));
-	parser_t parray = parser_named(h, JSON_ST_ARRAY, parser_and(h,
+			parser_or(h, f_parray, pfalse)))), pspaces);
+	parser_t parray = parser_and(h,
 		parser_and(h,
 			parser_and(h, parser_string(h, "["), pspaces),
-			parser_maybe(h, parser_and(h,
-				parser_and(h, pvalue, pspaces),
-				parser_rep(h, parser_and(h,
-					parser_and(h, parser_string(h, ","), pspaces),
-					parser_and(h, pvalue, pspaces)), 0, 0)))),
-		parser_string(h, "]")));
+			parser_named(h, JSON_ST_ARRAY, parser_maybe(h, parser_and(h,
+				pvalue,
+				parser_rep(h, parser_and(h, parser_string(h, ","), pvalue), 0, 0))))),
+		parser_string(h, "]"));
 	parser_forward_set(f_parray, parray);
 	parser_t ppair = parser_named(h, JSON_ST_PAIR, parser_and(h, parser_and(h, pstring, pspaces), parser_and(h, parser_and(h, parser_string(h, ":"), pspaces), pvalue)));
-	parser_t pobject = parser_named(h, JSON_ST_OBJECT, parser_and(h,
+	parser_t pobject = parser_and(h,
 		parser_and(h,
 			parser_and(h, parser_string(h, "{"), pspaces),
-			parser_maybe(h, parser_and(h,
+			parser_named(h, JSON_ST_OBJECT, parser_maybe(h, parser_and(h,
 				parser_and(h, ppair, pspaces),
 				parser_rep(h, parser_and(h,
 					parser_and(h, parser_string(h, ","), pspaces),
-					parser_and(h, ppair, pspaces)), 0, 0)))),
-		parser_string(h, "}")));
+					parser_and(h, ppair, pspaces)), 0, 0))))),
+		parser_string(h, "}"));
 	parser_forward_set(f_pobject, pobject);
 	return parser_and(h, parser_and(h, pspaces, pvalue), pspaces);
 }
@@ -627,11 +625,11 @@ typedef struct {
 typedef jb_v_s *jb_v_t;
 
 json_value_t jbv_insert_new(jb_v_t jb) {
-	if(jb->key)
-		err_throw(e_json_invalid_state);
 	json_value_t v = 0;
 	if(jb->current) {
 		if(jb->current->value_type==JSON_OBJECT) {
+			if(!jb->key)
+				err_throw(e_json_invalid_state);
 			v = heap_alloc(jb->heap, sizeof(json_value_s));
 			v->parent = jb->current;
 			map_set(jb->current->value.object, jb->key, v);

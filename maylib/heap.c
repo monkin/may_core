@@ -62,7 +62,7 @@ void heap_release(heap_t h, size_t sz) {
 
 void heap_release_to(heap_t h, void *p) {
 	heap_block_t *i = h->last;
-	while(i ? p<i->data || p>=(i->data+i->used) : false)
+	while(i ? ((char *)p)<i->data || ((char *)p)>=(i->data+i->used) : false)
 		i = i->previous;
 	if(i) {
 		heap_block_t *j;
@@ -72,6 +72,14 @@ void heap_release_to(heap_t h, void *p) {
 		i->next = 0;
 	} else
 		err_throw(e_heap_invalid_pointer);
+}
+
+void heap_clear(heap_t h) {
+	heap_block_t *i;
+	for(i = h->first.next; i; i=i->next)
+		mem_free(i);
+	h->first.next = 0;
+	h->last = &h->first;
 }
 
 

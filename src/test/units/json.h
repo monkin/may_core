@@ -126,7 +126,6 @@ void test_json() {
 					json_value_t val = json_tree2value(h, st);
 					str_t s = json_value2string(h, val, JSON_FORMAT_NONE);
 					str_t standard = str_from_cs(h, "{\"name\":\"test\",\"items\":[12,\"\\n0\"]}");
-					TEST_LOG("wew");
 					if(str_compare(s,standard)!=0) {
 						TEST_LOG("json_value2string builds some invalid string.");
 						TEST_FAIL;

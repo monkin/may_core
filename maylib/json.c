@@ -53,6 +53,9 @@ static void json_v2s(jbuilder_t jb, json_value_t v) {
 	case JSON_FALSE:
 		jbuilder_bool(jb, false);
 		break;
+	case JSON_NUMBER:
+		jbuilder_number(jb, v->value.number);
+		break;
 	}
 }
 
@@ -304,13 +307,13 @@ parser_t json_parser(heap_t h) {
 	parser_t pspaces = parser_rep(h, parser_cset(h, " \t\r\n"), 0, 0);
 	parser_t pstring = parser_and(h,
 		parser_string(h, "\""), 
-		parser_named(h, JSON_ST_STRING, parser_and(h,
-			parser_rep(h,
+		parser_and(h,
+			parser_named(h, JSON_ST_STRING, parser_rep(h,
 				parser_or(h,
 					parser_named(h, JSON_ST_STRING_SIMPLE, parser_fn(h, parser_string_simple, 0)),
 					parser_named(h, JSON_ST_STRING_ESC, parser_fn(h, parser_string_esc, 0))
-				), 0, 0),
-			parser_string(h, "\""))));
+				), 0, 0)),
+			parser_string(h, "\"")));
 	parser_t pnumber = parser_named(h, JSON_ST_NUMBER, parser_fn(h, parser_number, 0));
 	parser_t ptrue = parser_named(h, JSON_ST_TRUE, parser_string(h, "true"));
 	parser_t pfalse = parser_named(h, JSON_ST_FALSE, parser_string(h, "false"));
@@ -637,6 +640,7 @@ json_value_t jbv_insert_new(jb_v_t jb) {
 			jb->key = 0;
 		} else if(jb->current->value_type==JSON_ARRAY) {
 			json_array_item_t i = heap_alloc(jb->heap, sizeof(json_array_item_s));
+			v = &i->value;
 			i->value.parent = jb->current;
 			i->next = 0;
 			json_value_t current = jb->current;
@@ -646,7 +650,6 @@ json_value_t jbv_insert_new(jb_v_t jb) {
 				current->value.array->last = i;
 			} else
 				current->value.array->first = current->value.array->last = i;
-			current->value.array->size++;
 		} else
 			err_throw(e_json_invalid_state);
 	} else {

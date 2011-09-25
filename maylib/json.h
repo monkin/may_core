@@ -10,6 +10,7 @@
 
 ERR_DECLARE(e_json_error);
 ERR_DECLARE(e_json_invalid_state);
+ERR_DECLARE(e_json_syntax_error);
 
 struct json_value_ss;
 struct json_array_ss;

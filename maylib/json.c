@@ -3,7 +3,27 @@
 #include <string.h>
 
 ERR_DEFINE(e_json_error, "JSON error.", 0);
+ERR_DEFINE(e_json_syntax_error, "JSON syntax error.", e_json_error);
 ERR_DEFINE(e_json_invalid_state, "JSON Builder error.", e_json_error);
+
+/* String to value */
+
+json_value_t json_string2value(heap_t h, parser_t p, str_t s) {
+	volatile syntree_t st = 0;
+	json_value_t r = 0;
+	err_try {
+		st = syntree_create(s);
+		parser_process(p, st);
+		if(!syntree_eof(st))
+			err_throw(e_json_syntax_error);
+		r = json_tree2value(h, st);
+		st = syntree_delete(st);
+	} err_catch {
+		st = syntree_delete(st);
+		err_throw_down();
+	}
+	return r;
+}
 
 /* Value to stream */
 
@@ -61,7 +81,13 @@ static void json_v2s(jbuilder_t jb, json_value_t v) {
 
 void json_value2stream(ios_t s, json_value_t v, int format) {
 	jbuilder_t jb = jbuilder_create_s(s, format);
-	json_v2s(jb, v);
+	err_try {
+		json_v2s(jb, v);
+		jb = jbuilder_delete(jb);
+	} err_catch {
+		jb = jbuilder_delete(jb);
+		err_throw_down();
+	}
 }
 
 /* Tree to value */

@@ -134,6 +134,7 @@ static void tree2value_row(syntree_node_t st, jbuilder_t jb, heap_t h) {
 		switch(syntree_name(i)) {
 		case JSON_ST_STRING:
 			jbuilder_string(jb, tree2value_string(i, h));
+			break;
 		case JSON_ST_NUMBER:
 			jbuilder_number(jb, str_to_double(syntree_value(i)));
 			break;

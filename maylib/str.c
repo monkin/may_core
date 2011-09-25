@@ -53,23 +53,23 @@ str_t str_from_double(heap_t h, double d) {
 
 double str_to_double(str_t s) {
 	double r;
-	int f;
+	int f, n;
 	if(*str_end(s)) {
 		if(str_length(s)<DOUBLE_BUFFER_LEN) {
 			char buff[DOUBLE_BUFFER_LEN];
 			memcpy(buff, str_begin(s), str_length(s));
 			buff[str_length(s)] = '\0';
-			f = sscanf(buff, "%lf", &r);
+			f = sscanf(buff, "%lf%n", &r, &n);
 		} else {
 			char *buff = mem_alloc(str_length(s)+1);
 			memcpy(buff, str_begin(s), str_length(s));
 			buff[str_length(s)] = '\0';
-			f = sscanf(buff, "%lf", &r);
+			f = sscanf(buff, "%lf%n", &r, &n);
 			free(buff);
 		}
 	} else
-		f = sscanf(str_begin(s), "%lf", &r);
-	if(f!=EOF && f==(str_end(s)-str_begin(s)))
+		f = sscanf(str_begin(s), "%lf%n", &r, &n);
+	if(f!=EOF && n==(str_end(s)-str_begin(s)))
 		return r;
 	else
 		err_throw(e_str_format);
@@ -77,23 +77,23 @@ double str_to_double(str_t s) {
 
 long long str_to_int(str_t s) {
 	long long r;
-	int f;
+	int f, n;
 	if(*str_end(s)) {
 		if(str_length(s)<INT_BUFFER_LEN) {
 			char buff[INT_BUFFER_LEN];
 			memcpy(buff, str_begin(s), str_length(s));
 			buff[str_length(s)] = '\0';
-			f = sscanf(buff, "%lld", &r);
+			f = sscanf(buff, "%lld%n", &r, &n);
 		} else {
 			char *buff = mem_alloc(str_length(s)+1);
 			memcpy(buff, str_begin(s), str_length(s));
 			buff[str_length(s)] = '\0';
-			f = sscanf(buff, "%lld", &r);
+			f = sscanf(buff, "%lld%n", &r, &n);
 			free(buff);
 		}
 	} else
-		f = sscanf(str_begin(s), "%lld", &r);
-	if(f!=EOF && f==(str_end(s)-str_begin(s)))
+		f = sscanf(str_begin(s), "%lld%n", &r, &n);
+	if(f!=EOF && n==(str_end(s)-str_begin(s)))
 		return r;
 	else
 		err_throw(e_str_format);

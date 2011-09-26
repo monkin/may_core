@@ -6,6 +6,83 @@
 ERR_DEFINE(e_ios_error, "IO error.", 0);
 ERR_DEFINE(e_ios_invalid_mode, "Invalid file open mode.", e_ios_error);
 
+/* Range stream */
+
+typedef struct {
+	ios_s self;
+	ios_t stream;
+	long long interval[2];
+} ios_r_s;
+
+typedef ios_r_s *ios_r_t;
+
+static long long ios_r_tell(void *f);
+
+static size_t ios_r_write(void *f, const void *dt, size_t sz, size_t cnt) {
+	ios_r_t s = (ios_r_t) f;
+	long long spos = ios_r_tell(f);
+	long long ssz = s->interval[1] - s->interval[0];
+	if(ssz<(cnt*sz))
+		cnt = ssz/sz;
+	return ios_write_n(s->stream, dt, sz, cnt);
+}
+static size_t ios_r_read(void *f, void *dt, size_t sz, size_t cnt) {
+	ios_r_t s = (ios_r_t) f;
+	long long spos = ios_r_tell(f);
+	long long ssz = s->interval[1] - s->interval[0];
+	if(ssz<(cnt*sz))
+		cnt = ssz/sz;
+	return ios_read_n(s->stream, dt, sz, cnt);
+}
+static bool ios_r_eof(void *f) {
+	ios_r_t s = (ios_r_t) f;
+	return ios_tell(&s->self) == (s->interval[1] - s->interval[0]);
+}
+static long long ios_r_tell(void *f) {
+	ios_r_t s = (ios_r_t) f;
+	long long p = ios_tell(s->stream);
+	if(p<s->interval[0])
+		return 0;
+	else if(p>s->interval[1])
+		return s->interval[1] - s->interval[0];
+	else
+		return p - s->interval[0];
+}
+static void ios_r_seek(void *f, long long pos, int origin) {
+	ios_r_t s = (ios_r_t) f;
+	long long p = ios_tell(s->stream);
+	switch(origin) {
+	case IOS_SEEK_CURRENT:
+		pos += ios_tell(&s->self);
+		break;
+	case IOS_SEEK_END:
+		pos += s->interval[1] - s->interval[0];
+		break;
+	}
+	if(p > (s->interval[1] - s->interval[0]) || p<0) {
+		err_throw(e_ios_error);
+	} else
+		ios_seek(s->stream, pos+s->interval[0], IOS_SEEK_BEGIN);
+}
+static void ios_r_flush(void *f) {
+	ios_flush(((ios_r_t) f)->stream);
+}
+static void ios_r_close(void *f) {
+	mem_free(f);
+}
+
+static ios_table_s ios_r_vtable = { ios_r_write, ios_r_read, ios_r_eof, ios_r_tell, ios_r_seek, ios_r_flush, ios_r_close };
+
+ios_t ios_range_create(ios_t stream, long long begin, long long end) {
+	ios_r_t r = mem_alloc(sizeof(ios_r_s));
+	r->self.data = r;
+	r->self.vtable = &ios_r_vtable;
+	r->stream = stream;
+	r->interval[0] = begin;
+	r->interval[1] = end;
+	return &r->self;
+}
+
 /* File streams. */
 
 typedef struct {
@@ -16,31 +93,25 @@ typedef struct {
 typedef ios_f_s *ios_f_t;
 
 static size_t ios_f_write(void *f, const void *dt, size_t sz, size_t cnt) {
-	size_t r = fwrite(dt, sz, cnt, ((ios_f_t) f)->file);
-	/*if(r!=cnt)
-		err_throw(e_ios_error);*/
-	return r;
+	return fwrite(dt, sz, cnt, ((ios_f_t) f)->file);
 }
 static size_t ios_f_read(void *f, void *dt, size_t sz, size_t cnt) {
-	size_t r = fread(dt, sz, cnt, ((ios_f_t) f)->file);
-	/*if(r!=cnt)
-		err_throw(e_ios_error);*/
-	return r;
+	return fread(dt, sz, cnt, ((ios_f_t) f)->file);
 }
-bool ios_f_eof(void *f) {
+static bool ios_f_eof(void *f) {
 	return feof(((ios_f_t) f)->file);
 }
-long long ios_f_tell(void *f) {
+static long long ios_f_tell(void *f) {
 	return ftello64(((ios_f_t) f)->file);
 }
-void ios_f_seek(void *f, long long pos, int origin) {
+static void ios_f_seek(void *f, long long pos, int origin) {
 	if(0!=fseeko64(((ios_f_t) f)->file, pos, origin))
 		err_throw(e_ios_error);
 }
-void ios_f_flush(void *f) {
+static void ios_f_flush(void *f) {
 	fflush(((ios_f_t) f)->file);
 }
-void ios_f_close(void *f) {
+static void ios_f_close(void *f) {
 	fclose(((ios_f_t) f)->file);
 	mem_free(((ios_f_t) f)->block);
 }
@@ -137,7 +208,7 @@ typedef struct {
 
 typedef ios_mem_s *ios_mem_t;
 
-size_t ios_m_write(void *ms, const void *dt, size_t sz, size_t cnt) {
+static size_t ios_m_write(void *ms, const void *dt, size_t sz, size_t cnt) {
 	ios_mem_t m = (ios_mem_t) ms;
 	size_t fsz = sz*cnt;
 	while(m->block_count*IOS_MEM_BLOCK_SIZE < m->position+fsz) {
@@ -166,7 +237,7 @@ size_t ios_m_write(void *ms, const void *dt, size_t sz, size_t cnt) {
 	}
 	return succ_cnt;
 }
-size_t ios_m_read(void *ms, void *dt, size_t sz, size_t cnt) {
+static size_t ios_m_read(void *ms, void *dt, size_t sz, size_t cnt) {
 	ios_mem_t m = (ios_mem_t) ms;
 	if(sz*cnt+m->position > m->size)
 		cnt = (m->size - m->position) / sz;
@@ -191,13 +262,13 @@ size_t ios_m_read(void *ms, void *dt, size_t sz, size_t cnt) {
 	}
 	return cnt;
 }
-bool ios_m_eof(void *ms) {
+static bool ios_m_eof(void *ms) {
 	return ((ios_mem_t) ms)->position == ((ios_mem_t) ms)->size;
 }
-long long ios_m_tell(void *ms) {
+static long long ios_m_tell(void *ms) {
 	return ((ios_mem_t) ms)->position;
 }
-void ios_m_seek(void *ms, long long offset, int origin) {
+static void ios_m_seek(void *ms, long long offset, int origin) {
 	ios_mem_t m = (ios_mem_t) ms;
 	switch(origin) {
 	case IOS_SEEK_BEGIN:
@@ -244,8 +315,8 @@ void ios_m_seek(void *ms, long long offset, int origin) {
 		err_throw(e_ios_error);
 	}
 }
-void ios_m_flush(void *ms) {}
-void ios_m_close(void *ms) {
+static void ios_m_flush(void *ms) {}
+static void ios_m_close(void *ms) {
 	if(ms) {
 		ios_mem_block_t i = ((ios_mem_t) ms)->first.next;
 		mem_free(ms);
@@ -311,6 +382,9 @@ long long ios_tell(ios_t s) {
 }
 void ios_seek(ios_t s, long long pos, int origin) {
 	s->vtable->seek(s->data, pos, origin);
+}
+void ios_flush(ios_t s) {
+	s->vtable->flush(s->data);
 }
 ios_t ios_close(ios_t s) {
 	s->vtable->close(s->data);

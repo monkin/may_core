@@ -121,7 +121,7 @@ jbuilder_t jbuilder_create_v(heap_t);
 json_value_t jbuilder_value_v(jbuilder_t);
 
 /*jbuilder_t jbuilder_delete(jbuilder_t);*/
-#define jbuilder_delete(jb) ((jb)->vtable->x_delete((jb)->data), 0)
+#define jbuilder_delete(jb) ((jb)->vtable->x_delete((jb)->data), (jbuilder_t) 0)
 /*void jbuilder_array(jbuilder_t);*/
 #define jbuilder_array(jb) ((jb)->vtable->array((jb)->data))
 /*void jbuilder_array_end(jbuilder_t);*/

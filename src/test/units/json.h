@@ -86,15 +86,15 @@ void test_json() {
 			st = syntree_delete(st);
 			heap_release_to(h, hpos);
 			
-			st = syntree_create(str_from_cs(h, "[\"test\\n\", \"\", [], {\"12\":\"13\\n\\u1234\", \"x\": {}}]"));
+			st = syntree_create(str_from_cs(h, "\"\\n12test\\u0030\""));
 			if(parser_process(parser, st)) {
 				if(!syntree_eof(st)) {
 					TEST_LOG("String parsing error");
 					TEST_FAIL;
-				}/* else if(syntree_name(syntree_begin(st))!=JSON_ST_STRING) {
+				} else if(syntree_name(syntree_begin(st))!=JSON_ST_STRING) {
 					TEST_LOG("Root is not an string");
 					TEST_FAIL;
-				}*/
+				}
 			} else
 				TEST_FAIL;
 			st = syntree_delete(st);

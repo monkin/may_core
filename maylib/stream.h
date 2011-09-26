@@ -50,6 +50,8 @@ str_t ios_mem_to_string(ios_t, heap_t);
 
 ios_t ios_file_create(str_t, ios_mode_t);
 
+ios_t ios_range_create(ios_t, long long, long long);
+
 size_t ios_write_n(ios_t, const void *, size_t, size_t);
 size_t ios_read_n(ios_t, void *, size_t, size_t);
 void ios_write(ios_t, const void *, size_t);
@@ -57,6 +59,7 @@ void ios_read(ios_t, void *, size_t);
 bool ios_eof(ios_t);
 long long ios_tell(ios_t);
 void ios_seek(ios_t, long long, int);
+void ios_flush(ios_t);
 ios_t ios_close(ios_t);
 
 #endif /* MAY_STREAM_H */

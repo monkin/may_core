@@ -50,7 +50,7 @@ str_t ios_mem_to_string(ios_t, heap_t);
 
 ios_t ios_file_create(str_t, ios_mode_t);
 
-ios_t ios_range_create(ios_t, long long, long long);
+ios_t ios_range_create(heap_t, ios_t, long long, long long);
 
 size_t ios_write_n(ios_t, const void *, size_t, size_t);
 size_t ios_read_n(ios_t, void *, size_t, size_t);

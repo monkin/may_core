@@ -67,14 +67,12 @@ static void ios_r_seek(void *f, long long pos, int origin) {
 static void ios_r_flush(void *f) {
 	ios_flush(((ios_r_t) f)->stream);
 }
-static void ios_r_close(void *f) {
-	mem_free(f);
-}
+static void ios_r_close(void *f) {}
 
 static ios_table_s ios_r_vtable = { ios_r_write, ios_r_read, ios_r_eof, ios_r_tell, ios_r_seek, ios_r_flush, ios_r_close };
 
-ios_t ios_range_create(ios_t stream, long long begin, long long end) {
-	ios_r_t r = mem_alloc(sizeof(ios_r_s));
+ios_t ios_range_create(heap_t h, ios_t stream, long long begin, long long end) {
+	ios_r_t r = heap_alloc(h, sizeof(ios_r_s));
 	r->self.data = r;
 	r->self.vtable = &ios_r_vtable;
 	r->stream = stream;

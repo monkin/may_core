@@ -33,11 +33,13 @@ size_t tests_failed = 0;
 #include "units/stream.h"
 #include "units/map.h"
 #include "units/json.h"
+#include "units/tar.h"
 
 
 int main() {
 	test_parser();
 	test_json();
+	test_tar();
 	printf("Results: (%i/%i) %i%%\n", (int) tests_success, (int) (tests_success + tests_failed), (int) (tests_success*100/(tests_success + tests_failed)));
 	return 0;
 }

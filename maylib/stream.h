@@ -13,6 +13,11 @@ ERR_DECLARE(e_ios_invalid_mode);
 #define IOS_SEEK_CURRENT SEEK_CUR
 #define IOS_SEEK_END SEEK_END
 
+enum {
+	/* If you need some io buffer and don't now prefered size - use this constant. */
+	IOS_DEFAULT_BUFFER_SIZE = 4*1024
+};
+
 typedef struct {
 	size_t (* write)(void *, const void *, size_t, size_t);
 	size_t (* read)(void *, void *, size_t, size_t);

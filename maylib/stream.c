@@ -270,7 +270,7 @@ static void ios_m_seek(void *ms, long long offset, int origin) {
 	ios_mem_t m = (ios_mem_t) ms;
 	switch(origin) {
 	case IOS_SEEK_BEGIN:
-		if(offset>0 && m->size>=offset) {
+		if(offset>=0 && m->size>=offset) {
 			m->position = offset;
 			m->current = &m->first;
 			while(offset>IOS_MEM_BLOCK_SIZE) {
@@ -299,7 +299,7 @@ static void ios_m_seek(void *ms, long long offset, int origin) {
 		} else
 			err_throw(e_ios_error);
 	case IOS_SEEK_END:
-		if(offset<0 && (-offset)<=m->size) {
+		if(offset<=0 && (-offset)<=m->size) {
 			offset = -offset;
 			m->position = m->size - offset;
 			while(offset>IOS_MEM_BLOCK_SIZE) {
@@ -385,7 +385,8 @@ void ios_flush(ios_t s) {
 	s->vtable->flush(s->data);
 }
 ios_t ios_close(ios_t s) {
-	s->vtable->close(s->data);
+	if(s)
+		s->vtable->close(s->data);
 	return 0;
 }
 

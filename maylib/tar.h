@@ -8,6 +8,7 @@
 
 ERR_DECLARE(e_tar_error);
 ERR_DECLARE(e_tar_name_too_long);
+ERR_DECLARE(e_tar_file_too_large);
 
 struct tar_ss;
 typedef struct tar_ss tar_s;
@@ -23,6 +24,7 @@ typedef struct tar_item_ss {
 } tar_item_s;
 
 typedef tar_item_s *tar_item_t;
+typedef tar_item_t tar_it_t;
 
 struct tar_ss {
 	heap_t heap;
@@ -40,7 +42,8 @@ void tar_putf(tar_t, str_t fname, str_t path);
 void tar_puts(tar_t, str_t fname, ios_t);
 tar_t tar_delete(tar_t);
 
-tar_item_t tar_it_first(tar_t);
+/* tar_item_t tar_it_first(tar_t); */
+#define tar_it_first(t) ((t)->first)
 /* tar_item_t tar_it_next(tar_item_t); */
 #define tar_it_next(ti) ((ti)->next)
 

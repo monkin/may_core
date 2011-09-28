@@ -6,6 +6,9 @@
 #include "str.h"
 #include "map.h"
 
+ERR_DECLARE(e_tar_error);
+ERR_DECLARE(e_tar_name_too_long);
+
 struct tar_ss;
 typedef struct tar_ss tar_s;
 typedef tar_s *tar_t;

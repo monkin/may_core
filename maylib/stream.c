@@ -44,7 +44,7 @@ static long long ios_r_tell(void *f) {
 	if(p<s->interval[0])
 		return 0;
 	else if(p>s->interval[1])
-		return s->interval[1] - s->interval[0];
+		return s->interval[1];
 	else
 		return p - s->interval[0];
 }
@@ -52,17 +52,20 @@ static void ios_r_seek(void *f, long long pos, int origin) {
 	ios_r_t s = (ios_r_t) f;
 	long long p = ios_tell(s->stream);
 	switch(origin) {
+	case IOS_SEEK_BEGIN:
+		pos += s->interval[0];
+		break;
 	case IOS_SEEK_CURRENT:
 		pos += ios_tell(&s->self);
 		break;
 	case IOS_SEEK_END:
-		pos += s->interval[1] - s->interval[0];
+		pos += s->interval[0] + s->interval[1];
 		break;
 	}
-	if(p > (s->interval[1] - s->interval[0]) || p<0) {
+	if(pos < s->interval[0] || pos > (s->interval[0]+s->interval[1])) {
 		err_throw(e_ios_error);
 	} else
-		ios_seek(s->stream, pos+s->interval[0], IOS_SEEK_BEGIN);
+		ios_seek(s->stream, pos, IOS_SEEK_BEGIN);
 }
 static void ios_r_flush(void *f) {
 	ios_flush(((ios_r_t) f)->stream);

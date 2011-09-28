@@ -5,6 +5,7 @@
 ERR_DEFINE(e_tar_error, "Tar archive error", 0);
 ERR_DEFINE(e_tar_name_too_long, "File name is too long", e_tar_error);
 ERR_DEFINE(e_tar_file_too_large, "File is too large", e_tar_error);
+ERR_DEFINE(e_tar_invalid_checksum, "File is corrupted", e_tar_error);
 
 typedef struct {
 	char name[100];
@@ -20,23 +21,6 @@ typedef struct {
 } tar_header_s;
 
 typedef tar_header_s *tar_header_t;
-
-tar_t tar_create(ios_t s) {
-	heap_t h = 0;
-	tar_t r = 0;
-	err_try {
-		h = heap_create(0);
-		r = heap_alloc(h, sizeof(tar_s));
-		r->heap = h;
-		r->stream = s;
-		r->files = map_create(h);
-		r->first = r->last = 0;
-	} err_catch {
-		h = heap_delete(h);
-		err_throw_down();
-	}
-	return r;
-}
 
 static void fill_crc(const tar_header_t t, char *r) {
 	unsigned long crc = 0;
@@ -119,13 +103,19 @@ void tar_puts(tar_t tar, str_t fname, ios_t stream) {
 	ios_seek(tar->stream, position, IOS_SEEK_BEGIN);
 	ios_write(tar->stream, tar_nulls, 512);
 	long long size = 0;
-	while(true) {
-		static char buff[IOS_DEFAULT_BUFFER_SIZE];
-		size_t n = ios_read_n(stream, buff, 1, IOS_DEFAULT_BUFFER_SIZE);
-		ios_write(tar->stream, buff, n);
-		size += n;
-		if(n!=IOS_DEFAULT_BUFFER_SIZE)
-			break;
+	char *buff = mem_alloc(IOS_DEFAULT_BUFFER_SIZE);
+	err_try {
+		while(true) {
+			size_t n = ios_read_n(stream, buff, 1, IOS_DEFAULT_BUFFER_SIZE);
+			ios_write(tar->stream, buff, n);
+			size += n;
+			if(n!=IOS_DEFAULT_BUFFER_SIZE)
+				break;
+		}
+		buff = mem_free(buff);
+	} err_catch {
+		buff = mem_free(buff);
+		err_throw_down();
 	}
 	ios_write(tar->stream, tar_nulls, padd_512(size));
 	tar_header_s th;
@@ -145,6 +135,70 @@ void tar_puts(tar_t tar, str_t fname, ios_t stream) {
 		tar->last = item;
 	} else
 		tar->first = tar->last = item;
+}
+
+ios_t tar_find(tar_t tar, str_t fname) {
+	tar_item_t i = map_get(tar->files, fname);
+	return i ? i->range : 0;
+}
+
+str_t tar_get(tar_t tar, heap_t h, str_t fname) {
+	tar_item_t i = map_get(tar->files, fname);
+	if(!i)
+		return 0;
+	ios_seek(i->range, 0, IOS_SEEK_END);
+	long long sz = ios_tell(i->range);
+	str_t r = str_create(h, sz);
+	ios_seek(i->range, 0, IOS_SEEK_BEGIN);
+	ios_read(i->range, str_begin(r), sz);
+	return r;
+}
+
+tar_t tar_create(ios_t s) {
+	heap_t h = 0;
+	tar_t r = 0;
+	err_try {
+		h = heap_create(0);
+		r = heap_alloc(h, sizeof(tar_s));
+		r->heap = h;
+		r->stream = s;
+		r->files = map_create(h);
+		r->first = r->last = 0;
+		long long pos = 0;
+		while(true) {
+			ios_seek(s, pos, IOS_SEEK_BEGIN);
+			tar_header_s th;
+			char checksum[8];
+			if(ios_read_n(s, &th, sizeof(th), 1)) {
+				fill_crc(&th, checksum);
+				if(memcmp(checksum, th.checksum, 8)!=0)
+					err_throw(e_tar_invalid_checksum);
+				if(th.mode[0]=='0') {
+					tar_item_t item = heap_alloc(h, sizeof(tar_item_s));
+					item->tar = r;
+					item->name = str_from_cs(h, th.name);
+					item->position = pos + sizeof(tar_header_s);
+					sscanf(th.size, "%llo", &item->size);
+					item->range = ios_range_create(h, s, item->position, item->size);
+					item->next = 0;
+					map_set(r->files, item->name, item);
+					if(r->first) {
+						r->last->next = item;
+						r->last = item;
+					} else
+						r->first = r->last = item;
+					pos += item->size + sizeof(tar_header_s);
+					pos += padd_512(pos);
+				} else
+					pos += sizeof(tar_item_s);
+			} else
+				break;
+		}
+	} err_catch {
+		h = heap_delete(h);
+		err_throw_down();
+	}
+	return r;
 }
 
 tar_t tar_delete(tar_t t) {

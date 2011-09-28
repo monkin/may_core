@@ -9,6 +9,7 @@
 ERR_DECLARE(e_tar_error);
 ERR_DECLARE(e_tar_name_too_long);
 ERR_DECLARE(e_tar_file_too_large);
+ERR_DECLARE(e_tar_invalid_checksum);
 
 struct tar_ss;
 typedef struct tar_ss tar_s;
@@ -36,7 +37,7 @@ struct tar_ss {
 
 tar_t tar_create(ios_t);
 ios_t tar_find(tar_t, str_t fname);
-str_t tar_get(tar_t, str_t fname);
+str_t tar_get(tar_t, heap_t, str_t fname);
 void tar_put(tar_t, str_t fname, str_t content);
 void tar_putf(tar_t, str_t fname, str_t path);
 void tar_puts(tar_t, str_t fname, ios_t);

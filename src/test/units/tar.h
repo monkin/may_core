@@ -18,14 +18,21 @@ void test_tar() {
 			if(ios_tell(s)!=2*1024) {
 				TEST_LOG("TAR size is invalid");
 				TEST_FAIL;
+			} else {
+				t = tar_delete(t);
+				t = tar_create(s);
+				if(str_compare(tar_get(t, h, str_from_cs(h, "array.json")), str_from_cs(h, "[]"))!=0) {
+					TEST_LOG("TAR reading error");
+					TEST_FAIL;
+				}
 			}
+			t = tar_delete(t);
 			h = heap_delete(h);
 			s = ios_close(s);
-			t = tar_delete(t);
 		} err_catch {
+			t = tar_delete(t);
 			h = heap_delete(h);
 			s = ios_close(s);
-			t = tar_delete(t);
 			err_throw_down();
 		}
 	} TEST_END;

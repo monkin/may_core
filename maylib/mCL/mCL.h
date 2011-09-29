@@ -41,7 +41,8 @@ bool mclt_is_compatible(mclt_t t1, mclt_t t2);
 /*
  Returns true if this code is valid:
  	t1 a
- 	t2 b = (t1) b
+ 	t2 b
+ 	a = (t1) b
 */
 bool mclt_is_convertable(mclt_t t1, mclt_t t2);
 
@@ -50,8 +51,12 @@ bool mclt_is_convertable(mclt_t t1, mclt_t t2);
 #define mclt_is_pointer(t) ((t) & MCLT_POINTER)
 #define mclt_is_vector(t) (((t) & MCLT_V_SIZE) && !mclt_is_pointer(t))
 #define mclt_is_numeric(t) (mclt_is_float(t) || mclt_is_integer(t))
+#define mclt_int_size(t) (1<<(MCLT_I_SIZE & (t)))
 mclt_t mclt_vector(mclt_t t1, int vector_size);
 mclt_t mclt_pointer(mclt_t t, long mem_type);
+mclt_t mclt_vector_of(mclt_t t1);
+mclt_t mclt_vector_size(mclt_t t1);
+mclt_t mclt_pointer_to(mclt_t t1);
 
 parser_t mcl_parser(heap_t h);
 

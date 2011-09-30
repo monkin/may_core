@@ -27,6 +27,13 @@ str_t str_from_cs(heap_t h, const char *s) {
 	return r;
 }
 
+str_t str_from_bin(heap_t h, void *s, size_t sz) {
+	assert(h);
+	str_t r = str_create(h, sz);
+	memcpy(r->data, s, sz);
+	return r;
+}
+
 str_t str_from_int(heap_t h, long long i) {
 	assert(h);
 	str_t r = str_create(h, INT_BUFFER_LEN);

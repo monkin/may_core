@@ -20,6 +20,7 @@ typedef char *str_it_t;
 str_t str_create(heap_t, size_t);
 
 str_t str_from_cs(heap_t, const char *s);
+str_t str_from_bin(heap_t, void *s, size_t sz);
 str_t str_from_int(heap_t, long long);
 str_t str_from_double(heap_t, double);
 

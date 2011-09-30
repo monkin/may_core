@@ -57,6 +57,7 @@ mclt_t mclt_pointer(mclt_t t, long mem_type);
 mclt_t mclt_vector_of(mclt_t t1);
 mclt_t mclt_vector_size(mclt_t t1);
 mclt_t mclt_pointer_to(mclt_t t1);
+str_t mclt_name(heap_t, mclt_t);
 
 parser_t mcl_parser(heap_t h);
 

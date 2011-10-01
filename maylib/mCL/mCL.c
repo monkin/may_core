@@ -62,7 +62,7 @@ mclt_t mclt_vector_size(mclt_t t) {
 mclt_t mclt_pointer_to(mclt_t t) {
 	if(!mclt_is_pointer(t))
 		err_throw(e_mclt_error);
-	return t & 0xFFFF;
+	return t & 0xFFFF & (mclt_t)(~MCLT_POINTER);
 }
 
 static map_t type_names = 0;
@@ -79,20 +79,58 @@ str_t mclt_name(mclt_t t) {
 			type_heap = heap_create(0);
 			type_names = map_create(type_heap);
 			TYPE_APPEND(MCLT_FLOAT, "float");
-			TYPE_APPEND(MCLT_INT, "char");
-			TYPE_APPEND(MCLT_INT | MCLT_UNSIGNED, "uchar");
-			TYPE_APPEND(MCLT_INT | 1, "short");
-			TYPE_APPEND(MCLT_INT | MCLT_UNSIGNED | 1, "ushort");
-			TYPE_APPEND(MCLT_INT | 2, "int");
-			TYPE_APPEND(MCLT_INT | MCLT_UNSIGNED | 2, "uint");
-			TYPE_APPEND(MCLT_INT | 3, "long");
-			TYPE_APPEND(MCLT_INT | MCLT_UNSIGNED | 3, "ulong");
+			TYPE_APPEND(MCLT_INTEGER, "char");
+			TYPE_APPEND(MCLT_INTEGER | MCLT_UNSIGNED, "uchar");
+			TYPE_APPEND(MCLT_INTEGER | 1, "short");
+			TYPE_APPEND(MCLT_INTEGER | MCLT_UNSIGNED | 1, "ushort");
+			TYPE_APPEND(MCLT_INTEGER | 2, "int");
+			TYPE_APPEND(MCLT_INTEGER | MCLT_UNSIGNED | 2, "uint");
+			TYPE_APPEND(MCLT_INTEGER | 3, "long");
+			TYPE_APPEND(MCLT_INTEGER | MCLT_UNSIGNED | 3, "ulong");
+			TYPE_APPEND(MCLT_IMAGE_R, "read_only image_t");
+			TYPE_APPEND(MCLT_IMAGE_W, "write_only image_t");
 		} err_catch {
 			type_heap = heap_delete(type_heap);
+			err_throw_down();
 		}
 		atexit(type_clear);
 	}
-	//str_t r = map_get(type_names, )
+	str_t r = map_get_bin(type_names, &t, sizeof(t));
+	if(r)
+		return r;
+	char buff[128];
+	char *buff_pos = buff;
+	if(mclt_is_pointer(t)) {
+		if(t & MCLT_P_GLOBAL) {
+			strcpy(buff, "global ");
+			buff_pos += 7;
+		} else if(t & MCLT_P_LOCAL) {
+			strcpy(buff, "local ");
+			buff_pos += 6;
+		} else if(t & MCLT_P_PRIVATE) {
+			strcpy(buff, "private ");
+			buff_pos += 8;
+		} else
+			err_throw(e_mclt_error);
+		str_t pt = mclt_name(mclt_pointer_to(t));
+		memcpy(buff_pos, str_begin(pt), str_length(pt));
+		buff_pos += str_length(pt);
+		strcpy(buff_pos, " *");
+		TYPE_APPEND(t, buff);
+	} else if(mclt_is_vector(t)) {
+		str_t vof = mclt_name(mclt_vector_of(t));
+		char buff[128];
+		assert(str_length(vof)<126);
+		memcpy(buff, str_begin(vof), str_length(vof));
+		sprintf(buff+str_length(vof), "%ld", (long) mclt_vector_size(t));
+		TYPE_APPEND(t, buff);
+	} else
+		err_throw(e_mclt_error);
+	r = map_get_bin(type_names, &t, sizeof(t));
+	if(r)
+		return r;
+	else
+		err_throw(e_mclt_error);
 }
 
 

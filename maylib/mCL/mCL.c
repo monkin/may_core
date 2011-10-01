@@ -68,10 +68,10 @@ mclt_t mclt_pointer_to(mclt_t t) {
 static map_t type_names = 0;
 static heap_t type_heap = 0;
 static void type_clear() {
-	type_heap heap_delete(type_heap);
+	type_heap = heap_delete(type_heap);
 }
 
-#define TYPE_APPEND(t, nm) { mclt_t tp = (t); map_set(type_names, str_from_bin(type_heap, &tp, sizeof(tp)), str_from_cs(type_heap, nm)); }
+#define TYPE_APPEND(t, nm) { mclt_t tp = (t); map_set_bin(type_names, &tp, sizeof(tp), str_from_cs(type_heap, nm)); }
 
 str_t mclt_name(mclt_t t) {
 	if(!type_heap) {
@@ -92,6 +92,7 @@ str_t mclt_name(mclt_t t) {
 		}
 		atexit(type_clear);
 	}
+	//str_t r = map_get(type_names, )
 }
 
 

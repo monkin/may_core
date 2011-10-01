@@ -62,7 +62,7 @@ void *map_get_bin(map_t m, const void *key, size_t key_len) {
 	return 0;
 }
 
-map_t map_set(map_t m, str_t key, void *value) {
+static map_t map_set_internal(map_t m, str_t key, void *value) {
 	map_node_t i;
 	assert(m && key);
 	i = m->node;
@@ -103,12 +103,16 @@ map_t map_set(map_t m, str_t key, void *value) {
 	return m;
 }
 
-void *map_set_cs(map_t m, const char *key, void *value) {
-	return map_set(m, str_from_cs(m->heap, key), value);
+map_t map_set(map_t m, str_t key, void *value) {
+	return map_set_internal(m, str_clone(m->heap, key), value);
 }
 
-void *map_set_bin(map_t m, const void *key, size_t key_len, void *value) {
-	return map_set(m, str_from_bin(m->heap, key, key_len), value);
+map_t map_set_cs(map_t m, const char *key, void *value) {
+	return map_set_internal(m, str_from_cs(m->heap, key), value);
+}
+
+map_t map_set_bin(map_t m, const void *key, size_t key_len, void *value) {
+	return map_set_internal(m, str_from_bin(m->heap, key, key_len), value);
 }
 
 map_t map_remove(map_t m, str_t key) {

@@ -1,5 +1,5 @@
 
-#include <maylib/mCL/mCL.h>
+#include <maylib/mcl/mcl.h>
 
 void test_mcl_types() {
 	TEST_MODULE("mcl_types");

@@ -34,7 +34,7 @@ size_t tests_failed = 0;
 #include "units/map.h"
 #include "units/json.h"
 #include "units/tar.h"
-#include "units/mCL/types.h"
+#include "units/mcl/types.h"
 
 
 int main() {

@@ -1,4 +1,5 @@
 
+#include "platform.h"
 #include "map.h"
 #include "mem.h"
 #include <assert.h>
@@ -85,7 +86,7 @@ static map_t map_set_internal(map_t m, str_t key, void *value) {
 					j->children[1] = 0;
 					j->key = key;
 					j->value = value;
-					i->children[ci] = j; /*!!! not atomic */
+					may_atomic_cmpset(&i->children[ci], 0, j);
 					for(; i; i=i->parent)
 						i->length++;
 					break;

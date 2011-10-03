@@ -329,7 +329,7 @@ static bool parser_number(syntree_t st, void *d) {
 	return true;
 }
 
-parser_t json_parser(heap_t h) {
+static parser_t json_parser_internal(heap_t h) {
 	parser_t pspaces = parser_rep(h, parser_cset(h, " \t\r\n"), 0, 0);
 	parser_t pstring = parser_and(h,
 		parser_string(h, "\""), 
@@ -373,6 +373,32 @@ parser_t json_parser(heap_t h) {
 		parser_string(h, "}"));
 	parser_forward_set(f_pobject, pobject);
 	return parser_and(h, parser_and(h, pspaces, pvalue), pspaces);
+}
+
+static heap_t json_parser_m_heap = 0;
+static parser_t json_parser_m = 0;
+
+parser_t json_parser() {
+	return json_parser_m;
+}
+
+static void json_destroy() {
+	json_parser_m_heap = heap_delete(json_parser_m_heap);
+	json_parser_m = 0;
+}
+
+void json_init() {
+	if(!json_parser_m_heap) {
+		json_parser_m_heap = heap_create(0);
+		err_try {
+			json_parser_m = json_parser_internal(json_parser_m_heap);
+			atexit(json_destroy);
+		} err_catch {
+			json_parser_m_heap = heap_delete(json_parser_m_heap);
+			json_parser_m = 0;
+			err_throw_down();
+		}
+	}
 }
 
 /* Builder */

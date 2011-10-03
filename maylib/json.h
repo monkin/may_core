@@ -76,7 +76,9 @@ typedef struct json_value_ss *json_value_t;
 #define JSON_FORMAT_SPACE_4 json_format(1, 0, 4)
 #define JSON_FORMAT_SPACE_8 json_format(1, 0, 8)
 
-parser_t json_parser(heap_t);
+void json_init();
+
+parser_t json_parser();
 json_value_t json_string2value(heap_t, parser_t, str_t);
 json_value_t json_tree2value(heap_t, syntree_t);
 str_t json_value2string(heap_t, json_value_t, int format);

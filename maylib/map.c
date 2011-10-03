@@ -78,13 +78,14 @@ static map_t map_set_internal(map_t m, str_t key, void *value) {
 					i = i->children[ci];
 					continue;
 				} else {
-					map_node_t j = i->children[ci] = heap_alloc(m->heap, sizeof(map_node_s));
+					map_node_t j = heap_alloc(m->heap, sizeof(map_node_s));
 					j->length = 1;
 					j->parent = i;
 					j->children[0] = 0;
 					j->children[1] = 0;
 					j->key = key;
 					j->value = value;
+					i->children[ci] = j; /*!!! not atomic */
 					for(; i; i=i->parent)
 						i->length++;
 					break;

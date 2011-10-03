@@ -41,11 +41,10 @@ void test_json() {
 		volatile syntree_t st = 0;
 		err_try {
 			h = heap_create(0);
-			parser_t parser = json_parser(h);
 			void *hpos = heap_position(h);
 			
 			st = syntree_create(str_from_cs(h, "{}"));
-			if(parser_process(parser, st)) {
+			if(parser_process(json_parser(), st)) {
 				if(!syntree_eof(st)) {
 					TEST_LOG("Empty object parsing error");
 					TEST_FAIL;
@@ -59,7 +58,7 @@ void test_json() {
 			heap_release_to(h, hpos);
 			
 			st = syntree_create(str_from_cs(h, "[]"));
-			if(parser_process(parser, st)) {
+			if(parser_process(json_parser(), st)) {
 				if(!syntree_eof(st)) {
 					TEST_LOG("Empty array parsing error");
 					TEST_FAIL;
@@ -73,7 +72,7 @@ void test_json() {
 			heap_release_to(h, hpos);
 			
 			st = syntree_create(str_from_cs(h, "12"));
-			if(parser_process(parser, st)) {
+			if(parser_process(json_parser(), st)) {
 				if(!syntree_eof(st)) {
 					TEST_LOG("Number parsing error");
 					TEST_FAIL;
@@ -87,7 +86,7 @@ void test_json() {
 			heap_release_to(h, hpos);
 			
 			st = syntree_create(str_from_cs(h, "\"\\n12test\\u0030\""));
-			if(parser_process(parser, st)) {
+			if(parser_process(json_parser(), st)) {
 				if(!syntree_eof(st)) {
 					TEST_LOG("String parsing error");
 					TEST_FAIL;
@@ -114,8 +113,7 @@ void test_json() {
 		err_try {
 			h = heap_create(0);
 			st = syntree_create(str_from_cs(h, "{\"name\": \"test\", \"items\" : [12, \"\\n\\u0030\"]}"));
-			parser_t parser = json_parser(h);
-			if(parser_process(parser, st)) {
+			if(parser_process(json_parser(), st)) {
 				if(!syntree_eof(st)) {
 					TEST_LOG("Syntax error");
 					TEST_FAIL;

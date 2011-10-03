@@ -1,4 +1,5 @@
 
+#include <maylib/maylib.h>
 #include <maylib/json.h>
 #include <maylib/stream.h>
 #include <stdio.h>
@@ -38,6 +39,7 @@ size_t tests_failed = 0;
 
 
 int main() {
+	maylib_init();
 	test_parser();
 	test_json();
 	test_tar();

@@ -11,6 +11,7 @@ ERR_DECLARE(e_mcl_error);
 ERR_DECLARE(e_mclt_error);
 
 enum {
+	MCLT_VOID = 0,
 	MCLT_FLOAT = 4,
 	MCLT_INTEGER = 8,
 	MCLT_UNSIGNED = 16,
@@ -64,6 +65,7 @@ bool mclt_is_convertable(mclt_t t1, mclt_t t2);
 #define mclt_is_pointer(t) ((t) & MCLT_POINTER)
 #define mclt_is_vector(t) (((t) & MCLT_V_SIZE) && !mclt_is_pointer(t))
 #define mclt_is_image(t) ((t & MCLT_IMAGE_R) || (t & MCLT_IMAGE_W))
+#define mclt_is_void(t) (!(t))
 #define mclt_is_numeric(t) (mclt_is_float(t) || mclt_is_integer(t))
 #define mclt_integer_size(t) (1<<(MCLT_I_SIZE & (t)))
 mclt_t mclt_vector(mclt_t t1, int vector_size);

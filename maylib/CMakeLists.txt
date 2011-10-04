@@ -1,3 +1,5 @@
 find_package (Threads)
-add_library(maylib STATIC maylib.c err.c  heap.c  map.c  mem.c  str.c  utf.c syntree.c parser.c json.c stream.c tar.c mcl/mcl.c)
-target_link_libraries (maylib ${CMAKE_THREAD_LIBS_INIT})
+find_package(OpenCL REQUIRED)
+include_directories(${OPENCL_INCLUDE_DIR})
+add_library(maylib STATIC maylib.c err.c  heap.c  map.c  mem.c  str.c  utf.c syntree.c parser.c json.c stream.c tar.c mcl/mcl.c mcl/ex.c)
+target_link_libraries(maylib ${CMAKE_THREAD_LIBS_INIT} ${OPENCL_LIBRARIES})

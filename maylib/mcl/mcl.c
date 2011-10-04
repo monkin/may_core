@@ -1,6 +1,7 @@
 
 #include "mcl.h"
 #include <pthread.h>
+#include <CL/cl.h>
 
 ERR_DEFINE(e_mcl_error, "mCL error", 0);
 ERR_DEFINE(e_mclt_error, "Invalid mCL type operation", e_mcl_error);

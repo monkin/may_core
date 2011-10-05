@@ -73,6 +73,7 @@ mclt_t mclt_pointer(mclt_t t, long mem_type);
 mclt_t mclt_vector_of(mclt_t t1);
 mclt_t mclt_vector_size(mclt_t t1);
 mclt_t mclt_pointer_to(mclt_t t1);
+mclt_t mclt_numeric_op_result(mclt_t, mclt_t);
 str_t mclt_name(mclt_t);
 void mclt_init();
 

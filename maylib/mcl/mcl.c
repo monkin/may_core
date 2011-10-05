@@ -152,4 +152,10 @@ str_t mclt_name(mclt_t t) {
 		err_throw(e_mclt_error);
 }
 
+mclt_t mclt_numeric_op_result(mclt_t t1, mclt_t t2) {
+
+}
+
+
+
 

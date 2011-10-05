@@ -5,6 +5,7 @@
 #include "mcl.h"
 #include "../map.h"
 #include "../str.h"
+#include "../stream.h"
 
 struct mcl_ex_ss;
 typedef struct mcl_ex_ss *mcl_ex_s;
@@ -17,8 +18,15 @@ enum {
 	MCL_EXC_CONST
 };
 
-typedef struct {
+typedef void *mcl_arg_t;
 
+bool mcl_insert_ptr(map_t, void *);
+
+typedef struct {
+	void (*push_arguments)(void *, void (*push_fn)(void *, mcl_arg_t), void *dt);
+	void (*global_source)(void *, map_t, ios_t);
+	void (*local_source)(void *, map_t, ios_t);
+	void (*value_source)(void *, ios_t);
 } mcl_ex_vtable_s;
 
 typedef mcl_ex_vtable_s *mcl_ex_vtable_t;
@@ -28,8 +36,6 @@ struct mcl_ex_ss {
 	mcl_ex_vtable_t vtable;
 	void *data;
 };
-
-typedef void *mcl_arg_t;
 
 mcl_ex_t mcl_call(heap_t h, str_t nm, ...);
 mcl_ex_t mcl_call_cs(heap_t h, const char *nm, ...);

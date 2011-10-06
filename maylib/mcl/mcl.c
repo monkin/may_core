@@ -152,8 +152,39 @@ str_t mclt_name(mclt_t t) {
 		err_throw(e_mclt_error);
 }
 
-mclt_t mclt_numeric_op_result(mclt_t t1, mclt_t t2) {
-
+mclt_t mclt_op_result(mclt_t t1, mclt_t t2) {
+	if(t1==t2)
+		return t1;
+	if(mclt_is_numeric(t1) && mclt_is_numeric(t2)) {
+		if(mclt_is_float(t1) || mclt_is_float(t2))
+			return MCLT_FLOAT;
+		int sz1 = mclt_integer_size(t1);
+		int sz2 = mclt_integer_size(t2);
+		if(sz1==sz2)
+			return mclt_is_unsigned(t1) ? t1 : t2;
+		else
+			return sz1>sz2 ? t1 : t2;
+	}
+	if(mclt_is_vector(t1)) {
+		if(mclt_is_vector(t2)) {
+			if(mclt_vector_size(t1)==mclt_vector_size(t2))
+				return mclt_vector(mclt_op_result(mclt_vector_of(t1), mclt_vector_of(t2)),  mclt_vector_size(t1));
+			else
+				err_throw(e_mclt_error);
+		} else
+			return mclt_vector(mclt_op_result(mclt_vector_of(t1), t2),  mclt_vector_size(t1));
+	}
+	if(mclt_is_vector(t2))
+		return mclt_op_result(t2, t1);
+	if(mclt_is_pointer(t1)) {
+		if(mclt_is_integer(t2) && mclt_pointer_to(t1)!=MCLT_VOID)
+			return t1;
+		else
+			err_throw(e_mclt_error);
+	}
+	if(mclt_is_pointer(t2))
+		return mclt_op_result(t2, t1);
+	err_throw(e_mclt_error);
 }
 
 

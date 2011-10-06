@@ -67,13 +67,15 @@ bool mclt_is_convertable(mclt_t t1, mclt_t t2);
 #define mclt_is_image(t) ((t & MCLT_IMAGE_R) || (t & MCLT_IMAGE_W))
 #define mclt_is_void(t) (!(t))
 #define mclt_is_numeric(t) (mclt_is_float(t) || mclt_is_integer(t))
+#define mclt_is_unsigned(t) ((t)&MCLT_UNSIGNED)
+#define mclt_is_signed(t) (!((t)&MCLT_UNSIGNED))
 #define mclt_integer_size(t) (1<<(MCLT_I_SIZE & (t)))
 mclt_t mclt_vector(mclt_t t1, int vector_size);
 mclt_t mclt_pointer(mclt_t t, long mem_type);
 mclt_t mclt_vector_of(mclt_t t1);
 mclt_t mclt_vector_size(mclt_t t1);
 mclt_t mclt_pointer_to(mclt_t t1);
-mclt_t mclt_numeric_op_result(mclt_t, mclt_t);
+mclt_t mclt_op_result(mclt_t, mclt_t);
 str_t mclt_name(mclt_t);
 void mclt_init();
 

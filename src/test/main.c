@@ -1,7 +1,7 @@
 
-#include <maylib/maylib.h>
-#include <maylib/json.h>
-#include <maylib/stream.h>
+#include <may/lib/maylib.h>
+#include <may/lib/json.h>
+#include <may/lib/stream.h>
 #include <stdio.h>
 #include <stdbool.h>
 

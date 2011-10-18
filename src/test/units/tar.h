@@ -1,6 +1,6 @@
 
-#include <maylib/tar.h>
-#include <maylib/stream.h>
+#include <may/lib/tar.h>
+#include <may/lib/stream.h>
 
 void test_tar() {
 	TEST_MODULE("tar");

@@ -1,5 +1,5 @@
 
-#include <maylib/str.h>
+#include <may/lib/str.h>
 
 void test_json() {
 	TEST_MODULE("json");

@@ -1,7 +1,7 @@
 
 #include "maylib.h"
-#include "json.h"
-#include "mcl/mcl.h"
+#include "lib/json.h"
+#include "cl/mcl.h"
 #include <stdbool.h>
 
 static bool initialized = false;

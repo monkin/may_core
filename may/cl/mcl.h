@@ -2,7 +2,7 @@
 #ifndef MAY_MCL_H
 #define MAY_MCL_H
 
-#include "../parser.h"
+#include "../lib/parser.h"
 #include <stdbool.h>
 
 /* mclt = mCL type */

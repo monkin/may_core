@@ -1,5 +1,5 @@
 
-#include <may/lib/maylib.h>
+#include <may/maylib.h>
 #include <may/lib/json.h>
 #include <may/lib/stream.h>
 #include <stdio.h>

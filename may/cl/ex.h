@@ -3,9 +3,9 @@
 #define MAY_MCLEX_H
 
 #include "mcl.h"
-#include "../map.h"
-#include "../str.h"
-#include "../stream.h"
+#include "../lib/map.h"
+#include "../lib/str.h"
+#include "../lib/stream.h"
 
 struct mcl_ex_ss;
 typedef struct mcl_ex_ss *mcl_ex_s;

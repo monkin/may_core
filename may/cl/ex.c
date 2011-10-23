@@ -1,5 +1,8 @@
 
 #include "ex.h"
+#include <assert.h>
+
+ERR_DEFINE(e_mcl_ex_invalid_operand, "Invalid operand type", e_mcl_error);
 
 bool mcl_insert_ptr(map_t m, void *p) {
 	char phash[sizeof(void *)];
@@ -22,13 +25,32 @@ typedef struct {
 
 typedef mcl_stdfn_s *mcl_stdfn_t;
 
+static mclt_t ret_type_op_set(size_t argc, mclt_t *argt) {
+	assert(argc==2);
+	if(mclt_is_compatible(argt[0], argt[1]))
+		return argt[0];
+	else
+		err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_op_binary(size_t argc, mclt_t *argt) {
+	assert(argc==2);
+	err_try {
+		return mclt_op_result(argt[0], argt[1]);
+	} err_catch {
+		if(err_is(e_mclt_error))
+			err_replace(e_mcl_ex_invalid_operand);
+		err_throw_down();
+	}
+}
+
 static mcl_stdfn_s stdfn_list[] = {
-	{"=", 2, 0},
-	{"+", 2, 0},
-	{"-", 2, 0},
-	{"*", 2, 0},
-	{"/", 2, 0},
-	{"%", 2, 0},
+	{"=", 2, ret_type_op_set},
+	{"+", 2, ret_type_op_binary},
+	{"-", 2, ret_type_op_binary},
+	{"*", 2, ret_type_op_binary},
+	{"/", 2, ret_type_op_binary},
+	{"%", 2, ret_type_op_binary},
 	
 	{"!", 1, 0},
 	{"==", 2, 0},

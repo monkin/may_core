@@ -84,7 +84,7 @@ const err_t *const name = &err_ ## name ## _realisation
 /**
  * Set error information
  */
-#define err_set(name) { ERR_TRACE_STORE; err_reset();  err_replace(name) }
+#define err_set(name) { err_reset(); ERR_TRACE_STORE;  err_replace(name) }
 /**
  * Get error
  */
@@ -110,7 +110,7 @@ int err_stack_clear();
 void err_throw_down();
 #define err_try if((err_stack_size==err_stack_capacity ? err_stack_resize() : 0) ? !setjmp(err_stack[err_stack_size++]) : !setjmp(err_stack[err_stack_size++])) {
 #define err_catch err_stack_size--; if(!err_stack_size) err_stack_clear(); } else if((--err_stack_size) ? 1 : err_stack_clear())
-#define err_throw(err_name) { err_set(err_name); err_throw_down(); }
+#define err_throw(err_name) { err_replace(err_name); err_throw_down(); }
 
 
 #endif /* MAY_ERR_H */

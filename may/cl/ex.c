@@ -16,18 +16,38 @@ bool mcl_insert_ptr(map_t m, void *p) {
 
 typedef struct {
 	char *name;
-	size_t args_count;
+	int args_count;
 	mclt_t (*return_type)(size_t, mclt_t *);
 } mcl_stdfn_s;
 
 typedef mcl_stdfn_s *mcl_stdfn_t;
 
 static mcl_stdfn_s stdfn_list[] = {
-	{"+", 2, 0},
-	{"-", 2, 0},
+	{"!", 1, 0},
+	{"!=", 2, 0},
+	{"%", 2, 0},
+	{"&", 2, 0},
+	{"&&", 2, 0},
 	{"*", 2, 0},
+	{"+", 2, 0},
+	{"++", 1, 0},
+	{"-", 2, 0},
+	{"--", 1, 0},
 	{"/", 2, 0},
-	{"?", 3, 0}
+	{"<", 2, 0},
+	{"<<", 2, 0},
+	{"<=", 2, 0},
+	{"=", 2, 0},
+	{"==", 2, 0},
+	{">", 2, 0},
+	{">=", 2, 0},
+	{">>", 2, 0},
+	{"?", 3, 0},
+	{"[]", 2, 0},
+	{"^", 2, 0},
+	{"|", 2, 0},
+	{"||", 2, 0},
+	{"~", 2, 0}
 };
 
 static mcl_ex_t mcl_call_internal(heap_t h, mcl_stdfn_t fn, mcl_ex_t *args) {

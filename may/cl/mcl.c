@@ -6,11 +6,17 @@
 ERR_DEFINE(e_mcl_error, "mCL error", 0);
 ERR_DEFINE(e_mclt_error, "Invalid mCL type operation", e_mcl_error);
 
+/*
+ Returns true if this code is valid:
+ 	t1 a
+ 	t2 b
+ 	a = b
+*/
 bool mclt_is_compatible(mclt_t t1, mclt_t t2) {
 	if(t1==t2)
 		return true;
 	if(mclt_is_pointer(t1) || mclt_is_pointer(t2))
-		return false;
+		return mclt_is_bool(t1) || mclt_is_bool(t2);
 	else if(mclt_is_vector(t1)) {
 		if(mclt_is_vector(t2))
 			return ((t1 & MCLT_V_SIZE) == (t2 & MCLT_V_SIZE)) ? mclt_is_compatible(t1 & 0xFF, t2 & 0xFF) : false;
@@ -20,9 +26,11 @@ bool mclt_is_compatible(mclt_t t1, mclt_t t2) {
 			return false;
 	} else if(mclt_is_numeric(t1)) {
 		if(mclt_is_numeric(t2)) {
-			if(t1==MCLT_FLOAT)
+			if(mclt_is_bool(t1))
+				return true;
+			else if(mclt_is_float(t1))
 				return (t2 & MCLT_I_SIZE)<=1;
-			else if(t2==MCLT_FLOAT)
+			else if(mclt_is_float(t2))
 				return false;
 			else
 				return (t2 & MCLT_I_SIZE) <= (t2 & MCLT_I_SIZE);
@@ -32,9 +40,26 @@ bool mclt_is_compatible(mclt_t t1, mclt_t t2) {
 		return false;
 }
 
+/*
+ Returns true if this code is valid:
+ 	t1 a
+ 	t2 b
+ 	a = (t1) b
+*/
 bool mclt_is_convertable(mclt_t t1, mclt_t t2) {
 	if(t1==t2)
 		return true;
+	if(mclt_is_image(t1) || mclt_is_image(t2))
+		return false;
+	if(mclt_is_pointer(t1))
+		return mclt_is_pointer(t2) ? mclt_pointer_type(t1)==mclt_pointer_type(t2) : false;
+	if(mclt_is_pointer(t2))
+		return mclt_is_bool(t1);
+	if(mclt_is_vector(t1))
+		return mclt_is_vector(t2) && mclt_vector_size(t2)==mclt_vector_size(t1);
+	if(mclt_is_vector(t2))
+		return false;
+	return true;
 }
 
 mclt_t mclt_vector(mclt_t t, int vector_size) {
@@ -62,7 +87,7 @@ mclt_t mclt_vector_size(mclt_t t) {
 }
 
 mclt_t mclt_pointer_to(mclt_t t) {
-	if(!mclt_is_pointer(t))
+	if(mclt_is_pointer(t) || mclt_is_image(t))
 		err_throw(e_mclt_error);
 	return t & 0xFFFF & (mclt_t)(~MCLT_POINTER);
 }
@@ -84,6 +109,8 @@ void mclt_init() {
 		err_try {
 			type_heap = heap_create(0);
 			type_names = map_create(type_heap);
+			TYPE_APPEND(MCLT_VOID, "void")
+			TYPE_APPEND(MCLT_BOOL, "bool")
 			TYPE_APPEND(MCLT_FLOAT, "float");
 			TYPE_APPEND(MCLT_INTEGER, "char");
 			TYPE_APPEND(MCLT_INTEGER | MCLT_UNSIGNED, "uchar");

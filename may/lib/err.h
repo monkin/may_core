@@ -84,7 +84,7 @@ const err_t *const name = &err_ ## name ## _realisation
 /**
  * Set error information
  */
-#define err_set(name) { err_reset(); ERR_TRACE_STORE;  err_replace(name) }
+#define err_set(name) { err_reset(); err_replace(name) }
 /**
  * Get error
  */

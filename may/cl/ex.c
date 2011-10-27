@@ -4,6 +4,66 @@
 
 ERR_DEFINE(e_mcl_ex_invalid_operand, "Invalid operand type", e_mcl_error);
 
+/*
+ Returns true if this code is valid:
+ 	t1 a
+ 	t2 b
+ 	a = b
+*/
+static bool mclt_is_compatible(mclt_t t1, mclt_t t2) {
+	if(t1==t2)
+		return true;
+	if(mclt_is_pointer(t1) || mclt_is_pointer(t2))
+		return mclt_is_bool(t1);
+	if(mclt_is_vector(t1)) {
+		if(mclt_is_vector(t2))
+			return ((t1 & MCLT_V_SIZE) == (t2 & MCLT_V_SIZE)) ? mclt_is_compatible(t1 & 0xFF, t2 & 0xFF) : false;
+		else if(mclt_is_numeric(t2))
+			return mclt_is_compatible(mclt_vector_of(t1), t2);
+		else
+			return false;
+	} else if(mclt_is_numeric(t1)) {
+		if(mclt_is_numeric(t2)) {
+			if(mclt_is_bool(t1))
+				return true;
+			else if(mclt_is_float(t1))
+				return (t2 & MCLT_I_SIZE)<=1;
+			else if(mclt_is_float(t2))
+				return false;
+			else
+				return (t2 & MCLT_I_SIZE) <= (t2 & MCLT_I_SIZE);
+		} else
+			return false;
+	} else
+		return false;
+}
+
+/*
+ Returns true if this code is valid:
+ 	t1 a
+ 	t2 b
+ 	a = (t1) b
+*/
+static bool mclt_is_convertable(mclt_t t1, mclt_t t2) {
+	if(t1==t2)
+		return true;
+	if(mclt_is_bool(t1))
+		return !mclt_is_image(t2);
+	if(mclt_is_bool(t2))
+		return mclt_is_numeric(t1);
+	if(mclt_is_image(t1) || mclt_is_image(t2))
+		return false;
+	if(mclt_is_pointer(t1))
+		return mclt_is_pointer(t2) ? mclt_pointer_type(t1)==mclt_pointer_type(t2) : false;
+	if(mclt_is_pointer(t2))
+		return false;
+	if(mclt_is_vector(t1))
+		return mclt_is_vector(t2) && mclt_vector_size(t2)==mclt_vector_size(t1);
+	if(mclt_is_vector(t2))
+		return false;
+	return true;
+}
+
 bool mcl_insert_ptr(map_t m, void *p) {
 	char phash[sizeof(void *)];
 	int i;
@@ -44,6 +104,38 @@ static mclt_t ret_type_op_binary(size_t argc, mclt_t *argt) {
 	}
 }
 
+static mclt_t ret_type_op_not(size_t argc, mclt_t *argt) {
+	assert(argc==1);
+	if(mclt_is_convertable(MCLT_BOOL, argt[0]))
+		return MCLT_BOOL;
+	else
+		err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_op_equal(size_t argc, mclt_t *argt) {
+	assert(argc==2);
+	if(mclt_is_compatible(argt[1], argt[2]) || mclt_is_compatible(argt[2], argt[1]))
+		return MCLT_BOOL;
+	else
+		err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_op_compare(size_t argc, mclt_t *argt) {
+	assert(argc==2);
+	if((mclt_is_compatible(argt[1], argt[2]) || mclt_is_compatible(argt[2], argt[1])) && !mclt_is_image(argt[1]))
+		return MCLT_BOOL;
+	else
+		err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_op_combine(size_t argc, mclt_t *argt) {
+	assert(argc==2);
+	if(mclt_is_compatible(MCLT_BOOL, argt[0]) && mclt_is_compatible(MCLT_BOOL, argt[1]))
+		return MCLT_BOOL;
+	else
+		err_throw(e_mcl_ex_invalid_operand);
+}
+
 static mcl_stdfn_s stdfn_list[] = {
 	{"=", 2, ret_type_op_set},
 	{"+", 2, ret_type_op_binary},
@@ -52,15 +144,15 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"/", 2, ret_type_op_binary},
 	{"%", 2, ret_type_op_binary},
 	
-	{"!", 1, 0},
-	{"==", 2, 0},
-	{"!=", 2, 0},
-	{"<", 2, 0},
-	{">", 2, 0},
-	{"<=", 2, 0},
-	{">=", 2, 0},
-	{"&&", 2, 0},
-	{"||", 2, 0},
+	{"!", 1, ret_type_op_not},
+	{"==", 2, ret_type_op_equal},
+	{"!=", 2, ret_type_op_equal},
+	{"<", 2, ret_type_op_compare},
+	{">", 2, ret_type_op_compare},
+	{"<=", 2, ret_type_op_compare},
+	{">=", 2, ret_type_op_compare},
+	{"&&", 2, ret_type_op_combine},
+	{"||", 2, ret_type_op_combine},
 	
 	{"&", 2, 0},
 	{"|", 2, 0},

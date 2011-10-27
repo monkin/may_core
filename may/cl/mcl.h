@@ -22,7 +22,7 @@ enum {
 	MCLT_P_LOCAL = 0x020000,  /* Pointer to local memory */
 	MCLT_P_PRIVATE = 0x040000, /* Pointer to private memory */
 	MCLT_IMAGE_R = 0x080000,
-	MCLT_IMAGE_W = 0x100000,
+	MCLT_IMAGE_W = 0x100000
 };
 
 enum mclt_type_shortcuts {
@@ -44,22 +44,6 @@ enum {
 };
 
 typedef long mclt_t;
-
-
-/*
- Returns true if this code is valid:
- 	t1 a
- 	t2 b
- 	a = b
-*/
-bool mclt_is_compatible(mclt_t t1, mclt_t t2);
-/*
- Returns true if this code is valid:
- 	t1 a
- 	t2 b
- 	a = (t1) b
-*/
-bool mclt_is_convertable(mclt_t t1, mclt_t t2);
 
 #define mclt_is_integer(t) (((t) & MCLT_INTEGER) && !((t) & MCLT_V_SIZE))
 #define mclt_is_float(t) ((t)==MCLT_FLOAT)

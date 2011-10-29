@@ -4,65 +4,6 @@
 
 ERR_DEFINE(e_mcl_ex_invalid_operand, "Invalid operand type", e_mcl_error);
 
-/*
- Returns true if this code is valid:
- 	t1 a
- 	t2 b
- 	a = b
-*/
-static bool mclt_is_compatible(mclt_t t1, mclt_t t2) {
-	if(t1==t2)
-		return true;
-	if(mclt_is_pointer(t1) || mclt_is_pointer(t2))
-		return mclt_is_bool(t1);
-	if(mclt_is_vector(t1)) {
-		if(mclt_is_vector(t2))
-			return ((t1 & MCLT_V_SIZE) == (t2 & MCLT_V_SIZE)) ? mclt_is_compatible(t1 & 0xFF, t2 & 0xFF) : false;
-		else if(mclt_is_numeric(t2))
-			return mclt_is_compatible(mclt_vector_of(t1), t2);
-		else
-			return false;
-	} else if(mclt_is_numeric(t1)) {
-		if(mclt_is_numeric(t2)) {
-			if(mclt_is_bool(t1))
-				return true;
-			else if(mclt_is_float(t1))
-				return (t2 & MCLT_I_SIZE)<=1;
-			else if(mclt_is_float(t2))
-				return false;
-			else
-				return (t2 & MCLT_I_SIZE) <= (t2 & MCLT_I_SIZE);
-		} else
-			return false;
-	} else
-		return false;
-}
-
-/*
- Returns true if this code is valid:
- 	t1 a
- 	t2 b
- 	a = (t1) b
-*/
-static bool mclt_is_convertable(mclt_t t1, mclt_t t2) {
-	if(t1==t2)
-		return true;
-	if(mclt_is_bool(t1))
-		return !mclt_is_image(t2);
-	if(mclt_is_bool(t2))
-		return mclt_is_numeric(t1);
-	if(mclt_is_image(t1) || mclt_is_image(t2))
-		return false;
-	if(mclt_is_pointer(t1))
-		return mclt_is_pointer(t2) ? mclt_pointer_type(t1)==mclt_pointer_type(t2) : false;
-	if(mclt_is_pointer(t2))
-		return false;
-	if(mclt_is_vector(t1))
-		return mclt_is_vector(t2) && mclt_vector_size(t2)==mclt_vector_size(t1);
-	if(mclt_is_vector(t2))
-		return false;
-	return true;
-}
 
 bool mcl_insert_ptr(map_t m, void *p) {
 	char phash[sizeof(void *)];
@@ -84,6 +25,57 @@ typedef struct {
 } mcl_stdfn_s;
 
 typedef mcl_stdfn_s *mcl_stdfn_t;
+
+#define mcl_rule(cnd, result) if(cnd) return (result)
+#define mcl_rulex(precnd, cnd, result, exception) if(precnd) { if(cnd) { return (result); } else { err_throw(exception); }; }
+#define mcl_else(result) return result
+
+/**
+ * t2 can be lossless converted to t1
+ */
+static bool type_greater(mclt_t t1, mclt_t t2) {
+	mcl_rule(t1==t2, true);
+	mcl_rule(mclt_is_vector(t1) && mclt_is_vector(t2), mclt_vector_size(t1)==mclt_vector_size(t2) && type_greater(mclt_vector_of(t1), mclt_vector_of(t2)));
+	mcl_rule(mclt_is_float(t1), mclt_is_numeric(t2));
+	mcl_rule(mclt_is_integer(t1), mclt_integer_size(t1)>=mclt_integer_size(t2));
+	mcl_rule(mclt_is_vector(t1), type_greater(mclt_vector_of(t1), t2));
+	mcl_rule(mclt_is_pointer(t1) && mclt_is_pointer(t2), (mclt_pointer_to(t1)==mclt_pointer_to(t2) || mclt_is_void(mclt_pointer_to(t1))) && mclt_pointer_type(t1)==mclt_pointer_type(t1));
+	mcl_rule(mclt_is_bool(t1), mclt_is_numeric(t2) || mclt_is_pointer(t2));
+	mcl_else(false);
+}
+
+/**
+ * t1 can contains some values from t2
+ * t2 can be converted to t1
+ */
+static bool type_compatible(mclt_t t1, mclt_t t2) {
+	mcl_rule(t1==t2, true);
+	mcl_rule(mclt_is_vector(t1) && mclt_is_vector(t2), mclt_vector_size(t1)==mclt_vector_size(t2));
+	mcl_rule(mclt_is_pointer(t1) && mclt_is_pointer(t2), mclt_pointer_type(t1)==mclt_pointer_type(t1));
+	mcl_rule(mclt_is_numeric(t1) && mclt_is_numeric(t2), true);
+	mcl_rule(mclt_is_bool(t1), mclt_is_pointer(t2), true);
+	mcl_else(false);
+}
+
+/**
+ * For numerics only. Returns the greater of both types.
+ */
+static mclt_t type_max(mclt_t t1, mclt_t t2) {
+	mcl_rule(t1==t2, true);
+	mcl_rulex(mclt_is_vector(t1) && mclt_is_vector(t2),
+		mclt_vector_size(t1)==mclt_vector_size(t2),
+		mclt_vector(type_max(mclt_vector_of(t1), mclt_vector_of(t2)), mclt_vector_size(t1)),
+		e_mcl_ex_invalid_operand);
+	mcl_rule(mclt_is_vector(t1) && mclt_is_numeric(t2),
+		mclt_vector(type_max(mclt_vector_of(t1), t2), mclt_vector_size(t1)))
+	mcl_rule(mclt_is_numeric(t1) && mclt_is_vector(t2), type_max(t2, t1));
+	mcl_rule(mclt_is_float(t1) || mclt_is_float(t2), MCLT_FLOAT);
+	mcl_rule((mclt_is_integer(t1) && mclt_is_integer(t2)) ? mclt_integer_size(t1)==mclt_integer_size(t2) : false, t1 | MCLT_UNSIGNED);
+	mcl_rule(mclt_is_integer(t1) && mclt_is_integer(t2), mclt_integer_size(t1)>mclt_integer_size(t2) ? t1 : t2);
+	err_throw(e_mcl_ex_invalid_operand);
+}
+
+
 
 static mclt_t ret_type_op_set(size_t argc, mclt_t *argt) {
 	assert(argc==2);
@@ -136,6 +128,25 @@ static mclt_t ret_type_op_combine(size_t argc, mclt_t *argt) {
 		err_throw(e_mcl_ex_invalid_operand);
 }
 
+static mclt_t ret_type_op_bit(size_t argc, mclt_t *argt) {
+	assert(argc==2);
+	if(mclt_is_vector(argt[0])) {
+		if(mclt_is_vector(argt[1])) {
+			if(mclt_vector_size(argt[0])==mclt_vector_size(argt[1]))
+		} else {
+			
+		}
+	} else if(mclt_is_vector(argt[1])) {
+		mclt_t types[2];
+		types[0] = argt[1];
+		types[1] = argt[0];
+		return ret_type_op_bit(2, types);
+	} else if(mclt_is_integer(argt[0]) && mclt_is_integer(argt[1])) {
+		
+	} else
+		err_throw(e_mcl_ex_invalid_operand);
+}
+
 static mcl_stdfn_s stdfn_list[] = {
 	{"=", 2, ret_type_op_set},
 	{"+", 2, ret_type_op_binary},
@@ -160,6 +171,8 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"~", 2, 0},
 	{"<<", 2, 0},
 	{">>", 2, 0},
+	{">>", 2, 0},
+	{"~", 2, 0},
 	
 	{"?", 3, 0},
 	{"[]", 2, 0},

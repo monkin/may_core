@@ -55,14 +55,13 @@ typedef long mclt_t;
 #define mclt_is_numeric(t) (mclt_is_float(t) || mclt_is_integer(t))
 #define mclt_is_unsigned(t) ((t)&MCLT_UNSIGNED)
 #define mclt_is_signed(t) (!((t)&MCLT_UNSIGNED))
-#define mclt_integer_size(t) (1<<((MCLT_I_SIZE & (t))-1))
+#define mclt_integer_size(t) ((MCLT_I_SIZE & (t))>0 ? (1<<((MCLT_I_SIZE & (t))-1)) : 0)
 #define mclt_pointer_type(t) ((t) & (MCL_MEM_GLOBAL | MCL_MEM_LOCAL | MCL_MEM_PRIVATE))
 mclt_t mclt_vector(mclt_t t1, int vector_size);
 mclt_t mclt_pointer(mclt_t t, long mem_type);
 mclt_t mclt_vector_of(mclt_t t1);
 mclt_t mclt_vector_size(mclt_t t1);
 mclt_t mclt_pointer_to(mclt_t t1);
-mclt_t mclt_op_result(mclt_t, mclt_t);
 str_t mclt_name(mclt_t);
 void mclt_init();
 

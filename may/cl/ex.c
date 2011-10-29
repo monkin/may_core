@@ -53,12 +53,12 @@ static bool type_compatible(mclt_t t1, mclt_t t2) {
 	mcl_rule(mclt_is_vector(t1) && mclt_is_vector(t2), mclt_vector_size(t1)==mclt_vector_size(t2));
 	mcl_rule(mclt_is_pointer(t1) && mclt_is_pointer(t2), mclt_pointer_type(t1)==mclt_pointer_type(t1));
 	mcl_rule(mclt_is_numeric(t1) && mclt_is_numeric(t2), true);
-	mcl_rule(mclt_is_bool(t1), mclt_is_pointer(t2), true);
+	mcl_rule(mclt_is_bool(t1) && mclt_is_pointer(t2), true);
 	mcl_else(false);
 }
 
 /**
- * For numerics only. Returns the greater of both types.
+ * For numerics and vectors only. Returns the greater of both types.
  */
 static mclt_t type_max(mclt_t t1, mclt_t t2) {
 	mcl_rule(t1==t2, true);
@@ -67,7 +67,7 @@ static mclt_t type_max(mclt_t t1, mclt_t t2) {
 		mclt_vector(type_max(mclt_vector_of(t1), mclt_vector_of(t2)), mclt_vector_size(t1)),
 		e_mcl_ex_invalid_operand);
 	mcl_rule(mclt_is_vector(t1) && mclt_is_numeric(t2),
-		mclt_vector(type_max(mclt_vector_of(t1), t2), mclt_vector_size(t1)))
+		mclt_vector(type_max(mclt_vector_of(t1), t2), mclt_vector_size(t1)));
 	mcl_rule(mclt_is_numeric(t1) && mclt_is_vector(t2), type_max(t2, t1));
 	mcl_rule(mclt_is_float(t1) || mclt_is_float(t2), MCLT_FLOAT);
 	mcl_rule((mclt_is_integer(t1) && mclt_is_integer(t2)) ? mclt_integer_size(t1)==mclt_integer_size(t2) : false, t1 | MCLT_UNSIGNED);
@@ -75,20 +75,18 @@ static mclt_t type_max(mclt_t t1, mclt_t t2) {
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
-
-
-static mclt_t ret_type_op_set(size_t argc, mclt_t *argt) {
+static mclt_t ret_type_op_set(size_t argc, mclt_t *args) {
 	assert(argc==2);
-	if(mclt_is_compatible(argt[0], argt[1]))
-		return argt[0];
+	if(type_compatible(args[0], args[1]))
+		return args[0];
 	else
 		err_throw(e_mcl_ex_invalid_operand);
 }
 
-static mclt_t ret_type_op_binary(size_t argc, mclt_t *argt) {
+static mclt_t ret_type_op_numeric(size_t argc, mclt_t *args) {
 	assert(argc==2);
 	err_try {
-		return mclt_op_result(argt[0], argt[1]);
+		return type_max(args[0], args[1]);
 	} err_catch {
 		if(err_is(e_mclt_error))
 			err_replace(e_mcl_ex_invalid_operand);
@@ -96,74 +94,58 @@ static mclt_t ret_type_op_binary(size_t argc, mclt_t *argt) {
 	}
 }
 
-static mclt_t ret_type_op_not(size_t argc, mclt_t *argt) {
+static mclt_t ret_type_op_plus(size_t argc, mclt_t *args) {
+	assert(argc==2);
+	if((mcl_is_pointer(args[0]) && mcl_is_integer(args[1])) && !mclt_is_void(mclt_pointer_to(args[0])))
+		return args[0];
+	if(mcl_is_pointer(args[1]) && mcl_is_integer(args[0])) {
+		mclt_t args_swap[2];
+		args_swap[0] = args[1];
+		args_swap[1] = args[0];
+		return ret_type_op_plus(argc, args_swap);
+	}
+	return ret_type_op_numeric(argc, args);
+}
+
+static mclt_t ret_type_op_minus(size_t argc, mclt_t *args) {
+	assert(argc==2);
+	if(mcl_is_pointer(args[0]) && args[0]==args[1])
+		return MCLT_LONG;
+	if((mcl_is_pointer(args[0]) && mcl_is_integer(args[1])) && !mclt_is_void(mclt_pointer_to(args[0])))
+		return args[0];
+	if(mcl_is_pointer(args[1]) && mcl_is_integer(args[0])) {
+		mclt_t args_swap[2];
+		args_swap[0] = args[1];
+		args_swap[1] = args[0];
+		return ret_type_op_plus(argc, args_swap);
+	}
+	return ret_type_op_numeric(argc, args);
+}
+
+static mclt_t ret_type_op_not(size_t argc, mclt_t *args) {
 	assert(argc==1);
-	if(mclt_is_convertable(MCLT_BOOL, argt[0]))
-		return MCLT_BOOL;
-	else
-		err_throw(e_mcl_ex_invalid_operand);
-}
-
-static mclt_t ret_type_op_equal(size_t argc, mclt_t *argt) {
-	assert(argc==2);
-	if(mclt_is_compatible(argt[1], argt[2]) || mclt_is_compatible(argt[2], argt[1]))
-		return MCLT_BOOL;
-	else
-		err_throw(e_mcl_ex_invalid_operand);
-}
-
-static mclt_t ret_type_op_compare(size_t argc, mclt_t *argt) {
-	assert(argc==2);
-	if((mclt_is_compatible(argt[1], argt[2]) || mclt_is_compatible(argt[2], argt[1])) && !mclt_is_image(argt[1]))
-		return MCLT_BOOL;
-	else
-		err_throw(e_mcl_ex_invalid_operand);
-}
-
-static mclt_t ret_type_op_combine(size_t argc, mclt_t *argt) {
-	assert(argc==2);
-	if(mclt_is_compatible(MCLT_BOOL, argt[0]) && mclt_is_compatible(MCLT_BOOL, argt[1]))
-		return MCLT_BOOL;
-	else
-		err_throw(e_mcl_ex_invalid_operand);
-}
-
-static mclt_t ret_type_op_bit(size_t argc, mclt_t *argt) {
-	assert(argc==2);
-	if(mclt_is_vector(argt[0])) {
-		if(mclt_is_vector(argt[1])) {
-			if(mclt_vector_size(argt[0])==mclt_vector_size(argt[1]))
-		} else {
-			
-		}
-	} else if(mclt_is_vector(argt[1])) {
-		mclt_t types[2];
-		types[0] = argt[1];
-		types[1] = argt[0];
-		return ret_type_op_bit(2, types);
-	} else if(mclt_is_integer(argt[0]) && mclt_is_integer(argt[1])) {
-		
-	} else
-		err_throw(e_mcl_ex_invalid_operand);
+	mcl_rule(mclt_is_vector(args[0]), mclt_vector(MCLT_BOOL, mclt_vector_size(args[0])));
+	mcl_rule(mclt_is_pointer(args[0]) || mclt_is_numeric(args[0]), MCLT_BOOL);
+	err_throw(e_mcl_ex_invalid_operand);
 }
 
 static mcl_stdfn_s stdfn_list[] = {
 	{"=", 2, ret_type_op_set},
-	{"+", 2, ret_type_op_binary},
-	{"-", 2, ret_type_op_binary},
-	{"*", 2, ret_type_op_binary},
-	{"/", 2, ret_type_op_binary},
-	{"%", 2, ret_type_op_binary},
+	{"+", 2, ret_type_op_plus},
+	{"-", 2, ret_type_op_minus},
+	{"*", 2, ret_type_op_numeric},
+	{"/", 2, ret_type_op_numeric},
+	{"%", 2, ret_type_op_numeric},
 	
 	{"!", 1, ret_type_op_not},
-	{"==", 2, ret_type_op_equal},
-	{"!=", 2, ret_type_op_equal},
-	{"<", 2, ret_type_op_compare},
-	{">", 2, ret_type_op_compare},
-	{"<=", 2, ret_type_op_compare},
-	{">=", 2, ret_type_op_compare},
-	{"&&", 2, ret_type_op_combine},
-	{"||", 2, ret_type_op_combine},
+	{"==", 2, 0},
+	{"!=", 2, 0},
+	{"<", 2, 0},
+	{">", 2, 0},
+	{"<=", 2, 0},
+	{">=", 2, 0},
+	{"&&", 2, 0},
+	{"||", 2, 0},
 	
 	{"&", 2, 0},
 	{"|", 2, 0},

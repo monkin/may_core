@@ -129,6 +129,15 @@ static mclt_t ret_type_op_not(size_t argc, mclt_t *args) {
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
+static mclt_t ret_type_op_equal(size_t argc, mclt_t *args) {
+	assert(argc==2);
+	if(!type_compatible(args[0], args[1]))
+		err_throw(e_mcl_ex_invalid_operand);
+	mcl_rule(mclt_is_vector(args[0]), mclt_vector(MCLT_BOOL, mclt_vector_size(args[0])));
+	mcl_rule(mclt_is_vector(args[1]), mclt_vector(MCLT_BOOL, mclt_vector_size(args[1])));
+	return MCLT_BOOL;
+}
+
 static mcl_stdfn_s stdfn_list[] = {
 	{"=", 2, ret_type_op_set},
 	{"+", 2, ret_type_op_plus},
@@ -138,8 +147,8 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"%", 2, ret_type_op_numeric},
 	
 	{"!", 1, ret_type_op_not},
-	{"==", 2, 0},
-	{"!=", 2, 0},
+	{"==", 2, ret_type_op_equal},
+	{"!=", 2, ret_type_op_equal},
 	{"<", 2, 0},
 	{">", 2, 0},
 	{"<=", 2, 0},
@@ -150,11 +159,10 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"&", 2, 0},
 	{"|", 2, 0},
 	{"^", 2, 0},
-	{"~", 2, 0},
 	{"<<", 2, 0},
 	{">>", 2, 0},
 	{">>", 2, 0},
-	{"~", 2, 0},
+	{"~", 1, 0},
 	
 	{"?", 3, 0},
 	{"[]", 2, 0},

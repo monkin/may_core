@@ -75,6 +75,8 @@ static mclt_t type_max(mclt_t t1, mclt_t t2) {
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
+#define type_is_arithmetic(t) (mclt_is_numeric(t) || mclt_is_vector(t))
+
 static mclt_t ret_type_op_set(size_t argc, mclt_t *args) {
 	assert(argc==2);
 	if(type_compatible(args[0], args[1]))
@@ -149,6 +151,32 @@ static mclt_t ret_type_op_compare(size_t argc, mclt_t *args) {
 	return MCLT_BOOL;
 }
 
+static mclt_t ret_type_op_compose(size_t argc, mclt_t *args) {
+	assert(argc==2);
+	if(type_is_arithmetic(args[0]) && type_is_arithmetic(args[1])) {
+		mclt_t t = type_max(args[0], args[1]);
+		return mclt_is_vector(t) ? mclt_vector(MCLT_BOOL, mclt_vector_size(t)) : MCLT_BOOL;
+	}
+	err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_op_binary(size_t argc, mclt_t *args) {
+	assert(argc==2);
+	if((mclt_is_integer(args[0]) || mclt_is_vector_of_integer(args[0]))
+			&& (mclt_is_integer(args[1]) || mclt_is_vector_of_integer(args[1]))) {
+		return type_max(args[0], args[1]);
+	}
+	err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_op_invert(size_t argc, mclt_t *args) {
+	assert(argc==1);
+	if(mclt_is_integer(args[0]) || mclt_is_vector_of_integer(args[0]))
+		return args[0];
+	else
+		err_throw(e_mcl_ex_invalid_operand);
+}
+
 static mcl_stdfn_s stdfn_list[] = {
 	{"=", 2, ret_type_op_set},
 	{"+", 2, ret_type_op_plus},
@@ -157,23 +185,23 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"/", 2, ret_type_op_numeric},
 	{"%", 2, ret_type_op_numeric},
 	
-	{"!", 1, ret_type_op_not},
 	{"==", 2, ret_type_op_equal},
 	{"!=", 2, ret_type_op_equal},
 	{"<", 2, ret_type_op_compare},
 	{">", 2, ret_type_op_compare},
 	{"<=", 2, ret_type_op_compare},
 	{">=", 2, ret_type_op_compare},
-	{"&&", 2, 0},
-	{"||", 2, 0},
+	{"!", 1, ret_type_op_not},
+	{"&&", 2, ret_type_op_compose},
+	{"||", 2, ret_type_op_compose},
 	
-	{"&", 2, 0},
-	{"|", 2, 0},
-	{"^", 2, 0},
-	{"<<", 2, 0},
-	{">>", 2, 0},
-	{">>", 2, 0},
-	{"~", 1, 0},
+	{"&", 2, ret_type_op_binary},
+	{"|", 2, ret_type_op_binary},
+	{"^", 2, ret_type_op_binary},
+	{"<<", 2, ret_type_op_binary},
+	{">>", 2, ret_type_op_binary},
+	{">>", 2, ret_type_op_binary},
+	{"~", 1, ret_type_op_invert},
 	
 	{"?", 3, 0},
 	{"[]", 2, 0},

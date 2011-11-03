@@ -50,6 +50,8 @@ typedef long mclt_t;
 #define mclt_is_bool(t) ((t)==MCLT_BOOL)
 #define mclt_is_pointer(t) ((t) & MCLT_POINTER)
 #define mclt_is_vector(t) (((t) & MCLT_V_SIZE) && !mclt_is_pointer(t))
+#define mclt_is_vector_of_integer(t) (mclt_is_vector(t) ? mclt_is_integer(mclt_vector_of(t)) : false)
+#define mclt_is_vector_of_float(t) (mclt_is_vector(t) ? mclt_is_float(mclt_vector_of(t)) : false)
 #define mclt_is_image(t) ((t & MCLT_IMAGE_R) || (t & MCLT_IMAGE_W))
 #define mclt_is_void(t) (!(t))
 #define mclt_is_numeric(t) (mclt_is_float(t) || mclt_is_integer(t))

@@ -49,6 +49,7 @@ syntree_node_t syntree_child(syntree_node_t);
 str_t syntree_value(syntree_node_t);
 
 size_t syntree_error_line(syntree_t);
+size_t syntree_error_char(syntree_t);
 
 
 #endif /* MAY_SYNTREE_H */

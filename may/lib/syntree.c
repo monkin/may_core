@@ -145,4 +145,14 @@ size_t syntree_error_line(syntree_t st) {
 	return line;
 }
 
+size_t syntree_error_char(syntree_t st) {
+	if(syntree_eof(st))
+		return 0;
+	str_it_t i;
+	size_t echar = 1;
+	for(i=st->max_position; i>str_begin(st->str) && *i!='\n'; i--)
+		echar++;
+	return echar;
+}
+
 

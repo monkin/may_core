@@ -216,6 +216,32 @@ static mclt_t ret_type_work_dim(size_t argc, mclt_t *args) {
 	return MCLT_ULONG;
 }
 
+static mclt_t ret_type_abs(size_t argc, mclt_t *args) {
+	assert(argc==1);
+	if(mclt_is_integer(args[0]) || mclt_is_vector_of_integer(args[0]))
+		return args[0] | MCLT_UNSIGNED;
+	err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_abs_diff(size_t argc, mclt_t *args) {
+	assert(argc==2);
+	mclt_t ret = type_max(args[0], args[1]);
+	if(mclt_is_integer(ret) || mclt_is_vector_of_integer(ret))
+		return ret | MCLT_UNSIGNED;
+	err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_integer_same(size_t argc, mclt_t *args) {
+	assert(argc>=1);
+	int i;
+	mclt_t ret = args[0];
+	for(i=1; i<argc; i++)
+		ret = type_max(ret, args[i]);
+	if(mclt_is_integer(ret) || mclt_is_vector_of_integer(ret))
+		return ret;
+	err_throw(e_mcl_ex_invalid_operand);
+}
+
 
 static mcl_stdfn_s stdfn_list[] = {
 	{"=", 2, ret_type_op_set},
@@ -255,24 +281,24 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"get_num_groups", 1, ret_type_work_item},
 	{"get_work_dim", 0, ret_type_work_dim},
 	
-	{"abs", 1, 0},
-	{"abs_diff", 2, 0},
-	{"add_sat", 2, 0},
-	{"hadd", 2, 0},
-	{"rhadd", 2, 0},
-	{"clz", 1, 0},
+	{"abs", 1, ret_type_abs},
+	{"abs_diff", 2, ret_type_abs_diff},
+	{"add_sat", 2, ret_type_integer_same},
+	{"hadd", 2, ret_type_integer_same},
+	{"rhadd", 2, ret_type_integer_same},
+	{"clz", 1, ret_type_integer_same},
 	{"clamp", 3, 0},
-	{"mad_hi", 3, 0},
-	{"mad_sat", 3, 0},
+	{"mad_hi", 3, ret_type_integer_same},
+	{"mad_sat", 3, ret_type_integer_same},
 	{"max", 2, 0},
 	{"min", 2, 0},
-	{"mul_hi", 2, 0},
-	{"rotate", 2, 0},
-	{"sub_sat", 2, 0},
+	{"mul_hi", 2, ret_type_integer_same},
+	{"rotate", 2, ret_type_integer_same},
+	{"sub_sat", 2, ret_type_integer_same},
 	{"upsample", 2, 0},
 	
-	{"mad24", 3, 0},
-	{"mul24", 2, 0},
+	{"mad24", 3, ret_type_integer_same},
+	{"mul24", 2, ret_type_integer_same},
 	
 	{"degrees", 1, 0},
 	{"mix", 3, 0},

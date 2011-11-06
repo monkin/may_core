@@ -177,6 +177,46 @@ static mclt_t ret_type_op_invert(size_t argc, mclt_t *args) {
 		err_throw(e_mcl_ex_invalid_operand);
 }
 
+static mclt_t ret_type_op_ternary(size_t argc, mclt_t *args) {
+	assert(argc==3);
+	int i;
+	int vector_size = 0;
+	for(i=0; i<3; i++) {
+		if(mclt_is_vector(args[i])) {
+			if(!vector_size)
+				vector_size = mclt_vector_size(args[i]);
+			else {
+				if(vector_size!=mclt_vector_size(args[i]))
+					err_throw(e_mcl_ex_invalid_operand);
+			}
+		} else if(!mclt_is_numeric(args[0]))
+			err_throw(e_mcl_ex_invalid_operand);
+	}
+	if(vector_size && mclt_is_vector_of_float(args[0]))
+		err_throw(e_mcl_ex_invalid_operand);
+	return type_max(args[1], args[2]);
+}
+
+static mclt_t ret_type_op_index(size_t argc, mclt_t *args) {
+	assert(argc==2);
+	if(mclt_is_pointer(args[0]) ? mclt_pointer_to(args[0])!=MCLT_VOID && mclt_is_integer(args[1]) : false)
+		return mclt_pointer_to(args[0]);
+	err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_work_item(size_t argc, mclt_t *args) {
+	assert(argc==1);
+	if(type_compatible(MCLT_UINT, args[0]))
+		return MCLT_ULONG;
+	err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_work_dim(size_t argc, mclt_t *args) {
+	assert(argc==0);
+	return MCLT_ULONG;
+}
+
+
 static mcl_stdfn_s stdfn_list[] = {
 	{"=", 2, ret_type_op_set},
 	{"+", 2, ret_type_op_plus},
@@ -203,17 +243,17 @@ static mcl_stdfn_s stdfn_list[] = {
 	{">>", 2, ret_type_op_binary},
 	{"~", 1, ret_type_op_invert},
 	
-	{"?", 3, 0},
-	{"[]", 2, 0},
+	{"?", 3, ret_type_op_ternary},
+	{"[]", 2, ret_type_op_index},
 	
-	{"get_global_id", 1, 0},
-	{"get_global_offset", 1, 0},
-	{"get_global_size", 1, 0},
-	{"get_group_id", 1, 0},
-	{"get_local_id", 1, 0},
-	{"get_local_size", 1, 0},
-	{"get_num_groups", 1, 0},
-	{"get_work_dim", 0, 0},
+	{"get_global_id", 1, ret_type_work_item},
+	{"get_global_offset", 1, ret_type_work_item},
+	{"get_global_size", 1, ret_type_work_item},
+	{"get_group_id", 1, ret_type_work_item},
+	{"get_local_id", 1, ret_type_work_item},
+	{"get_local_size", 1, ret_type_work_item},
+	{"get_num_groups", 1, ret_type_work_item},
+	{"get_work_dim", 0, ret_type_work_dim},
 	
 	{"abs", 1, 0},
 	{"abs_diff", 2, 0},

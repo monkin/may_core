@@ -21,7 +21,7 @@ bool mcl_insert_ptr(map_t m, void *p) {
 typedef struct {
 	char *name;
 	int args_count;
-	mclt_t (*return_type)(size_t, mclt_t *);
+	mclt_t (*return_type)(size_t, const mclt_t *, mclt_t *);
 } mcl_stdfn_s;
 
 typedef mcl_stdfn_s *mcl_stdfn_t;
@@ -77,7 +77,7 @@ static mclt_t type_max(mclt_t t1, mclt_t t2) {
 
 #define type_is_arithmetic(t) (mclt_is_numeric(t) || mclt_is_vector(t))
 
-static mclt_t ret_type_op_set(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_set(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	if(type_compatible(args[0], args[1]))
 		return args[0];
@@ -85,7 +85,7 @@ static mclt_t ret_type_op_set(size_t argc, mclt_t *args) {
 		err_throw(e_mcl_ex_invalid_operand);
 }
 
-static mclt_t ret_type_op_numeric(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_numeric(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	err_try {
 		return type_max(args[0], args[1]);
@@ -96,42 +96,37 @@ static mclt_t ret_type_op_numeric(size_t argc, mclt_t *args) {
 	}
 }
 
-static mclt_t ret_type_op_plus(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_plus(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
-	if((mcl_is_pointer(args[0]) && mcl_is_integer(args[1])) && !mclt_is_void(mclt_pointer_to(args[0])))
+	if((mcl_is_pointer(args[0]) && mcl_is_integer(args[1])) ? !mclt_is_void(mclt_pointer_to(args[0])) : false)
 		return args[0];
-	if(mcl_is_pointer(args[1]) && mcl_is_integer(args[0])) {
-		mclt_t args_swap[2];
-		args_swap[0] = args[1];
-		args_swap[1] = args[0];
-		return ret_type_op_plus(argc, args_swap);
-	}
-	return ret_type_op_numeric(argc, args);
+	if((mcl_is_pointer(args[1]) && mcl_is_integer(args[0])) ? !mclt_is_void(mclt_pointer_to(args[1])) : false)
+		return args[1];
+	return ret_type_op_numeric(argc, args, cast_to);
 }
 
-static mclt_t ret_type_op_minus(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_minus(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
-	if(mcl_is_pointer(args[0]) && args[0]==args[1])
-		return MCLT_LONG;
-	if((mcl_is_pointer(args[0]) && mcl_is_integer(args[1])) && !mclt_is_void(mclt_pointer_to(args[0])))
-		return args[0];
-	if(mcl_is_pointer(args[1]) && mcl_is_integer(args[0])) {
-		mclt_t args_swap[2];
-		args_swap[0] = args[1];
-		args_swap[1] = args[0];
-		return ret_type_op_plus(argc, args_swap);
+	if(mcl_is_pointer(args[0])) {
+		if(mclt_is_void(mclt_pointer_to(args[0])))
+			err_throw(e_mcl_ex_invalid_operand);
+		if(args[0]==args[1])
+			return MCLT_LONG;
+		if((mcl_is_pointer(args[0]) && mcl_is_integer(args[1])) ? !mclt_is_void(mclt_pointer_to(args[0])) : false)
+			return args[0];
+		err_throw(e_mcl_ex_invalid_operand);
 	}
-	return ret_type_op_numeric(argc, args);
+	return ret_type_op_numeric(argc, args, cast_to);
 }
 
-static mclt_t ret_type_op_not(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_not(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==1);
 	mcl_rule(mclt_is_vector(args[0]), mclt_vector(MCLT_BOOL, mclt_vector_size(args[0])));
 	mcl_rule(mclt_is_pointer(args[0]) || mclt_is_numeric(args[0]), MCLT_BOOL);
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
-static mclt_t ret_type_op_equal(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_equal(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	if(!type_compatible(args[0], args[1]))
 		err_throw(e_mcl_ex_invalid_operand);
@@ -140,7 +135,7 @@ static mclt_t ret_type_op_equal(size_t argc, mclt_t *args) {
 	return MCLT_BOOL;
 }
 
-static mclt_t ret_type_op_compare(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_compare(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	if(!type_compatible(args[0], args[1]) || mclt_is_image(args[0]) || (mclt_is_pointer(args[0]) && args[0]!=args[1]))
 		err_throw(e_mcl_ex_invalid_operand);
@@ -151,7 +146,7 @@ static mclt_t ret_type_op_compare(size_t argc, mclt_t *args) {
 	return MCLT_BOOL;
 }
 
-static mclt_t ret_type_op_compose(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_compose(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	if(type_is_arithmetic(args[0]) && type_is_arithmetic(args[1])) {
 		mclt_t t = type_max(args[0], args[1]);
@@ -160,7 +155,7 @@ static mclt_t ret_type_op_compose(size_t argc, mclt_t *args) {
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
-static mclt_t ret_type_op_binary(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_binary(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	if((mclt_is_integer(args[0]) || mclt_is_vector_of_integer(args[0]))
 			&& (mclt_is_integer(args[1]) || mclt_is_vector_of_integer(args[1]))) {
@@ -169,7 +164,7 @@ static mclt_t ret_type_op_binary(size_t argc, mclt_t *args) {
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
-static mclt_t ret_type_op_invert(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_invert(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==1);
 	if(mclt_is_integer(args[0]) || mclt_is_vector_of_integer(args[0]))
 		return args[0];
@@ -177,7 +172,7 @@ static mclt_t ret_type_op_invert(size_t argc, mclt_t *args) {
 		err_throw(e_mcl_ex_invalid_operand);
 }
 
-static mclt_t ret_type_op_ternary(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_ternary(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==3);
 	int i;
 	int vector_size = 0;
@@ -197,33 +192,33 @@ static mclt_t ret_type_op_ternary(size_t argc, mclt_t *args) {
 	return type_max(args[1], args[2]);
 }
 
-static mclt_t ret_type_op_index(size_t argc, mclt_t *args) {
+static mclt_t ret_type_op_index(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	if(mclt_is_pointer(args[0]) ? mclt_pointer_to(args[0])!=MCLT_VOID && mclt_is_integer(args[1]) : false)
 		return mclt_pointer_to(args[0]);
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
-static mclt_t ret_type_work_item(size_t argc, mclt_t *args) {
+static mclt_t ret_type_work_item(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==1);
 	if(type_compatible(MCLT_UINT, args[0]))
 		return MCLT_ULONG;
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
-static mclt_t ret_type_work_dim(size_t argc, mclt_t *args) {
+static mclt_t ret_type_work_dim(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==0);
 	return MCLT_ULONG;
 }
 
-static mclt_t ret_type_abs(size_t argc, mclt_t *args) {
+static mclt_t ret_type_abs(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==1);
 	if(mclt_is_integer(args[0]) || mclt_is_vector_of_integer(args[0]))
 		return args[0] | MCLT_UNSIGNED;
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
-static mclt_t ret_type_abs_diff(size_t argc, mclt_t *args) {
+static mclt_t ret_type_abs_diff(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	mclt_t ret = type_max(args[0], args[1]);
 	if(mclt_is_integer(ret) || mclt_is_vector_of_integer(ret))
@@ -231,7 +226,7 @@ static mclt_t ret_type_abs_diff(size_t argc, mclt_t *args) {
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
-static mclt_t ret_type_integer_same(size_t argc, mclt_t *args) {
+static mclt_t ret_type_integer_same(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc>=1);
 	int i;
 	mclt_t ret = args[0];

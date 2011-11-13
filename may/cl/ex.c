@@ -253,12 +253,36 @@ static mclt_t ret_type_float_same(size_t argc, const mclt_t *args, mclt_t *cast_
 	mclt_t ret = args[0];
 	for(i=1; i<argc; i++)
 		ret = type_max(ret, args[i]);
+	if(mclt_is_integer(ret))
+		ret = MCLT_FLOAT;
+	else if(mclt_is_vector_of_integer(ret))
+		ret = mclt_vector(MCLT_FLOAT, mclt_vector_size(ret));
 	if(mclt_is_float(ret) || mclt_is_vector_of_float(ret)) {
 		for(i=0; i<argc; i++)
 			cast_to[i] = ret;
 		return ret;
 	}
 	err_throw(e_mcl_ex_invalid_operand);
+}
+
+static mclt_t ret_type_float_length(size_t argc, const mclt_t *args, mclt_t *cast_to) {
+	assert(argc==1 && argc==2);
+	mclt_t atype = argc==1 ? args[0] : type_max(args[0], args[1]);
+	int i;
+	if(mclt_is_integer(atype))
+		atype = MCLT_FLOAT;
+	else if(mclt_is_vector_of_integer(atype))
+		atype = mclt_vector(MCLT_FLOAT, mclt_vector_size(atype));
+	else if(!mclt_is_float(atype) && !mclt_is_vector_of_float(atype))
+		err_throw(e_mcl_ex_invalid_operand);
+	if(mclt_is_vector(atype)) {
+		int sz = mclt_vector_size(atype);
+		if(sz!=2 && sz!=4)
+			err_throw(e_mcl_ex_invalid_operand);
+	}
+	for(i=0; i<argc; i++)
+		cast_to[i] = atype;
+	return MCLT_FLOAT;
 }
 
 static mcl_stdfn_s stdfn_list[] = {
@@ -396,13 +420,13 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"tgamma", 1, ret_type_float_same},
 	{"trunc", 1, ret_type_float_same},
 	
-	{"dot", 2, ret_type_float_same},
+	{"dot", 2, ret_type_float_length},
 	{"cross", 2, 0},
-	{"distance", 2, 0},
-	{"length", 1, 0},
+	{"distance", 2, ret_type_float_length},
+	{"length", 1, ret_type_float_length},
 	{"normalize", 1, ret_type_float_same},
-	{"fast_distance", 2, 0},
-	{"fast_length", 1, 0},
+	{"fast_distance", 2, ret_type_float_length},
+	{"fast_length", 1, ret_type_float_length},
 	{"fast_normalize", 1, ret_type_float_same},
 	{"isequal", 2, 0},
 	{"isnotequal", 2, 0},
@@ -425,14 +449,17 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"shufle", 2, 0},
 	{"shufle2", 3, 0},
 	
-	{"read_imagef", 3, 0},
-	{"read_imagei", 3, 0},
-	{"read_imageui", 3, 0},
+	{"read_imagef_nearest", 2, 0},
+	{"read_imagei_nearest", 2, 0},
+	{"read_imageui_nearest", 2, 0},
+	{"read_imagef_linear", 2, 0},
+	{"read_imagei_linear", 2, 0},
+	{"read_imageui_linear", 2, 0},
 	{"write_imagef", 3, 0},
 	{"write_imagei", 3, 0},
 	{"write_imageui", 3, 0},
 	{"get_image_width", 3, 0},
-	{"get_image_height", 3, 0},
+	{"get_image_height", 3, 0}
 	
 };
 

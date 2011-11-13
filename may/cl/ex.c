@@ -449,17 +449,17 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"shufle", 2, 0},
 	{"shufle2", 3, 0},
 	
-	{"read_imagef_nearest", 2, 0},
-	{"read_imagei_nearest", 2, 0},
-	{"read_imageui_nearest", 2, 0},
-	{"read_imagef_linear", 2, 0},
-	{"read_imagei_linear", 2, 0},
-	{"read_imageui_linear", 2, 0},
-	{"write_imagef", 3, 0},
-	{"write_imagei", 3, 0},
-	{"write_imageui", 3, 0},
-	{"get_image_width", 3, 0},
-	{"get_image_height", 3, 0}
+	{"read_image_fn", 2, 0},
+	{"read_image_in", 2, 0},
+	{"read_image_uin", 2, 0},
+	{"read_image_fl", 2, 0},
+	{"read_image_il", 2, 0},
+	{"read_image_uil", 2, 0},
+	{"write_image_f", 3, 0},
+	{"write_image_i", 3, 0},
+	{"write_image_ui", 3, 0},
+	{"get_image_width", 1, 0},
+	{"get_image_height", 1, 0}
 	
 };
 

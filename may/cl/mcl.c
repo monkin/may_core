@@ -31,9 +31,9 @@ mclt_t mclt_vector_size(mclt_t t) {
 }
 
 mclt_t mclt_pointer_to(mclt_t t) {
-	if(mclt_is_pointer(t) || mclt_is_image(t))
+	if(!mclt_is_pointer(t))
 		err_throw(e_mclt_error);
-	return t & 0xFFFF & (mclt_t)(~MCLT_POINTER);
+	return t & 0x3F;
 }
 
 static map_t type_names = 0;
@@ -56,14 +56,14 @@ void mclt_init() {
 			TYPE_APPEND(MCLT_VOID, "void")
 			TYPE_APPEND(MCLT_BOOL, "bool")
 			TYPE_APPEND(MCLT_FLOAT, "float");
-			TYPE_APPEND(MCLT_INTEGER, "char");
-			TYPE_APPEND(MCLT_INTEGER | MCLT_UNSIGNED, "uchar");
-			TYPE_APPEND(MCLT_INTEGER | 1, "short");
-			TYPE_APPEND(MCLT_INTEGER | MCLT_UNSIGNED | 1, "ushort");
-			TYPE_APPEND(MCLT_INTEGER | 2, "int");
-			TYPE_APPEND(MCLT_INTEGER | MCLT_UNSIGNED | 2, "uint");
-			TYPE_APPEND(MCLT_INTEGER | 3, "long");
-			TYPE_APPEND(MCLT_INTEGER | MCLT_UNSIGNED | 3, "ulong");
+			TYPE_APPEND(MCLT_CHAR, "char");
+			TYPE_APPEND(MCLT_UCHAR, "uchar");
+			TYPE_APPEND(MCLT_SHORT, "short");
+			TYPE_APPEND(MCLT_USHORT, "ushort");
+			TYPE_APPEND(MCLT_INT, "int");
+			TYPE_APPEND(MCLT_UINT, "uint");
+			TYPE_APPEND(MCLT_LONG, "long");
+			TYPE_APPEND(MCLT_ULONG, "ulong");
 			TYPE_APPEND(MCLT_IMAGE_R, "read_only image_t");
 			TYPE_APPEND(MCLT_IMAGE_W, "write_only image_t");
 			pthread_mutexattr_init(&mclt_nm_mutex_attr);

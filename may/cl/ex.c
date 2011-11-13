@@ -130,7 +130,7 @@ static mclt_t ret_type_op_equal(size_t argc, const mclt_t *args, mclt_t *cast_to
 	assert(argc==2);
 	if(!type_compatible(args[0], args[1]))
 		err_throw(e_mcl_ex_invalid_operand);
-	cast_to[0] = cast_to[1] = type_max(args[0], arg[1]);
+	cast_to[0] = cast_to[1] = type_max(args[0], args[1]);
 	mcl_rule(mclt_is_vector(args[0]), mclt_vector(MCLT_BOOL, mclt_vector_size(args[0])));
 	mcl_rule(mclt_is_vector(args[1]), mclt_vector(MCLT_BOOL, mclt_vector_size(args[1])));
 	return MCLT_BOOL;
@@ -140,7 +140,7 @@ static mclt_t ret_type_op_compare(size_t argc, const mclt_t *args, mclt_t *cast_
 	assert(argc==2);
 	if(!type_compatible(args[0], args[1]) || mclt_is_image(args[0]) || (mclt_is_pointer(args[0]) && args[0]!=args[1]))
 		err_throw(e_mcl_ex_invalid_operand);
-	cast_to[0] = cast_to[1] = type_max(args[0], arg[1]);
+	cast_to[0] = cast_to[1] = type_max(args[0], args[1]);
 	if(mclt_is_vector(args[0]))
 		return mclt_vector(MCLT_BOOL, mclt_vector_size(args[0]));
 	if(mclt_is_vector(args[1]))
@@ -318,7 +318,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"mad24", 3, ret_type_integer_same},
 	{"mul24", 2, ret_type_integer_same},
 	
-	{"clamp", 3, ret_type_float_same}
+	{"clamp", 3, ret_type_float_same},
 	{"degrees", 1, ret_type_float_same},
 	{"mix", 3, ret_type_float_same},
 	{"radians", 1, ret_type_float_same},
@@ -423,7 +423,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"bitselect", 3, 0},
 	{"select", 3, 0},
 	{"shufle", 2, 0},
-	{"shufle2", 3, 0}
+	{"shufle2", 3, 0},
 	
 	{"read_imagef", 3, 0},
 	{"read_imagei", 3, 0},

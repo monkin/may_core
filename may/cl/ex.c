@@ -396,14 +396,14 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"tgamma", 1, ret_type_float_same},
 	{"trunc", 1, ret_type_float_same},
 	
-	{"dot", 2, 0},
+	{"dot", 2, ret_type_float_same},
 	{"cross", 2, 0},
 	{"distance", 2, 0},
 	{"length", 1, 0},
-	{"normalize", 1, 0},
+	{"normalize", 1, ret_type_float_same},
 	{"fast_distance", 2, 0},
 	{"fast_length", 1, 0},
-	{"fast_normalize", 1, 0},
+	{"fast_normalize", 1, ret_type_float_same},
 	{"isequal", 2, 0},
 	{"isnotequal", 2, 0},
 	{"isgreater", 2, 0},
@@ -424,6 +424,16 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"select", 3, 0},
 	{"shufle", 2, 0},
 	{"shufle2", 3, 0}
+	
+	{"read_imagef", 3, 0},
+	{"read_imagei", 3, 0},
+	{"read_imageui", 3, 0},
+	{"write_imagef", 3, 0},
+	{"write_imagei", 3, 0},
+	{"write_imageui", 3, 0},
+	{"get_image_width", 3, 0},
+	{"get_image_height", 3, 0},
+	
 };
 
 static mcl_ex_t mcl_call_internal(heap_t h, mcl_stdfn_t fn, mcl_ex_t *args) {

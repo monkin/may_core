@@ -21,8 +21,7 @@ bool mcl_insert_ptr(map_t m, void *p) {
 typedef enum {
 	MCLFT_FUNCTION = 0,
 	MCLFT_OPERATOR = 1,
-	MCLFT_CUSTOM = 2,
-	MCLFT_IMAGE_FUNCTION = 3
+	MCLFT_CUSTOM = 2
 } mcl_function_type_t;
 
 typedef struct {
@@ -457,22 +456,128 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"shufle", 2, 0, 0},
 	{"shufle2", 3, 0, 0},
 	
-	{"read_image_fn", 2, 0, MCLFT_IMAGE_FUNCTION},
-	{"read_image_in", 2, 0, MCLFT_IMAGE_FUNCTION},
-	{"read_image_uin", 2, 0, MCLFT_IMAGE_FUNCTION},
-	{"read_image_fl", 2, 0, MCLFT_IMAGE_FUNCTION},
-	{"read_image_il", 2, 0, MCLFT_IMAGE_FUNCTION},
-	{"read_image_uil", 2, 0, MCLFT_IMAGE_FUNCTION},
-	{"write_image_f", 3, 0, MCLFT_IMAGE_FUNCTION},
-	{"write_image_i", 3, 0, MCLFT_IMAGE_FUNCTION},
-	{"write_image_ui", 3, 0, MCLFT_IMAGE_FUNCTION},
-	{"get_image_width", 1, 0, MCLFT_IMAGE_FUNCTION},
-	{"get_image_height", 1, 0, MCLFT_IMAGE_FUNCTION}
+	/* suffixes
+	* i - integer
+	* ui - unsigned integer
+	* f - float
+	* n - nearest neighbor interpolation
+	* l - linear interpolation
+	*/
+	{"read_image_fn", 2, 0, MCLFT_CUSTOM},
+	{"read_image_in", 2, 0, MCLFT_CUSTOM},
+	{"read_image_uin", 2, 0, MCLFT_CUSTOM},
+	{"read_image_fl", 2, 0, MCLFT_CUSTOM},
+	{"read_image_il", 2, 0, MCLFT_CUSTOM},
+	{"read_image_uil", 2, 0, MCLFT_CUSTOM},
+	{"write_image_f", 3, 0, MCLFT_FUNCTION},
+	{"write_image_i", 3, 0, MCLFT_FUNCTION},
+	{"write_image_ui", 3, 0, MCLFT_FUNCTION},
+	{"get_image_width", 1, 0, MCLFT_FUNCTION},
+	{"get_image_height", 1, 0, MCLFT_FUNCTION}
+
+};
+
+/*** experssion functions ***/
+static void mcl_push_arguments(mclt_ex_t ex, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
+	ex->vtable->push_arguments(ex->data, push_fn, push_fn_arg);
+}
+static void mcl_global_source(mclt_ex_t ex, map_t m, ios_t s) {
+	ex->vtable->global_source(ex->data, m, s);
+}
+static void mcl_local_source(mclt_ex_t ex, map_t m, ios_t s) {
+	ex->vtable->local_source(ex->data, m, s);
+}
+static void mcl_value_source(mclt_ex_t ex, ios_t s) {
+	ex->vtable->value_source(ex->data, s);
+}
+
+/*** call_internal ***/
+
+typedef struct {
+	mcl_stdfn_t fn;
+	mcl_ex_t args[4];
+} call_internal_data_s;
+
+typedef call_internal_data_s *call_internal_data_t;
+
+static void call_internal_push_arguments(void *data, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
+	int i;
+	for(i=0; i<cid->fn->args_count; i++)
+		mcl_push_arguments(((call_internal_data_t) data)->args[i], push_fn, push_fn_arg);
+}
+static void call_internal_global_source(void *data, map_t m, ios_t s) {
+	int i;
+	for(i=0; i<cid->fn->args_count; i++)
+		mcl_global_source(((call_internal_data_t) data)->args[i], m, s);
+}
+static void call_internal_local_source(void *data, map_t m, ios_t s) {
+	int i;
+	for(i=0; i<cid->fn->args_count; i++)
+		mcl_local_source(((call_internal_data_t) data)->args[i], m, s);
+}
+static void call_internal_value_source(void *data, ios_t s) {
+	call_internal_data_t cid = (call_internal_data_t) data;
+	int i;
+	switch(cid->fn->type) {
+	case MCLFT_FUNCTION:
+		ios_write(s, cid->fn->name, strlen(cid->fn->name));
+		ios_write(s, "(", 1);
+		for(i=0; i<cid->fn->args_count; i++) {
+			if(i)
+				ios_write(s, ", ", 2);
+			mcl_value_source(cid->args[i], s);
+		}
+		ios_write(s, ")", 1);
+		break;
+	case MCLFT_OPERATOR:
+		switch(cid->fn->args_count) {
+		case 1:
+			ios_write(s, "(", 1);
+			ios_write(s, cid->fn->name, strlen(cid->fn->name));
+			mcl_value_source(cid->args[0], s);
+			ios_write(s, ")", 1);
+			break;
+		case 2:
+			ios_write(s, "(", 1);
+			mcl_value_source(cid->args[0], s);
+			ios_write(s, cid->fn->name, strlen(cid->fn->name));
+			mcl_value_source(cid->args[1], s);
+			ios_write(s, ")", 1);
+			break;
+		}
+		break;
+	case MCLFT_CUSTOM:
+		switch(cid->fn->name[0]) {
+		case '[': /* [] - operator */
+			mcl_value_source(cid->args[0], s);
+			ios_write(s, "[", 1);
+			mcl_value_source(cid->args[1], s);
+			ios_write(s, "]", 1);
+			break;
+		case '?': /* x ? y : z */
+			ios_write(s, "(", 1);
+			mcl_value_source(cid->args[0], s);
+			ios_write(s, " ? ", 3);
+			mcl_value_source(cid->args[1], s);
+			ios_write(s, " : ", 3);
+			mcl_value_source(cid->args[2], s);
+			ios_write(s, ")", 1);
+			break;
+		default: /* read image function */
+		}
+		break;
+	}
+}
 	
+static mcl_ex_vtable_s call_internal_vtable = {
+	call_internal_push_arguments,
+	call_internal_global_source,
+	call_internal_local_source,
+	call_internal_value_source
 };
 
 static mcl_ex_t mcl_call_internal(heap_t h, mcl_stdfn_t fn, mcl_ex_t *args) {
-
+	
 }
 
 mcl_ex_t mcl_call(heap_t h, str_t nm, ...) {

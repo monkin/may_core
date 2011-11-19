@@ -25,7 +25,7 @@ typedef void *mcl_arg_t;
 bool mcl_insert_ptr(map_t, void *);
 
 typedef struct {
-	void (*push_arguments)(void *, void (*push_fn)(void *, mcl_arg_t), void *dt);
+	void (*push_arguments)(void *, str_t (*push_fn)(void *, mcl_arg_t), void *dt);
 	void (*global_source)(void *, map_t, ios_t);
 	void (*local_source)(void *, map_t, ios_t);
 	void (*value_source)(void *, ios_t);

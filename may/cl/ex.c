@@ -292,6 +292,28 @@ static mclt_t ret_type_float_length(size_t argc, const mclt_t *args, mclt_t *cas
 	return MCLT_FLOAT;
 }
 
+static mclt_t ret_type_read_image(size_t argc, const mclt_t *args, mclt_t *cast_to, mclt_t rtype) {
+	assert(argc==2);
+	if(args[0]!=MCLT_IMAGE_R)
+		err_throw(e_mcl_ex_invalid_operand);
+	if(mclt_is_vector(args[1]) ? mclt_vector_size(args[1])==2 : false) {
+		if(mclt_is_integer(mclt_vector_of(args[1])))
+			cast_to[1] = mclt_vector(MCLT_INT, 2);
+	} else
+		err_throw(e_mcl_ex_invalid_operand);
+	return mclt_vector(rtype, 4);
+}
+
+static mclt_t ret_type_read_image_f(size_t argc, const mclt_t *args, mclt_t *cast_to) {
+	return ret_type_read_image(argc, args, cast_to, MCLT_FLOAT);
+}
+static mclt_t ret_type_read_image_i(size_t argc, const mclt_t *args, mclt_t *cast_to) {
+	return ret_type_read_image(argc, args, cast_to, MCLT_INT);
+}
+static mclt_t ret_type_read_image_ui(size_t argc, const mclt_t *args, mclt_t *cast_to) {
+	return ret_type_read_image(argc, args, cast_to, MCLT_UINT);
+}
+
 static mcl_stdfn_s stdfn_list[] = {
 	{"=", 2, ret_type_op_set, MCLFT_OPERATOR},
 	{"+", 2, ret_type_op_plus, MCLFT_OPERATOR},
@@ -463,12 +485,12 @@ static mcl_stdfn_s stdfn_list[] = {
 	* n - nearest neighbor interpolation
 	* l - linear interpolation
 	*/
-	{"read_image_fn", 2, 0, MCLFT_CUSTOM},
-	{"read_image_in", 2, 0, MCLFT_CUSTOM},
-	{"read_image_uin", 2, 0, MCLFT_CUSTOM},
-	{"read_image_fl", 2, 0, MCLFT_CUSTOM},
-	{"read_image_il", 2, 0, MCLFT_CUSTOM},
-	{"read_image_uil", 2, 0, MCLFT_CUSTOM},
+	{"read_image_fn", 2, ret_type_read_image_f, MCLFT_CUSTOM},
+	{"read_image_in", 2, ret_type_read_image_i, MCLFT_CUSTOM},
+	{"read_image_uin", 2, ret_type_read_image_ui, MCLFT_CUSTOM},
+	{"read_image_fl", 2, ret_type_read_image_f, MCLFT_CUSTOM},
+	{"read_image_il", 2, ret_type_read_image_i, MCLFT_CUSTOM},
+	{"read_image_uil", 2, ret_type_read_image_ui, MCLFT_CUSTOM},
 	{"write_image_f", 3, 0, MCLFT_FUNCTION},
 	{"write_image_i", 3, 0, MCLFT_FUNCTION},
 	{"write_image_ui", 3, 0, MCLFT_FUNCTION},
@@ -478,16 +500,16 @@ static mcl_stdfn_s stdfn_list[] = {
 };
 
 /*** experssion functions ***/
-static void mcl_push_arguments(mclt_ex_t ex, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
+static void mcl_push_arguments(mcl_ex_t ex, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
 	ex->vtable->push_arguments(ex->data, push_fn, push_fn_arg);
 }
-static void mcl_global_source(mclt_ex_t ex, map_t m, ios_t s) {
+static void mcl_global_source(mcl_ex_t ex, map_t m, ios_t s) {
 	ex->vtable->global_source(ex->data, m, s);
 }
-static void mcl_local_source(mclt_ex_t ex, map_t m, ios_t s) {
+static void mcl_local_source(mcl_ex_t ex, map_t m, ios_t s) {
 	ex->vtable->local_source(ex->data, m, s);
 }
-static void mcl_value_source(mclt_ex_t ex, ios_t s) {
+static void mcl_value_source(mcl_ex_t ex, ios_t s) {
 	ex->vtable->value_source(ex->data, s);
 }
 
@@ -563,7 +585,18 @@ static void call_internal_value_source(void *data, ios_t s) {
 			mcl_value_source(cid->args[2], s);
 			ios_write(s, ")", 1);
 			break;
-		default: /* read image function */
+		default: { /* read image function */
+				bool is_linear;
+				if(cid->fn->name[11]=='f')
+				switch(cid->fn->name[11]) {
+				case 'f': /* read_image_f* */
+				case 'i': /* read_image_i* */
+					is_linear = cid->fn->name[12]=='l';
+					break;
+				case 'u': /* read_image_ui* */
+					is_linear = false;
+				}
+			}
 		}
 		break;
 	}

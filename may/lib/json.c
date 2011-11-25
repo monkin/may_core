@@ -1,4 +1,3 @@
-
 #include "json.h"
 #include <string.h>
 
@@ -432,7 +431,7 @@ static void jb_s_push_state(jb_s_t jb, char s) {
 }
 
 static void jb_s_indent(jb_s_t jb) {
-	static char spaces[] = "                                                                ";
+	static char spaces[] = "                                ";
 	static char tabs[] = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
 	if(jb->format & JSON_FORMATF_FLAG) {
 		ptrdiff_t cnt = (jb->format & JSON_FORMATF_TAB_SIZE) * jb->states_size;

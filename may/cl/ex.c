@@ -586,16 +586,25 @@ static void call_internal_value_source(void *data, ios_t s) {
 			ios_write(s, ")", 1);
 			break;
 		default: { /* read image function */
-				bool is_linear;
-				if(cid->fn->name[11]=='f')
+				bool is_linear = false;
 				switch(cid->fn->name[11]) {
 				case 'f': /* read_image_f* */
+					ios_write_cs(s, "read_image_f(");
+					is_linear = cid->fn->name[12]=='l';
+					break;
 				case 'i': /* read_image_i* */
+					ios_write_cs(s, "read_image_i(");
 					is_linear = cid->fn->name[12]=='l';
 					break;
 				case 'u': /* read_image_ui* */
-					is_linear = false;
+					ios_write_cs(s, "read_image_ui(");
+					is_linear = cid->fn->name[13]=='l';
+					break;
 				}
+				mcl_value_source(cid->args[0], s);
+				ios_write_cs(s, is_linear ? ", sampler_linear, " : ", sampler_nearest, ");
+				mcl_value_source(cid->args[1], s);
+				ios_write_cs(s, ")");
 			}
 		}
 		break;

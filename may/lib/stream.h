@@ -61,6 +61,7 @@ ios_t ios_range_create(heap_t, ios_t, long long position, long long size);
 size_t ios_write_n(ios_t, const void *, size_t, size_t);
 size_t ios_read_n(ios_t, void *, size_t, size_t);
 void ios_write(ios_t, const void *, size_t);
+#define ios_write_cs(ios, s) { const char *may_ios_str = (s); ios_write((ios), may_ios_str, strlen(may_ios_str)); }
 void ios_read(ios_t, void *, size_t);
 bool ios_eof(ios_t);
 long long ios_tell(ios_t);

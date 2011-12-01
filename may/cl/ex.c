@@ -92,6 +92,22 @@ static mclt_t ret_type_op_set(size_t argc, const mclt_t *args, mclt_t *cast_to) 
 		err_throw(e_mcl_ex_invalid_operand);
 }
 
+static mclt_t ret_type_neg(size_t argc, const mclt_t *args, mclt_t *cast_to) {
+	assert(argc==1);
+	if(mclt_is_vector(args[0])) {
+		if(mclt_is_bool(mclt_vector_of(args[0])))
+			return cast_to[0] = mclt_vector(MCLT_INT, mclt_vector_size());
+		else
+			return args[0];
+	} else if(mclt_is_numeric(args[0])) {
+		if(mclt_is_bool(args[0]))
+			return cast_to[0] = MCLT_INT;
+		else
+			return args[0];
+	} else
+		err_throw(e_mcl_ex_invalid_operand);
+}
+
 static mclt_t ret_type_op_numeric(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	err_try {
@@ -342,6 +358,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	
 	{"?", 3, ret_type_op_ternary, MCLFT_CUSTOM},
 	{"[]", 2, ret_type_op_index, MCLFT_CUSTOM},
+	{"neg", 1, ret_type_neg, MCLFT_CUSTOM}, /* unary minus */
 	
 	{"get_global_id", 1, ret_type_work_item, 0},
 	{"get_global_offset", 1, ret_type_work_item, 0},
@@ -571,10 +588,11 @@ static void call_internal_value_source(void *data, ios_t s) {
 	case MCLFT_CUSTOM:
 		switch(cid->fn->name[0]) {
 		case '[': /* [] - operator */
+			ios_write(s, "(", 1);
 			mcl_value_source(cid->args[0], s);
 			ios_write(s, "[", 1);
 			mcl_value_source(cid->args[1], s);
-			ios_write(s, "]", 1);
+			ios_write(s, "])", 2);
 			break;
 		case '?': /* x ? y : z */
 			ios_write(s, "(", 1);
@@ -584,6 +602,11 @@ static void call_internal_value_source(void *data, ios_t s) {
 			ios_write(s, " : ", 3);
 			mcl_value_source(cid->args[2], s);
 			ios_write(s, ")", 1);
+			break;
+		case 'n': /* neg(x) - unary minus*/
+			ios_write_cs(s, "(-");
+			mcl_value_source(cid->args[1], s);
+			ios_write_cs(s, ")");
 			break;
 		default: { /* read image function */
 				bool is_linear = false;

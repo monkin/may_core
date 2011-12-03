@@ -10,7 +10,7 @@
 ERR_DECLARE(e_mcl_ex_invalid_operand);
 
 struct mcl_ex_ss;
-typedef struct mcl_ex_ss *mcl_ex_s;
+typedef struct mcl_ex_ss mcl_ex_s;
 typedef mcl_ex_s *mcl_ex_t;
 
 enum {

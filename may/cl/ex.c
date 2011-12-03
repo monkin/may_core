@@ -96,7 +96,7 @@ static mclt_t ret_type_neg(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==1);
 	if(mclt_is_vector(args[0])) {
 		if(mclt_is_bool(mclt_vector_of(args[0])))
-			return cast_to[0] = mclt_vector(MCLT_INT, mclt_vector_size());
+			return cast_to[0] = mclt_vector(MCLT_INT, mclt_vector_size(args[0]));
 		else
 			return args[0];
 	} else if(mclt_is_numeric(args[0])) {
@@ -541,18 +541,21 @@ typedef call_internal_data_s *call_internal_data_t;
 
 static void call_internal_push_arguments(void *data, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
 	int i;
+	call_internal_data_t cid = (call_internal_data_t) data;
 	for(i=0; i<cid->fn->args_count; i++)
-		mcl_push_arguments(((call_internal_data_t) data)->args[i], push_fn, push_fn_arg);
+		mcl_push_arguments(cid->args[i], push_fn, push_fn_arg);
 }
 static void call_internal_global_source(void *data, map_t m, ios_t s) {
 	int i;
+	call_internal_data_t cid = (call_internal_data_t) data;
 	for(i=0; i<cid->fn->args_count; i++)
-		mcl_global_source(((call_internal_data_t) data)->args[i], m, s);
+		mcl_global_source(cid->args[i], m, s);
 }
 static void call_internal_local_source(void *data, map_t m, ios_t s) {
 	int i;
+	call_internal_data_t cid = (call_internal_data_t) data;
 	for(i=0; i<cid->fn->args_count; i++)
-		mcl_local_source(((call_internal_data_t) data)->args[i], m, s);
+		mcl_local_source(cid->args[i], m, s);
 }
 static void call_internal_value_source(void *data, ios_t s) {
 	call_internal_data_t cid = (call_internal_data_t) data;

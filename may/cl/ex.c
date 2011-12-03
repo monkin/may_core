@@ -535,6 +535,7 @@ static void mcl_value_source(mcl_ex_t ex, ios_t s) {
 typedef struct {
 	mcl_stdfn_t fn;
 	mcl_ex_t args[4];
+	mcl_ex_s ex;
 } call_internal_data_s;
 
 typedef call_internal_data_s *call_internal_data_t;
@@ -633,9 +634,14 @@ static void call_internal_value_source(void *data, ios_t s) {
 				ios_write_cs(s, ")");
 			}
 		}
-		break;
 	}
 }
+
+/*typedef struct {
+	mcl_stdfn_t fn;
+	mcl_ex_t args[4];
+	mcl_ex_s ex;
+} call_internal_data_s;*/
 	
 static mcl_ex_vtable_s call_internal_vtable = {
 	call_internal_push_arguments,
@@ -645,7 +651,22 @@ static mcl_ex_vtable_s call_internal_vtable = {
 };
 
 static mcl_ex_t mcl_call_internal(heap_t h, mcl_stdfn_t fn, mcl_ex_t *args) {
-	
+	call_internal_data_t r = heap_alloc(h, sizeof(call_internal_data_s));
+	mclt_t types[4];
+	mclt_t cast[4];
+	int i;
+	for(i=0; i<fn->args_count; i++)
+		types[i] = cast[i] = args[i]->return_type;
+
+	r->fn = fn;
+	r->ex.return_type = r->fn->return_type(fn->args_count, types, cast);
+	r->ex.vtable = &call_internal_vtable;
+	r->ex.data = r;
+
+	for(i=0; i<fn->args_count; i++)
+		r->args[i] = types[i]==cast[i] ? args[i] : mcl_cast(h, cast[i], args[i]);
+
+	return &r->ex;
 }
 
 mcl_ex_t mcl_call(heap_t h, str_t nm, ...) {

@@ -44,22 +44,6 @@ void *heap_slow_alloc(heap_t h, size_t sz) {
 	return &(b->data[0]);
 }
 
-void heap_release(heap_t h, size_t sz) {
-	heap_block_t *i = h->last;
-	while(i ? i->used<sz : false) {
-		i = i->previous;
-		sz -= i->used;
-	}
-	if(i) {
-		heap_block_t *j;
-		i->used -= sz;
-		for(j=i->next; j; j=j->next)
-			mem_free(j);
-		i->next = 0;
-	} else
-		err_throw(e_heap_invalid_size);
-}
-
 void heap_release_to(heap_t h, void *p) {
 	heap_block_t *i = h->last;
 	while(i ? ((char *)p)<i->data || ((char *)p)>=(i->data+i->used) : false)

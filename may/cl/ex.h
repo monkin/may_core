@@ -8,6 +8,7 @@
 #include "../lib/stream.h"
 
 ERR_DECLARE(e_mcl_ex_invalid_operand);
+ERR_DECLARE(e_mcl_ex_invalid_function);
 
 struct mcl_ex_ss;
 typedef struct mcl_ex_ss mcl_ex_s;
@@ -39,8 +40,17 @@ struct mcl_ex_ss {
 	void *data;
 };
 
-mcl_ex_t mcl_call(heap_t h, str_t nm, ...);
-mcl_ex_t mcl_call_cs(heap_t h, const char *nm, ...);
+void mcl_init();
+
+mcl_ex_t mcl_call(heap_t h, str_t nm);
+mcl_ex_t mcl_call_cs(heap_t h, const char *nm);
+mcl_ex_t mcl_call_1(heap_t h, str_t nm, mcl_ex_t);
+mcl_ex_t mcl_call_1_cs(heap_t h, const char *nm, mcl_ex_t);
+mcl_ex_t mcl_call_2(heap_t h, str_t nm, mcl_ex_t, mcl_ex_t);
+mcl_ex_t mcl_call_2_cs(heap_t h, const char *nm, mcl_ex_t, mcl_ex_t);
+mcl_ex_t mcl_call_3(heap_t h, str_t nm, mcl_ex_t, mcl_ex_t, mcl_ex_t);
+mcl_ex_t mcl_call_3_cs(heap_t h, const char *nm, mcl_ex_t, mcl_ex_t, mcl_ex_t);
+
 mcl_ex_t mcl_var(heap_t h, mcl_ex_t);
 mcl_ex_t mcl_arg(heap_t h, mclt_t tp, mcl_arg_t *);
 mcl_ex_t mcl_const(heap_t h, mclt_t tp, const void *val);

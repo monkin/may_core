@@ -32,7 +32,6 @@ void *heap_slow_alloc(heap_t, size_t);
 #define heap_alloc(h, sz) ((((h)->last->size - (h)->last->used)>=(sz)) \
 	? (((h)->last->used+=(sz)),&((h)->last->data[(h)->last->used-(sz)])) \
 	: heap_slow_alloc(h,(sz)))
-void heap_release(heap_t, size_t);
 void heap_release_to(heap_t, void *);
 /*void heap_position(heap_t);*/
 #define heap_position(h) ((h)->last->data + (h)->last->used)

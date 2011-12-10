@@ -3,6 +3,7 @@
 #include <assert.h>
 
 ERR_DEFINE(e_mcl_ex_invalid_operand, "Invalid operand type", e_mcl_error);
+ERR_DEFINE(e_mcl_ex_invalid_function, "Invalid function name", e_mcl_error);
 
 
 bool mcl_insert_ptr(map_t m, void *p) {
@@ -121,21 +122,21 @@ static mclt_t ret_type_op_numeric(size_t argc, const mclt_t *args, mclt_t *cast_
 
 static mclt_t ret_type_op_plus(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
-	if((mcl_is_pointer(args[0]) && mcl_is_integer(args[1])) ? !mclt_is_void(mclt_pointer_to(args[0])) : false)
+	if((mclt_is_pointer(args[0]) && mclt_is_integer(args[1])) ? !mclt_is_void(mclt_pointer_to(args[0])) : false)
 		return args[0];
-	if((mcl_is_pointer(args[1]) && mcl_is_integer(args[0])) ? !mclt_is_void(mclt_pointer_to(args[1])) : false)
+	if((mclt_is_pointer(args[1]) && mclt_is_integer(args[0])) ? !mclt_is_void(mclt_pointer_to(args[1])) : false)
 		return args[1];
 	return ret_type_op_numeric(argc, args, cast_to);
 }
 
 static mclt_t ret_type_op_minus(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
-	if(mcl_is_pointer(args[0])) {
+	if(mclt_is_pointer(args[0])) {
 		if(mclt_is_void(mclt_pointer_to(args[0])))
 			err_throw(e_mcl_ex_invalid_operand);
 		if(args[0]==args[1])
 			return MCLT_LONG;
-		if((mcl_is_pointer(args[0]) && mcl_is_integer(args[1])) ? !mclt_is_void(mclt_pointer_to(args[0])) : false)
+		if((mclt_is_pointer(args[0]) && mclt_is_integer(args[1])) ? !mclt_is_void(mclt_pointer_to(args[0])) : false)
 			return args[0];
 		err_throw(e_mcl_ex_invalid_operand);
 	}
@@ -512,9 +513,47 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"write_image_i", 3, 0, MCLFT_FUNCTION},
 	{"write_image_ui", 3, 0, MCLFT_FUNCTION},
 	{"get_image_width", 1, 0, MCLFT_FUNCTION},
-	{"get_image_height", 1, 0, MCLFT_FUNCTION}
-
+	{"get_image_height", 1, 0, MCLFT_FUNCTION},
+	{0, 0, 0, 0}
 };
+
+static heap_t stdfn_heap = 0;
+static map_t stdfn_map = 0;
+
+static void mcl_clear() {
+	stdfn_heap = heap_delete(stdfn_heap);
+	stdfn_map = 0;
+}
+
+void mcl_init() {
+	mcl_stdfn_t i;
+	stdfn_heap = heap_create(0);
+	err_try {
+		stdfn_map = map_create(stdfn_heap);
+		for(i=stdfn_list; i->name; i++)
+			map_set_cs(stdfn_map, i->name, i);
+		atexit(mcl_clear);
+	} err_catch {
+		stdfn_heap = heap_delete(stdfn_heap);
+		stdfn_map = 0;
+		err_throw_down();
+	}
+}
+
+static mcl_stdfn_t get_stdfn(str_t s) {
+	mcl_stdfn_t r = map_get(stdfn_map, s);
+	if(r)
+		return r;
+	else
+		err_throw(e_mcl_ex_invalid_function);
+}
+static mcl_stdfn_t get_stdfn_cs(const char *s) {
+	mcl_stdfn_t r = map_get_cs(stdfn_map, s);
+	if(r)
+		return r;
+	else
+		err_throw(e_mcl_ex_invalid_function);
+}
 
 /*** experssion functions ***/
 static void mcl_push_arguments(mcl_ex_t ex, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
@@ -637,12 +676,6 @@ static void call_internal_value_source(void *data, ios_t s) {
 	}
 }
 
-/*typedef struct {
-	mcl_stdfn_t fn;
-	mcl_ex_t args[4];
-	mcl_ex_s ex;
-} call_internal_data_s;*/
-	
 static mcl_ex_vtable_s call_internal_vtable = {
 	call_internal_push_arguments,
 	call_internal_global_source,
@@ -650,7 +683,8 @@ static mcl_ex_vtable_s call_internal_vtable = {
 	call_internal_value_source
 };
 
-static mcl_ex_t mcl_call_internal(heap_t h, mcl_stdfn_t fn, mcl_ex_t *args) {
+static mcl_ex_t mcl_call_internal(heap_t h, mcl_stdfn_t fn, int argc, mcl_ex_t *args) {
+	assert(fn->args_count==argc);
 	call_internal_data_t r = heap_alloc(h, sizeof(call_internal_data_s));
 	mclt_t types[4];
 	mclt_t cast[4];
@@ -669,10 +703,51 @@ static mcl_ex_t mcl_call_internal(heap_t h, mcl_stdfn_t fn, mcl_ex_t *args) {
 	return &r->ex;
 }
 
-mcl_ex_t mcl_call(heap_t h, str_t nm, ...) {
-
+mcl_ex_t mcl_call(heap_t h, str_t nm) {
+	return mcl_call_internal(h, get_stdfn(nm), 0, 0);
+}
+mcl_ex_t mcl_call_cs(heap_t h, const char *nm) {
+	return mcl_call_internal(h, get_stdfn_cs(nm), 0, 0);
+}
+mcl_ex_t mcl_call_1(heap_t h, str_t nm, mcl_ex_t arg1) {
+	mcl_ex_t args[1];
+	args[0] = arg1;
+	return mcl_call_internal(h, get_stdfn(nm), 1, args);
+}
+mcl_ex_t mcl_call_1_cs(heap_t h, const char *nm, mcl_ex_t arg1) {
+	mcl_ex_t args[1];
+	args[0] = arg1;
+	return mcl_call_internal(h, get_stdfn_cs(nm), 1, args);
+}
+mcl_ex_t mcl_call_2(heap_t h, str_t nm, mcl_ex_t arg1, mcl_ex_t arg2) {
+	mcl_ex_t args[2];
+	args[0] = arg1;
+	args[1] = arg2;
+	return mcl_call_internal(h, get_stdfn(nm), 2, args);
+}
+mcl_ex_t mcl_call_2_cs(heap_t h, const char *nm, mcl_ex_t arg1, mcl_ex_t arg2) {
+	mcl_ex_t args[2];
+	args[0] = arg1;
+	args[1] = arg2;
+	return mcl_call_internal(h, get_stdfn_cs(nm), 2, args);
+}
+mcl_ex_t mcl_call_3(heap_t h, str_t nm, mcl_ex_t arg1, mcl_ex_t arg2, mcl_ex_t arg3) {
+	mcl_ex_t args[3];
+	args[0] = arg1;
+	args[1] = arg2;
+	args[2] = arg3;
+	return mcl_call_internal(h, get_stdfn(nm), 3, args);
+}
+mcl_ex_t mcl_call_3_cs(heap_t h, const char *nm, mcl_ex_t arg1, mcl_ex_t arg2, mcl_ex_t arg3) {
+	mcl_ex_t args[3];
+	args[0] = arg1;
+	args[1] = arg2;
+	args[2] = arg3;
+	return mcl_call_internal(h, get_stdfn_cs(nm), 3, args);
 }
 
-mcl_ex_t mcl_call_cs(heap_t h, const char *nm, ...) {
+/*** type cast function ***/
 
+mcl_ex_t mcl_cast(heap_t h, mclt_t t, mcl_ex_t ex) {
+	
 }

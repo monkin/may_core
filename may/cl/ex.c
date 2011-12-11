@@ -746,7 +746,7 @@ mcl_ex_t mcl_call_3_cs(heap_t h, const char *nm, mcl_ex_t arg1, mcl_ex_t arg2, m
 	return mcl_call_internal(h, get_stdfn_cs(nm), 3, args);
 }
 
-/*** type cast function ***/
+/*** mcl_cast ***/
 
 typedef struct {
 	mclt_t cast_to;
@@ -763,7 +763,7 @@ static void cast_global_source(void *data, map_t m, ios_t s) {
 	mcl_global_source(((cast_data_t)data)->expr, m, s);
 }
 static void cast_local_source(void *data, map_t m, ios_t s) {
-	mcl_global_source(((cast_data_t)data)->expr, m, s);
+	mcl_local_source(((cast_data_t)data)->expr, m, s);
 }
 static void cast_value_source(void *data, ios_t s) {
 	cast_data_t cd = data;
@@ -804,5 +804,68 @@ mcl_ex_t mcl_cast(heap_t h, mclt_t t, mcl_ex_t ex) {
 	} else
 		err_throw(e_mcl_ex_invalid_operand);
 }
+
+/*** mcl_var ***/
+
+typedef struct {
+	str_t name;
+	mcl_ex_t expr;
+	mcl_ex_s self;
+} var_data_s;
+
+typedef var_data_s *var_data_t;
+
+static void var_push_arguments(void *data, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_dt) {
+	mcl_push_arguments(((var_data_t)data)->expr, push_fn, push_fn_dt);
+}
+static void var_global_source(void *data, map_t m, ios_t s) {
+	mcl_global_source(((var_data_t)data)->expr, m, s);
+}
+static void var_local_source(void *data, map_t m, ios_t s) {
+	var_data_t vd = data;
+	str_t type_name = mclt_name(vd->expr->return_type);
+	ios_write(s, str_begin(type_name), str_length(type_name));
+	ios_write(s, " ", 1);
+	ios_write(s, str_begin(vd->name), str_length(vd->name));
+	ios_write(s, " = ", 3);
+	mcl_local_source(vd->expr, m, s);
+	ios_write(s, ";\n", 2);
+}
+static void var_value_source(void *data, ios_t s) {
+	var_data_t vd = data;
+	ios_write(s, str_begin(vd->name), str_length(vd->name));
+}
+
+static mcl_ex_vtable_s var_vtable = {
+	var_push_arguments,
+	var_global_source,
+	var_local_source,
+	var_value_source
+};
+
+static char var_hex_digit(int d) {
+	return d<10 ? '0' + d : 'a' + d - 10;
+}
+
+mcl_ex_t mcl_var(heap_t h, mcl_ex_t ex) {
+	int i;
+	str_it_t si;
+	size_t var_id;
+	var_data_t data = heap_alloc(h, sizeof(var_data_s));
+	var_id = *((size_t *)&data);
+	
+	data->name = str_create(h, sizeof(var_id)*2) + 1;
+	si = str_begin(data->name);
+	*(si++) = 'v';
+	for(i=0; i<sizeof(var_id)*2; i++, si++, var_id=var_id>>16)
+		*si = var_hex_digit(var_id & 0x0F);
+	
+	data->expr = ex;
+	data->self.vtable = &var_vtable;
+	data->self.data = data;
+	data->self.return_type = ex->return_type;
+	return &data->self;
+}
+
 
 

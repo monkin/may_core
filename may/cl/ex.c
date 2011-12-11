@@ -748,6 +748,47 @@ mcl_ex_t mcl_call_3_cs(heap_t h, const char *nm, mcl_ex_t arg1, mcl_ex_t arg2, m
 
 /*** type cast function ***/
 
-mcl_ex_t mcl_cast(heap_t h, mclt_t t, mcl_ex_t ex) {
-	
+typedef struct {
+	mclt_t cast_to;
+	mcl_ex_t expr;
+	mcl_ex_s res_expression;
+} cast_data_s;
+
+typedef cast_data_s *cast_data_t;
+
+static void cast_push_arguments(void *data, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_dt) {
+	mcl_push_arguments(((cast_data_t)data)->expr, push_fn, push_fn_dt);
 }
+static void cast_global_source(void *data, map_t m, ios_t s) {
+	mcl_global_source(((cast_data_t)data)->expr, m, s);
+}
+static void cast_local_source(void *data, map_t m, ios_t s) {
+	mcl_global_source(((cast_data_t)data)->expr, m, s);
+}
+static void cast_value_source(void *data, ios_t s) {
+	cast_data_t cd = data;
+}
+
+static mcl_ex_vtable_s cast_vtable = {
+	cast_push_arguments,
+	cast_global_source,
+	cast_local_source,
+	cast_value_source
+};
+
+mcl_ex_t mcl_cast(heap_t h, mclt_t t, mcl_ex_t ex) {
+	if(ex->return_type==t)
+		return ex;
+	else if(type_compatible(t, ex->return_type)) {
+		cast_data_t r = heap_alloc(h, sizeof(cast_data_s));
+		r->cast_to = t;
+		r->expr = ex;
+		r->res_expression.return_type = t;
+		r->res_expression.vtable = &cast_vtable;
+		r->res_expression.data = ex;
+		return &r->res_expression;
+	} else
+		err_throw(e_mcl_ex_invalid_operand);
+}
+
+

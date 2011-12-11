@@ -767,6 +767,20 @@ static void cast_local_source(void *data, map_t m, ios_t s) {
 }
 static void cast_value_source(void *data, ios_t s) {
 	cast_data_t cd = data;
+	str_t cast_to_name = mclt_name(cd->cast_to);
+	if(mclt_is_vector(cd->cast_to)) {
+		ios_write_cs(s, "convert_");
+		ios_write(s, str_begin(cast_to_name), str_length(cast_to_name));
+		ios_write(s, "(", 1);
+		mcl_value_source(cd->expr, s);
+		ios_write(s, ")", 1);
+	} else if(mclt_is_pointer(cd->cast_to) || mclt_is_scalar(cd->cast_to)) {
+		ios_write(s, "((", 2);
+		ios_write(s, str_begin(cast_to_name), str_length(cast_to_name));
+		ios_write(s, ")", 1);
+		mcl_value_source(cd->expr, s);
+		ios_write(s, ")", 1);
+	}
 }
 
 static mcl_ex_vtable_s cast_vtable = {

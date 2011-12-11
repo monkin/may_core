@@ -55,6 +55,7 @@ typedef long mclt_t;
 #define mclt_is_image(t) ((t & MCLT_IMAGE_R) || (t & MCLT_IMAGE_W))
 #define mclt_is_void(t) (!(t))
 #define mclt_is_numeric(t) (mclt_is_float(t) || mclt_is_integer(t))
+#define mclt_is_scalar(t) mclt_is_numeric(t)
 #define mclt_is_unsigned(t) ((t)&MCLT_UNSIGNED)
 #define mclt_is_signed(t) (!((t)&MCLT_UNSIGNED))
 #define mclt_integer_size(t) ((MCLT_I_SIZE & (t))>0 ? (1<<((MCLT_I_SIZE & (t))-1)) : 0)

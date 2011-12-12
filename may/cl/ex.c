@@ -19,6 +19,24 @@ bool mcl_insert_ptr(map_t m, void *p) {
 	}
 }
 
+static char hex_digit(int d) {
+	return d<10 ? '0' + d : 'a' + d - 10;
+}
+
+static str_t pointer_to_name(heap_t h, char prefix, void *p) {
+	int i;
+	str_it_t si;
+	size_t var_id;
+	str_t r;
+	var_id = *((size_t *)&p);
+	r = str_create(h, sizeof(var_id)*2 + 1);
+	si = str_begin(r);
+	*(si++) = prefix;
+	for(i=0; i<sizeof(var_id)*2; i++, si++, var_id=var_id>>4)
+		*si = hex_digit(var_id & 0x0F);
+	return r;
+}
+
 typedef enum {
 	MCLFT_FUNCTION = 0,
 	MCLFT_OPERATOR = 1,
@@ -556,7 +574,7 @@ static mcl_stdfn_t get_stdfn_cs(const char *s) {
 }
 
 /*** experssion functions ***/
-static void mcl_push_arguments(mcl_ex_t ex, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
+static void mcl_push_arguments(mcl_ex_t ex, void (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
 	ex->vtable->push_arguments(ex->data, push_fn, push_fn_arg);
 }
 static void mcl_global_source(mcl_ex_t ex, map_t m, ios_t s) {
@@ -579,7 +597,7 @@ typedef struct {
 
 typedef call_internal_data_s *call_internal_data_t;
 
-static void call_internal_push_arguments(void *data, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
+static void call_internal_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
 	int i;
 	call_internal_data_t cid = (call_internal_data_t) data;
 	for(i=0; i<cid->fn->args_count; i++)
@@ -756,7 +774,7 @@ typedef struct {
 
 typedef cast_data_s *cast_data_t;
 
-static void cast_push_arguments(void *data, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_dt) {
+static void cast_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *push_fn_dt) {
 	mcl_push_arguments(((cast_data_t)data)->expr, push_fn, push_fn_dt);
 }
 static void cast_global_source(void *data, map_t m, ios_t s) {
@@ -831,21 +849,23 @@ typedef struct {
 
 typedef var_data_s *var_data_t;
 
-static void var_push_arguments(void *data, str_t (*push_fn)(void *, mcl_arg_t), void *push_fn_dt) {
+static void var_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *push_fn_dt) {
 	mcl_push_arguments(((var_data_t)data)->expr, push_fn, push_fn_dt);
 }
 static void var_global_source(void *data, map_t m, ios_t s) {
 	mcl_global_source(((var_data_t)data)->expr, m, s);
 }
 static void var_local_source(void *data, map_t m, ios_t s) {
-	var_data_t vd = data;
-	str_t type_name = mclt_name(vd->expr->return_type);
-	ios_write(s, str_begin(type_name), str_length(type_name));
-	ios_write(s, " ", 1);
-	ios_write(s, str_begin(vd->name), str_length(vd->name));
-	ios_write(s, " = ", 3);
-	mcl_local_source(vd->expr, m, s);
-	ios_write(s, ";\n", 2);
+	if(mcl_insert_ptr(m, data)) {
+		var_data_t vd = data;
+		str_t type_name = mclt_name(vd->expr->return_type);
+		ios_write(s, str_begin(type_name), str_length(type_name));
+		ios_write(s, " ", 1);
+		ios_write(s, str_begin(vd->name), str_length(vd->name));
+		ios_write(s, " = ", 3);
+		mcl_local_source(vd->expr, m, s);
+		ios_write(s, ";\n", 2);
+	}
 }
 static void var_value_source(void *data, ios_t s) {
 	var_data_t vd = data;
@@ -859,23 +879,10 @@ static mcl_ex_vtable_s var_vtable = {
 	var_value_source
 };
 
-static char var_hex_digit(int d) {
-	return d<10 ? '0' + d : 'a' + d - 10;
-}
 
 mcl_ex_t mcl_var(heap_t h, mcl_ex_t ex) {
-	int i;
-	str_it_t si;
-	size_t var_id;
 	var_data_t data = heap_alloc(h, sizeof(var_data_s));
-	var_id = *((size_t *)&data);
-	
-	data->name = str_create(h, sizeof(var_id)*2) + 1;
-	si = str_begin(data->name);
-	*(si++) = 'v';
-	for(i=0; i<sizeof(var_id)*2; i++, si++, var_id=var_id>>16)
-		*si = var_hex_digit(var_id & 0x0F);
-	
+	data->name = pointer_to_name(h, 'v', data);
 	data->expr = ex;
 	data->self.vtable = &var_vtable;
 	data->self.data = data;
@@ -883,5 +890,41 @@ mcl_ex_t mcl_var(heap_t h, mcl_ex_t ex) {
 	return &data->self;
 }
 
+/*** mcl_arg ***/
 
+typedef struct {
+	str_t name;
+	mclt_t type;
+} mcl_arg_s;
 
+typedef struct {
+	mcl_arg_s arg;
+	mcl_ex_s self;
+} arg_data_s;
+
+void arg_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *push_fn_data) {
+	push_fn(push_fn_data, &((arg_data_s *) data)->arg);
+}
+void arg_global_source(void *data, map_t m, ios_t s) {}
+void arg_local_source(void *data, map_t m, ios_t s) {}
+void arg_value_source(void *data, ios_t s) {
+	str_t name = ((arg_data_s *) data)->arg.name;
+	ios_write(s, str_begin(name), str_length(name));
+}
+
+static mcl_ex_vtable_s arg_vtable = {
+	arg_push_arguments,
+	arg_global_source,
+	arg_local_source,
+	arg_value_source
+};
+
+mcl_ex_t mcl_arg(heap_t h, mclt_t tp, mcl_arg_t *arg) {
+	arg_data_s *r = heap_alloc(h, sizeof(arg_data_s));
+	r->arg.name = pointer_to_name(h, 'a', r);
+	r->arg.type = tp;
+	r->self.return_type = tp;
+	r->self.data = r;
+	r->self.vtable = &arg_vtable;
+	return &r->self;
+}

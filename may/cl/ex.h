@@ -9,6 +9,7 @@
 
 ERR_DECLARE(e_mcl_ex_invalid_operand);
 ERR_DECLARE(e_mcl_ex_invalid_function);
+ERR_DECLARE(e_mcl_ex_invalid_type);
 
 struct mcl_ex_ss;
 typedef struct mcl_ex_ss mcl_ex_s;

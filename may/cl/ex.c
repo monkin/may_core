@@ -4,6 +4,7 @@
 
 ERR_DEFINE(e_mcl_ex_invalid_operand, "Invalid operand type", e_mcl_error);
 ERR_DEFINE(e_mcl_ex_invalid_function, "Invalid function name", e_mcl_error);
+ERR_DEFINE(e_mcl_ex_invalid_type, "Invalid constant type", e_mcl_error);
 
 
 bool mcl_insert_ptr(map_t m, void *p) {
@@ -107,6 +108,7 @@ static mclt_t type_max(mclt_t t1, mclt_t t2) {
 #include "ex/cast.c"
 #include "ex/var.c"
 #include "ex/arg.c"
+#include "ex/const.c"
 
 #undef MAY_MCLEX_C_INCLUDE
 

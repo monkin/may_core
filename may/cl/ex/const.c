@@ -22,22 +22,6 @@ static mcl_ex_vtable_s const_vtable = {
 	const_value_source
 };
 
-static cl_ulong read_integer(mclt_t tp, const void *val, void **p) {
-	int sz = mclt_integer_size(tp);
-	if(p)
-		*p = ((char *) val) + sz;
-	switch(sz) {
-	case 1:
-		return *((cl_uchar *) val);
-	case 2:
-		return *((cl_ushort *) val);
-	case 4:
-		return *((cl_uint *) val);
-	case 8:
-		return *((cl_ulong *) val);
-	}
-}
-
 static char hex_digits[] = "0123456789abcdef";
 #define MCL_CONST_WRITE_BYTE(out, b) {      \
 	out[0] = hex_digits[(b) & 0x0F];        \
@@ -52,45 +36,74 @@ static char hex_digits[] = "0123456789abcdef";
 		MCL_CONST_WRITE_BYTE(mi_p, ((const char *)p)[mi_i]); \
 	ios_write(s, mi_buff, (sz)*2); \
 }
+#define MCL_CONST_WRITE_VECTOR(s, p, isz, vsz) { \
+	int mj_i;              \
+	const char *mj_p = p;  \
+	for(mj_i=0; mj_i<(vsz); mj_i++, mj_p+=isz) {    \
+		if(mj_i)                              \
+			ios_write(s, ", ", 2);         \
+		MCL_CONST_WRITE_HEX(s, mj_p, isz); \
+	} \
+}
+#define MCL_CONST_WRITE_TYPE_NAME(s, tp) { \
+	str_t mk_name = mclt_name(tp);         \
+	ios_write(s, str_begin(mk_name), str_length(mk_name)); \
+}
 
 static void write_const(ios_t s, mclt_t tp, const void *val) {
 	if(mclt_is_bool(tp))
 		ios_write(s, (*((const char *) val)) ? "1" : "0", 1);
 	else if(mclt_is_integer(tp)) {
 		int size = mclt_integer_size(tp);
-		ios_write(s, "0x", 2);
+		ios_write(s, "((", 2);
+		MCL_CONST_WRITE_TYPE_NAME(s, tp);
+		ios_write(s, ") 0x", 4);
 		MCL_CONST_WRITE_HEX(s, val, size);
+		ios_write(s, ")", 1);
 	} if(mclt_is_float(tp)) {
 		ios_write_cs(s, "as_float(0x");
 		MCL_CONST_WRITE_HEX(s, val, 4);
 		ios_write(s, ")", 1);
 	} else if(mclt_is_vector(tp)) {
-		
+		mclt_t vt = mclt_vector_of(tp);
+		if(mclt_is_integer(vt)) {
+			int isize = mclt_is_bool(vt) ? 1 : mclt_integer_size(tp);
+			ios_write(s, "((", 2);
+			MCL_CONST_WRITE_TYPE_NAME(s, tp);
+			ios_write(s, ")(", 2);
+			MCL_CONST_WRITE_VECTOR(s, val, isize, mclt_vector_size(vt));
+			ios_write(s, "))", 2);
+		} else { /* float */
+			ios_write(s, "as_", 3);
+			MCL_CONST_WRITE_TYPE_NAME(s, tp);
+			ios_write(s, "((", 2);
+			MCL_CONST_WRITE_TYPE_NAME(s, mclt_name(mclt_vector(MCLT_UINT, mclt_vector_size(tp))));
+			ios_write(s, ")(", 2);
+			MCL_CONST_WRITE_VECTOR(s, val, 4, mclt_vector_size(vt));
+			ios_write(s, "))", 2);
+		}
 	} else
 		err_throw(e_mcl_ex_invalid_type);
 }
 
-#undef MCL_CONST_BYTE
+#undef MCL_CONST_WRITE_TYPE_NAME
+#undef MCL_CONST_WRITE_VECTOR
 #undef MCL_CONST_WRITE_HEX
+#undef MCL_CONST_BYTE
 
 mcl_ex_t mcl_const(heap_t h, mclt_t tp, const void *val) {
 	const_data_s *r = heap_alloc(h, sizeof(const_data_s));
-
 	ios_t s = ios_mem_create();
+	str_t source = 0;
 	err_try {
-		str_t type_name = mclt_name(tp);
-		ios_write(s, "(", 1);
-		ios_write(s, str_begin(type_name), str_length(type_name));
-		ios_write(s, ")(", 2);
-		
-		ios_write(s, ")", 1);
+		write_const(s, tp, val);
+		source = ios_mem_to_string(s, h);
 		s = ios_close(s);
 	} err_catch {
 		s = ios_close(s);
 		err_throw_down();
 	}
-
-
+	r->content = source;
 	r->self.return_type = tp;
 	r->self.data = r;
 	r->self.vtable = &const_vtable;

@@ -13,7 +13,7 @@ typedef if_data_s *if_data_t;
 
 void if_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *dt) {
 	if_data_t ifd = data;
-	mcl_push_arguments(data->condition, push_fn, dt);
+	mcl_push_arguments(ifd->condition, push_fn, dt);
 	if(ifd->ex_true)
 		mcl_push_arguments(ifd->ex_true, push_fn, dt);
 	if(ifd->ex_false)
@@ -21,7 +21,7 @@ void if_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *dt)
 }
 void if_global_source(void *data, map_t m, ios_t s) {
 	if_data_t ifd = data;
-	mcl_global_source(data->condition, m, s);
+	mcl_global_source(ifd->condition, m, s);
 	if(ifd->ex_true)
 		mcl_global_source(ifd->ex_true, m, s);
 	if(ifd->ex_false)
@@ -29,7 +29,7 @@ void if_global_source(void *data, map_t m, ios_t s) {
 }
 void if_local_source(void *data, map_t m, ios_t s) {
 	if_data_t ifd = data;
-	mcl_local_source(data->condition, m, s);
+	mcl_local_source(ifd->condition, m, s);
 	if(ifd->ex_true)
 		mcl_local_source(ifd->ex_true, m, s);
 	if(ifd->ex_false)

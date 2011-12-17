@@ -77,7 +77,7 @@ static void write_const(ios_t s, mclt_t tp, const void *val) {
 			ios_write(s, "as_", 3);
 			MCL_CONST_WRITE_TYPE_NAME(s, tp);
 			ios_write(s, "((", 2);
-			MCL_CONST_WRITE_TYPE_NAME(s, mclt_name(mclt_vector(MCLT_UINT, mclt_vector_size(tp))));
+			MCL_CONST_WRITE_TYPE_NAME(s, mclt_vector(MCLT_UINT, mclt_vector_size(tp)));
 			ios_write(s, ")(", 2);
 			MCL_CONST_WRITE_VECTOR(s, val, 4, mclt_vector_size(vt));
 			ios_write(s, "))", 2);

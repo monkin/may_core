@@ -109,6 +109,9 @@ static mclt_t type_max(mclt_t t1, mclt_t t2) {
 #include "ex/var.c"
 #include "ex/arg.c"
 #include "ex/const.c"
+#include "ex/if.c"
+#include "ex/for.c"
+#include "ex/seq.c"
 
 #undef MAY_MCLEX_C_INCLUDE
 

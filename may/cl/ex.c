@@ -102,6 +102,19 @@ static mclt_t type_max(mclt_t t1, mclt_t t2) {
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
+static void mcl_push_arguments(mcl_ex_t ex, void (*push_fn)(void *, mcl_arg_t), void *push_fn_arg) {
+	ex->vtable->push_arguments(ex->data, push_fn, push_fn_arg);
+}
+static void mcl_global_source(mcl_ex_t ex, map_t m, ios_t s) {
+	ex->vtable->global_source(ex->data, m, s);
+}
+static void mcl_local_source(mcl_ex_t ex, map_t m, ios_t s) {
+	ex->vtable->local_source(ex->data, m, s);
+}
+static void mcl_value_source(mcl_ex_t ex, ios_t s) {
+	ex->vtable->value_source(ex->data, s);
+}
+
 #define MAY_MCLEX_C_INCLUDE
 
 #include "ex/call.c"

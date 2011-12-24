@@ -54,7 +54,7 @@ void if_value_source(void *data, ios_t s) {
 		mcl_value_source(ifd->condition, s);
 		ios_write_cs(s, ") {\n\t");
 		mcl_value_source(ifd->ex_false, s);
-		ios_write_cs(s, ";\n}");
+		ios_write(s, ";\n}", 3);
 	}
 }
 

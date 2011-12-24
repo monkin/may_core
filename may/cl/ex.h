@@ -58,6 +58,7 @@ mcl_ex_t mcl_const(heap_t h, mclt_t tp, const void *val);
 mcl_ex_t mcl_seq(heap_t h, size_t n, ...);
 mcl_ex_t mcl_if(heap_t h, mcl_ex_t, mcl_ex_t, mcl_ex_t);
 mcl_ex_t mcl_for(heap_t h, mcl_ex_t var_init, mcl_ex_t var_cond, mcl_ex_t var_inc, mcl_ex_t ex);
+mcl_ex_t mcl_while(heap_t h, mcl_ex_t condition, mcl_ex_t expression);
 mcl_ex_t mcl_cast(heap_t h, mclt_t, mcl_ex_t);
 
 

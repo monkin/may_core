@@ -124,6 +124,7 @@ static void mcl_value_source(mcl_ex_t ex, ios_t s) {
 #include "ex/const.c"
 #include "ex/if.c"
 #include "ex/for.c"
+#include "ex/while.c"
 #include "ex/seq.c"
 
 #undef MAY_MCLEX_C_INCLUDE

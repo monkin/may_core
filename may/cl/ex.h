@@ -41,6 +41,13 @@ struct mcl_ex_ss {
 	void *data;
 };
 
+typedef struct {
+	str_t name;
+	mclt_t type;
+} mcl_arg_s;
+
+typedef mcl_arg_s *mcl_arg_t;
+
 void mcl_init();
 
 mcl_ex_t mcl_call(heap_t h, str_t nm);
@@ -60,6 +67,7 @@ mcl_ex_t mcl_if(heap_t h, mcl_ex_t, mcl_ex_t, mcl_ex_t);
 mcl_ex_t mcl_for(heap_t h, mcl_ex_t var_init, mcl_ex_t var_cond, mcl_ex_t var_inc, mcl_ex_t ex);
 mcl_ex_t mcl_while(heap_t h, mcl_ex_t condition, mcl_ex_t expression);
 mcl_ex_t mcl_cast(heap_t h, mclt_t, mcl_ex_t);
+
 
 
 #endif /* MAY_MCLEX_H */

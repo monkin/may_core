@@ -3,11 +3,6 @@
 #endif
 
 typedef struct {
-	str_t name;
-	mclt_t type;
-} mcl_arg_s;
-
-typedef struct {
 	mcl_arg_s arg;
 	mcl_ex_s self;
 } arg_data_s;

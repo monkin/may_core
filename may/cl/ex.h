@@ -22,7 +22,13 @@ enum {
 	MCL_EXC_CONST
 };
 
-typedef void *mcl_arg_t;
+typedef struct {
+	str_t name;
+	mclt_t type;
+} mcl_arg_s;
+
+typedef mcl_arg_s *mcl_arg_t;
+
 
 bool mcl_insert_ptr(map_t, void *);
 
@@ -40,13 +46,6 @@ struct mcl_ex_ss {
 	mcl_ex_vtable_t vtable;
 	void *data;
 };
-
-typedef struct {
-	str_t name;
-	mclt_t type;
-} mcl_arg_s;
-
-typedef mcl_arg_s *mcl_arg_t;
 
 void mcl_init();
 

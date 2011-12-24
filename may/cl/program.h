@@ -4,7 +4,7 @@
 
 #include "mcl.h"
 #include "ex.h"
-#include "<CL/cl.h>"
+#include <CL/cl.h>
 
 typedef struct {
 	cl_program program;

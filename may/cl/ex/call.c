@@ -257,7 +257,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"*", 2, ret_type_op_numeric, MCLFT_OPERATOR},
 	{"/", 2, ret_type_op_numeric, MCLFT_OPERATOR},
 	{"%", 2, ret_type_op_numeric, MCLFT_OPERATOR},
-	
+
 	{"==", 2, ret_type_op_equal, MCLFT_OPERATOR},
 	{"!=", 2, ret_type_op_equal, MCLFT_OPERATOR},
 	{"<", 2, ret_type_op_compare, MCLFT_OPERATOR},
@@ -267,7 +267,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"!", 1, ret_type_op_not, MCLFT_OPERATOR},
 	{"&&", 2, ret_type_op_compose, MCLFT_OPERATOR},
 	{"||", 2, ret_type_op_compose, MCLFT_OPERATOR},
-	
+
 	{"&", 2, ret_type_op_binary, MCLFT_OPERATOR},
 	{"|", 2, ret_type_op_binary, MCLFT_OPERATOR},
 	{"^", 2, ret_type_op_binary, MCLFT_OPERATOR},
@@ -275,11 +275,11 @@ static mcl_stdfn_s stdfn_list[] = {
 	{">>", 2, ret_type_op_binary, MCLFT_OPERATOR},
 	{">>", 2, ret_type_op_binary, MCLFT_OPERATOR},
 	{"~", 1, ret_type_op_invert, MCLFT_OPERATOR},
-	
+
 	{"?", 3, ret_type_op_ternary, MCLFT_CUSTOM},
 	{"[]", 2, ret_type_op_index, MCLFT_CUSTOM},
 	{"neg", 1, ret_type_neg, MCLFT_CUSTOM}, /* unary minus */
-	
+
 	{"get_global_id", 1, ret_type_work_item, 0},
 	{"get_global_offset", 1, ret_type_work_item, 0},
 	{"get_global_size", 1, ret_type_work_item, 0},
@@ -288,7 +288,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"get_local_size", 1, ret_type_work_item, 0},
 	{"get_num_groups", 1, ret_type_work_item, 0},
 	{"get_work_dim", 0, ret_type_work_dim, 0},
-	
+
 	{"abs", 1, ret_type_abs, 0},
 	{"abs_diff", 2, ret_type_abs_diff, 0},
 	{"add_sat", 2, ret_type_integer_same, 0},
@@ -304,10 +304,10 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"rotate", 2, ret_type_integer_same, 0},
 	{"sub_sat", 2, ret_type_integer_same, 0},
 	{"upsample", 2, 0, 0},
-	
+
 	{"mad24", 3, ret_type_integer_same, 0},
 	{"mul24", 2, ret_type_integer_same, 0},
-	
+
 	{"clamp", 3, ret_type_float_same, 0},
 	{"degrees", 1, ret_type_float_same, 0},
 	{"mix", 3, ret_type_float_same, 0},
@@ -315,7 +315,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"step", 2, ret_type_float_same, 0},
 	{"smoothstep", 3, ret_type_float_same, 0},
 	{"sign", 1, ret_type_float_same, 0},
-	
+
 	{"acos", 1, ret_type_float_same, 0},
 	{"acosh", 1, ret_type_float_same, 0},
 	{"acospi", 1, ret_type_float_same, 0},
@@ -338,7 +338,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"exp", 1, ret_type_float_same, 0},
 	{"exp2", 1, ret_type_float_same, 0},
 	{"exp10", 1, ret_type_float_same, 0},
-	
+
 	{"expm1", 1, ret_type_float_same, 0},
 	{"fabs", 1, ret_type_float_same, 0},
 	{"fdim", 2, ret_type_float_same, 0},
@@ -385,7 +385,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"tanpi", 1, ret_type_float_same, 0},
 	{"tgamma", 1, ret_type_float_same, 0},
 	{"trunc", 1, ret_type_float_same, 0},
-	
+
 	{"dot", 2, ret_type_float_length, 0},
 	{"cross", 2, 0, 0},
 	{"distance", 2, ret_type_float_length, 0},
@@ -414,7 +414,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"select", 3, 0, 0},
 	{"shufle", 2, 0, 0},
 	{"shufle2", 3, 0, 0},
-	
+
 	/* suffixes
 	* i - integer
 	* ui - unsigned integer
@@ -492,6 +492,9 @@ static void call_internal_push_arguments(void *data, void (*push_fn)(void *, mcl
 }
 static void call_internal_global_source(void *data, map_t m, ios_t s) {
 	int i;
+	static char *samplers_code = "sampler_t sampler_linear = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_LINEAR;\nsampler_t sampler_nearest = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;\n";
+	if(mcl_insert_ptr(m, samplers_code))
+		ios_write_cs(s, samplers_code);
 	call_internal_data_t cid = (call_internal_data_t) data;
 	for(i=0; i<cid->fn->args_count; i++)
 		mcl_global_source(cid->args[i], m, s);

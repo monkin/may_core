@@ -80,7 +80,7 @@ const err_t *const name = &err_ ## name ## _realisation
 /**
  * Replase old error to new
  */
-#define err_replace(name) { ERR_TRACE_STORE; err_ = name; err_line_ = __LINE__; err_file_ = __FILE__; }
+#define err_replace(name) { static char err_file_name_[] = __FILE__; ERR_TRACE_STORE; err_ = name; err_line_ = __LINE__; err_file_ = err_file_name_; }
 /**
  * Set error information
  */

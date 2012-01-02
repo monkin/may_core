@@ -36,6 +36,7 @@ size_t tests_failed = 0;
 #include "units/json.h"
 #include "units/tar.h"
 #include "units/mcl/types.h"
+#include "units/mcl/program.h"
 
 
 int main() {

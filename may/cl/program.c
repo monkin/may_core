@@ -20,6 +20,9 @@ static void mcl_prog_push_fn(void *data, mcl_arg_t argument) {
 			first = false;
 			ios_write(d->stream, ", ", 2);
 		}
+		str_t type_name = mclt_name(argument->type);
+		ios_write(d->stream, str_begin(type_name), str_length(type_name));
+		ios_write(d->stream, " ", 1);
 		ios_write(d->stream, str_begin(argument->name), str_length(argument->name));
 	}
 }

@@ -1,0 +1,15 @@
+DOXYFILE_ENCODING      = UTF-8
+PROJECT_NAME           = img_cl
+TAB_SIZE               = 4
+OPTIMIZE_OUTPUT_FOR_C  = YES
+EXTRACT_ALL            = YES
+EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_LOCAL_METHODS  = YES
+INPUT                  = ./may
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = *.h
+RECURSIVE              = YES
+GENERATE_LATEX         = NO
+HTML_OUTPUT            = docs
+SKIP_FUNCTION_MACROS   = NO
+HIDE_UNDOC_RELATIONS   = NO

@@ -51,7 +51,7 @@ typedef enum {
 } ios_mode_t;
 
 ios_t ios_mem_create();
-str_t ios_mem_to_string(ios_t, heap_t);
+str_t ios_mem_to_string(ios_t, heap_t); // !!! Return zero ended str_t
 
 ios_t ios_file_create(str_t, ios_mode_t);
 

@@ -64,8 +64,8 @@ void mclt_init() {
 			TYPE_APPEND(MCLT_UINT, "uint");
 			TYPE_APPEND(MCLT_LONG, "long");
 			TYPE_APPEND(MCLT_ULONG, "ulong");
-			TYPE_APPEND(MCLT_IMAGE_R, "read_only image_t");
-			TYPE_APPEND(MCLT_IMAGE_W, "write_only image_t");
+			TYPE_APPEND(MCLT_IMAGE_R, "read_only image2d_t");
+			TYPE_APPEND(MCLT_IMAGE_W, "write_only image2d_t");
 			pthread_mutexattr_init(&mclt_nm_mutex_attr);
 			pthread_mutexattr_settype(&mclt_nm_mutex_attr, PTHREAD_MUTEX_RECURSIVE);
 			pthread_mutex_init(&mclt_nm_mutex, &mclt_nm_mutex_attr);

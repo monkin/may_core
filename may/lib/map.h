@@ -34,6 +34,7 @@ void *map_get_bin(map_t, const void *key, size_t key_len);
 map_t map_remove(map_t, str_t key);
 map_node_t map_begin(map_t);
 map_node_t map_next(map_node_t);
+#define map_length(m) ((m)->length)
 
 
 #endif /* MAY_MAP_H */

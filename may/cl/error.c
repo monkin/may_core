@@ -1,7 +1,8 @@
 
 #include "error.h"
+#include "mcl.h"
 
-ERR_DEFINE(e_opencl_error, "OpenCL error", 0);
+ERR_DEFINE(e_opencl_error, "OpenCL error", e_mcl_error);
 
 #define MCL_OPENCL_ERROR(lname, uname) ERR_DEFINE(e_opencl_ ## lname, "OpenCL error: " # lname, e_opencl_error)
 #include "error_codes.h"

@@ -86,7 +86,7 @@ static map_t map_set_internal(map_t m, str_t key, void *value) {
 					j->children[1] = 0;
 					j->key = key;
 					j->value = value;
-					may_atomic_cmpset(&i->children[ci], 0, j);
+					i->children[ci] = j;
 					for(; i; i=i->parent)
 						i->length++;
 					break;

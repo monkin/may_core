@@ -6,6 +6,7 @@
 #include "../lib/map.h"
 #include "../lib/str.h"
 #include "../lib/stream.h"
+#include <CL/cl.h>
 
 ERR_DECLARE(e_mcl_ex_invalid_operand);
 ERR_DECLARE(e_mcl_ex_invalid_function);
@@ -25,6 +26,7 @@ enum {
 typedef struct {
 	str_t name;
 	mclt_t type;
+	cl_uint position;
 } mcl_arg_s;
 
 typedef mcl_arg_s *mcl_arg_t;

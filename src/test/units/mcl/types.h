@@ -17,6 +17,10 @@ void test_mcl_types() {
 			if(str_compare(mclt_name(mclt_vector(MCLT_USHORT, 2)), str_from_cs(h, "ushort2"))!=0)
 				TEST_FAIL;
 		} TEST_END;
+		TEST_CHECK("pointer_to_vector") {
+			if(str_compare(mclt_name(mclt_pointer(mclt_vector(MCLT_UCHAR, 8), MCL_MEM_PRIVATE)), str_from_cs(h, "private uchar8 *"))!=0)
+				TEST_FAIL;
+		} TEST_END;
 		h = heap_delete(h);
 	} err_catch {
 		h = heap_delete(h);

@@ -28,6 +28,7 @@ mcl_ex_t mcl_arg(heap_t h, mclt_t tp, mcl_arg_t *arg) {
 	arg_data_s *r = heap_alloc(h, sizeof(arg_data_s));
 	r->arg.name = pointer_to_name(h, 'a', r);
 	r->arg.type = tp;
+	r->arg.position = 0;
 	r->self.return_type = tp;
 	r->self.data = r;
 	r->self.vtable = &arg_vtable;

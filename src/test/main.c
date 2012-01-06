@@ -45,6 +45,7 @@ int main() {
 	test_json();
 	test_tar();
 	test_mcl_types();
+	test_mcl_program();
 	printf("Results: (%i/%i) %i%%\n", (int) tests_success, (int) (tests_success + tests_failed), (int) (tests_success*100/(tests_success + tests_failed)));
 	return 0;
 }

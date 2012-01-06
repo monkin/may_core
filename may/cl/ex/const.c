@@ -7,10 +7,10 @@ typedef struct {
 	mcl_ex_s self;
 } const_data_s;
 
-void const_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *dt) {}
-void const_global_source(void *data, map_t m, ios_t s) {}
-void const_local_source(void *data, map_t m, ios_t s) {}
-void const_value_source(void *data, ios_t s) {
+static void const_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *dt) {}
+static void const_global_source(void *data, map_t m, ios_t s) {}
+static void const_local_source(void *data, map_t m, ios_t s) {}
+static void const_value_source(void *data, ios_t s) {
 	const_data_s *cd = data;
 	ios_write(s, str_begin(cd->content), str_length(cd->content));
 }
@@ -24,15 +24,15 @@ static mcl_ex_vtable_s const_vtable = {
 
 static char hex_digits[] = "0123456789abcdef";
 #define MCL_CONST_WRITE_BYTE(out, b) {      \
-	out[0] = hex_digits[(b) & 0x0F];        \
-	out[1] = hex_digits[((b) >> 4) & 0x0F]; \
+	out[0] = hex_digits[((b) >> 4) & 0x0F]; \
+	out[1] = hex_digits[(b) & 0x0F];        \
 }
 #define MCL_CONST_WRITE_HEX(s, p, sz) { \
 	int mi_i;                           \
 	char mi_buff[16];                   \
-	char *mi_p = mi_buff;               \
+	char *mi_p = mi_buff + ((sz)-1)*2;  \
 	assert(sz<=8);                      \
-	for(mi_i=0; mi_i<(sz); mi_i++, mi_p+=2) \
+	for(mi_i=0; mi_i<(sz); mi_i++, mi_p-=2) \
 		MCL_CONST_WRITE_BYTE(mi_p, ((const char *)p)[mi_i]); \
 	ios_write(s, mi_buff, (sz)*2); \
 }
@@ -60,7 +60,7 @@ static void write_const(ios_t s, mclt_t tp, const void *val) {
 		ios_write(s, ") 0x", 4);
 		MCL_CONST_WRITE_HEX(s, val, size);
 		ios_write(s, ")", 1);
-	} if(mclt_is_float(tp)) {
+	} else if(mclt_is_float(tp)) {
 		ios_write_cs(s, "as_float(0x");
 		MCL_CONST_WRITE_HEX(s, val, 4);
 		ios_write(s, ")", 1);

@@ -7,7 +7,7 @@
 static mclt_t ret_type_op_set(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	if(type_compatible(args[0], args[1]))
-		return cast_to[0] = args[0];
+		return cast_to[1] = args[0];
 	else
 		err_throw(e_mcl_ex_invalid_operand);
 }

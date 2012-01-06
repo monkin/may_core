@@ -15,7 +15,7 @@ static void mcl_prog_push_fn(void *data, mcl_arg_t argument) {
 	if(!map_get_bin(d->map, &argument, sizeof(argument))) {
 		size_t num = argument->position = map_length(d->map);
 		map_set_bin(d->map, &argument, sizeof(argument), (void *) num);
-		if(!num)
+		if(num)
 			ios_write(d->stream, ", ", 2);
 		str_t type_name = mclt_name(argument->type);
 		ios_write(d->stream, str_begin(type_name), str_length(type_name));
@@ -42,13 +42,14 @@ cl_program mcl_program_create(cl_context ctx, mcl_ex_t ex) {
 		ios_write(source_stream, ") {\n", 4);
 		ex->vtable->local_source(ex->data, map_create(h), source_stream);
 		ex->vtable->value_source(ex->data, source_stream);
-		ios_write(source_stream, "}\n", 2);
+		ios_write(source_stream, ";\n}\n", 4);
 		str_t source = ios_mem_to_string(source_stream, h);
 		source_stream = ios_close(source_stream);
 
 		// Create OpenCL program
 		const char *source_cs = str_begin(source);
 		const size_t source_len = str_length(source);
+		//printf("source: %s", source_cs);
 		cl_int code = CL_SUCCESS;
 		cl_program program = clCreateProgramWithSource(ctx, 1, &source_cs, &source_len, &code);
 		mcl_throw_if_error(code);

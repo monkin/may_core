@@ -61,7 +61,7 @@ mcl_ex_t mcl_call_3(heap_t h, str_t nm, mcl_ex_t, mcl_ex_t, mcl_ex_t);
 mcl_ex_t mcl_call_3_cs(heap_t h, const char *nm, mcl_ex_t, mcl_ex_t, mcl_ex_t);
 
 mcl_ex_t mcl_var(heap_t h, mcl_ex_t);
-mcl_ex_t mcl_arg(heap_t h, mclt_t tp, mcl_arg_t *);
+mcl_ex_t mcl_arg(heap_t h, mclt_t tp, mcl_arg_s *);
 mcl_ex_t mcl_const(heap_t h, mclt_t tp, const void *val);
 mcl_ex_t mcl_seq(heap_t h, size_t n, ...);
 mcl_ex_t mcl_if(heap_t h, mcl_ex_t, mcl_ex_t, mcl_ex_t);

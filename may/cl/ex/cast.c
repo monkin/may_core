@@ -69,7 +69,7 @@ mcl_ex_t mcl_cast(heap_t h, mclt_t t, mcl_ex_t ex) {
 		r->expr = ex;
 		r->res_expression.return_type = t;
 		r->res_expression.vtable = &cast_vtable;
-		r->res_expression.data = ex;
+		r->res_expression.data = r;
 		return &r->res_expression;
 	} else
 		err_throw(e_mcl_ex_invalid_operand);

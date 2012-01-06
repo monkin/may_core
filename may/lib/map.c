@@ -11,6 +11,7 @@ map_t map_create(heap_t h) {
 	map_t res = (map_t) heap_alloc(h, sizeof(map_s));
 	res->heap = h;
 	res->node = 0;
+	res->length = 0;
 	return res;
 }
 
@@ -89,13 +90,14 @@ static map_t map_set_internal(map_t m, str_t key, void *value) {
 					i->children[ci] = j;
 					for(; i; i=i->parent)
 						i->length++;
+					m->length++;
 					break;
 				}
 			}
 		}
 	} else {
 		i = m->node = heap_alloc(m->heap, sizeof(map_node_s));
-		i->length = 1;
+		m->length = i->length = 1;
 		i->parent = 0;
 		i->children[0] = 0;
 		i->children[1] = 0;

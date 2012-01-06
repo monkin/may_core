@@ -14,4 +14,3 @@ cl_kernel mcl_kernel_delete(cl_kernel);
 void mcl_kernel_setarg(cl_kernel, mcl_arg_t, size_t arg_size, const void *arg_value);
 
 #endif /* MAY_MCL_PROGRAM_H */
-

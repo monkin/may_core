@@ -91,5 +91,6 @@ void test_mcl_program() {
 		h = heap_delete(h);
 	} err_catch {
 		h = heap_delete(h);
+		err_throw_down();
 	}
 }

@@ -1,5 +1,4 @@
 
-#include "platform.h"
 #include "map.h"
 #include "mem.h"
 #include <assert.h>

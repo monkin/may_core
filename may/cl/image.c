@@ -9,7 +9,7 @@
 ERR_DEFINE(e_mcl_image_loading, "Image loading error.", e_mcl_error);
 
 cl_mem mcl_image_create(cl_context context, str_t data) {
-	mcl_image_create_bin(context, str_begin(data), str_len(data));
+	mcl_image_create_bin(context, str_begin(data), str_length(data));
 }
 cl_mem mcl_image_create_bin(cl_context context, const void *data, size_t len) {
 	cl_int code;
@@ -90,4 +90,7 @@ cl_mem mcl_image_delete(cl_mem img) {
 	if(img)
 		clReleaseMemObject(img);
 	return 0;
+}
+void mcl_image_init() {
+	ilInit();
 }

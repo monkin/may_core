@@ -82,7 +82,8 @@ void test_mcl_program() {
 							clReleaseMemObject(buff);
 						if(program)
 							mcl_program_delete(program);
-						clReleaseContext(context);
+						if(context)
+							clReleaseContext(context);
 						err_throw_down();
 					}
 				} TEST_END;

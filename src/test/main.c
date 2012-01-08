@@ -37,6 +37,7 @@ size_t tests_failed = 0;
 #include "units/tar.h"
 #include "units/mcl/types.h"
 #include "units/mcl/program.h"
+#include "units/mcl/image.h"
 
 
 int main() {
@@ -46,6 +47,7 @@ int main() {
 	test_tar();
 	test_mcl_types();
 	test_mcl_program();
+	test_mcl_image();
 	printf("Results: (%i/%i) %i%%\n", (int) tests_success, (int) (tests_success + tests_failed), (int) (tests_success*100/(tests_success + tests_failed)));
 	return 0;
 }

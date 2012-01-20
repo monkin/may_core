@@ -63,6 +63,7 @@ void heap_clear(heap_t h) {
 	for(i = h->first.next; i; i=i->next)
 		mem_free(i);
 	h->first.next = 0;
+	h->first.used = 0;
 	h->last = &h->first;
 }
 

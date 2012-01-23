@@ -1,7 +1,29 @@
 
 #include "filter.h"
 
-filter_t filter_create(filter_controller_t controller, cl_context context, json_value_t config, map_t filters) {
+ERR_DEFINE(e_filter_not_found, "Filter not found", e_mcl_error);
+
+static heap_t filter_heap = 0;
+static map_t filter_map = 0;
+
+static void uregister_filters() {
+	filter_heap = heap_delete(filter_heap);
+}
+void filter_init() {
+	filter_heap = heap_create(0);
+	err_try {
+		filter_map = map_create(filter_heap);
+		atexit(uregister_filters);
+	} err_catch {
+		filter_heap = heap_delete(filter_heap);
+		err_throw_down();
+	}
+}
+void filter_register(filter_controller_t c) {
+	map_set_cs(filter_map, c->name, c);
+}
+
+static filter_t filter_create_internal(filter_controller_t controller, cl_context context, json_value_t config, map_t filters) {
 	heap_t h = heap_create(16*1024);
 	filter_t filter = heap_alloc(h, sizeof(filter_s));
 	filter->heap = h;
@@ -11,8 +33,7 @@ filter_t filter_create(filter_controller_t controller, cl_context context, json_
 	filter->config = config;
 	filter->filters = filters;
 	filter_t background = map_get_cs(filters, "_");
-	if(background)
-		filter->type = background->type;
+	filter->type = background ? background->type : 0;
 	err_try {
 		controller->init(filter);
 	} err_catch {
@@ -21,6 +42,23 @@ filter_t filter_create(filter_controller_t controller, cl_context context, json_
 	}
 	return filter;
 }
+
+filter_t filter_create(str_t s, cl_context context, json_value_t config, map_t filters) {
+	filter_controller_t controller = map_get(filter_map, s);
+	if(controller)
+		return filter_create_internal(controller, context, config, filters);
+	else
+		err_throw(e_filter_not_found);
+}
+
+filter_t filter_create_cs(const char *s, cl_context context, json_value_t config, map_t filters) {
+	filter_controller_t controller = map_get_cs(filter_map, s);
+	if(controller)
+		return filter_create_internal(controller, context, config, filters);
+	else
+		err_throw(e_filter_not_found);
+}
+
 filter_t filter_delete(filter_t filter) {
 	if(filter) {
 		filter->controller->destroy(filter);

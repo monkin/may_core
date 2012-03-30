@@ -1,6 +1,8 @@
 project(may-doc)
 cmake_minimum_required(VERSION 2.6)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
 option(BUILD_DOCUMENTATION "Use Doxygen to create the HTML based API documentation" OFF)
 if(BUILD_DOCUMENTATION)
 	FIND_PACKAGE(Doxygen)

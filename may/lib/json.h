@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 ERR_DECLARE(e_json_error);
+ERR_DECLARE(e_json_assertion_failed);
 ERR_DECLARE(e_json_invalid_state);
 ERR_DECLARE(e_json_syntax_error);
 
@@ -152,6 +153,24 @@ void jbuilder_string_cs(jbuilder_t, const char *);*/
 void jbuilder_false(jbuilder_t);*/
 #define jbuilder_true(jb) jbuilder_bool(jb, true)
 #define jbuilder_false(jb) jbuilder_bool(jb, false)
+
+#define json_assert_type(val, tp1, tp2) { \
+	json_value_t may_json_javl = (val);   \
+	if(may_json_javl ? (may_json_javl->value_type!=(tp1) && may_json_javl->value_type!=(tp2)) : true) { \
+		err_throw(e_json_assertion_failed); \
+	} \
+}
+#define json_assert_array(val) json_assert_type(val, JSON_ARRAY, JSON_ARRAY)
+#define json_assert_object(val) json_assert_type(val, JSON_OBJECT, JSON_OBJECT)
+#define json_assert_string(val) json_assert_type(val, JSON_STRING, JSON_STRING)
+#define json_assert_number(val) json_assert_type(val, JSON_NUMBER, JSON_NUMBER)
+#define json_assert_null(val) json_assert_type(val, JSON_NULL, JSON_NULL)
+#define json_assert_bool(val) json_assert_type(val, JSON_TRUE, JSON_FALSE)
+#define json_assert_false(val) json_assert_type(val, JSON_FALSE, JSON_FALSE)
+#define json_assert_true(val) json_assert_type(val, JSON_TRUE, JSON_TRUE)
+void json_assert_haskey(json_value_t, str_t);
+void json_assert_haskey_cs(json_value_t, const char *);
+
 
 #endif /* MAY_JSON_H */
 

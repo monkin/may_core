@@ -2,6 +2,7 @@
 #include <string.h>
 
 ERR_DEFINE(e_json_error, "JSON error.", 0);
+ERR_DEFINE(e_json_assertion_failed, "JSON assertion failed.", e_json_error);
 ERR_DEFINE(e_json_syntax_error, "JSON syntax error.", e_json_error);
 ERR_DEFINE(e_json_invalid_state, "JSON Builder error.", e_json_error);
 
@@ -813,4 +814,15 @@ json_value_t jbuilder_value_v(jbuilder_t jbv) {
 	return jb->current;
 }
 
+void json_assert_haskey(json_value_t v, str_t key) {
+	json_assert_object(v);
+	if(!map_get(v->value.object, key))
+		err_throw(e_json_assertion_failed);
+}
+
+void json_assert_haskey_cs(json_value_t v, const char *key) {
+	json_assert_object(v);
+	if(!map_get_cs(v->value.object, key))
+		err_throw(e_json_assertion_failed);
+}
 

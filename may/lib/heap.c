@@ -34,7 +34,7 @@ heap_t heap_delete(heap_t h) {
 }
 
 void *heap_slow_alloc(heap_t h, size_t sz) {
-	size_t block_sz = (sz*16<=h->block_size) ? h->block_size : sz*16;
+	size_t block_sz = sz>h->block_size ? sz : h->block_size;
 	heap_block_t *b = h->last->next = mem_alloc(sizeof(heap_s) + block_sz);
 	b->previous = h->last;
 	h->last = b;

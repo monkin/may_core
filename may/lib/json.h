@@ -56,6 +56,8 @@ typedef struct json_value_ss {
 struct json_array_item_ss;
 typedef struct json_array_item_ss json_array_item_s;
 typedef json_array_item_s *json_array_item_t;
+typedef json_array_item_t json_ait_t; /* array iterator */
+typedef map_node_t json_oit_t; /* object iterator */
 
 struct json_array_item_ss {
 	json_value_s value;
@@ -170,6 +172,19 @@ void jbuilder_false(jbuilder_t);*/
 #define json_assert_true(val) json_assert_type(val, JSON_TRUE, JSON_TRUE)
 void json_assert_haskey(json_value_t, str_t);
 void json_assert_haskey_cs(json_value_t, const char *);
+
+bool json_is_string(json_value_t);
+bool json_is_number(json_value_t);
+bool json_is_bool(json_value_t);
+bool json_is_null(json_value_t);
+bool json_is_object(json_value_t);
+bool json_is_array(json_value_t);
+
+str_t json_to_string(json_value_t);
+double json_to_number(json_value_t);
+bool json_to_bool(json_value_t);
+map_t json_to_object(json_value_t);
+json_array_t json_to_array(json_value_t);
 
 
 #endif /* MAY_JSON_H */

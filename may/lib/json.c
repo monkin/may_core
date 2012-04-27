@@ -826,3 +826,31 @@ void json_assert_haskey_cs(json_value_t v, const char *key) {
 		err_throw(e_json_assertion_failed);
 }
 
+bool json_is_string(json_value_t v) { return v ? v->value_type==JSON_STRING : false; }
+bool json_is_number(json_value_t v) { return v ? v->value_type==JSON_NUMBER : false; }
+bool json_is_bool(json_value_t v) { return v ? v->value_type==JSON_TRUE || v->value_type==JSON_FALSE : false; }
+bool json_is_null(json_value_t v) { return v ? v->value_type==JSON_NULL : false; }
+bool json_is_object(json_value_t v) { return v ? v->value_type==JSON_OBJECT : false; }
+bool json_is_array(json_value_t v) { return v ? v->value_type==JSON_ARRAY : false; }
+
+str_t json_to_string(json_value_t v) {
+	json_assert_string(v);
+	return v->value.string;
+}
+double json_to_number(json_value_t v) {
+	json_assert_number(v);
+	return v->value.number;
+}
+bool json_to_bool(json_value_t v) {
+	json_assert_bool(v);
+	return v->value_type==JSON_TRUE;
+}
+map_t json_to_object(json_value_t v) {
+	json_assert_object(v);
+	return v->value.object;
+}
+json_array_t json_to_array(json_value_t v) {
+	json_assert_array(v);
+	return v->value.array;
+}
+

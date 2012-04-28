@@ -36,10 +36,11 @@ struct filter_ss {
 	cl_context context;
 	json_value_t config;
 	map_t filters;
+	map_t binary_streams;
 };
 
-filter_t filter_create(str_t, cl_context, json_value_t config, map_t filters);
-filter_t filter_create_cs(const char *, cl_context, json_value_t config, map_t filters);
+filter_t filter_create(str_t, cl_context, json_value_t config, map_t filters, map_t binary_streams);
+filter_t filter_create_cs(const char *, cl_context, json_value_t config, map_t filters, map_t binary_streams);
 filter_t filter_delete(filter_t);
 mcl_ex_t filter_get_expression(heap_t, filter_t, mcl_ex_t point,
 	mcl_arg_t (*create_arg)(heap_t, size_t arg_size, const void *arg_value),

@@ -23,7 +23,7 @@ void filter_register(filter_controller_t c) {
 	map_set_cs(filter_map, c->name, c);
 }
 
-static filter_t filter_create_internal(filter_controller_t controller, cl_context context, json_value_t config, map_t filters) {
+static filter_t filter_create_internal(filter_controller_t controller, cl_context context, json_value_t config, map_t filters, map_t binary_streams) {
 	heap_t h = heap_create(16*1024);
 	filter_t filter = heap_alloc(h, sizeof(filter_s));
 	filter->heap = h;
@@ -32,6 +32,7 @@ static filter_t filter_create_internal(filter_controller_t controller, cl_contex
 	filter->context = context;
 	filter->config = config;
 	filter->filters = filters;
+	filter->binary_streams = binary_streams;
 	filter_t background = map_get_cs(filters, "_");
 	filter->type = background ? background->type : 0;
 	err_try {
@@ -43,18 +44,18 @@ static filter_t filter_create_internal(filter_controller_t controller, cl_contex
 	return filter;
 }
 
-filter_t filter_create(str_t s, cl_context context, json_value_t config, map_t filters) {
+filter_t filter_create(str_t s, cl_context context, json_value_t config, map_t filters, map_t binary_streams) {
 	filter_controller_t controller = map_get(filter_map, s);
 	if(controller)
-		return filter_create_internal(controller, context, config, filters);
+		return filter_create_internal(controller, context, config, filters, binary_streams);
 	else
 		err_throw(e_filter_not_found);
 }
 
-filter_t filter_create_cs(const char *s, cl_context context, json_value_t config, map_t filters) {
+filter_t filter_create_cs(const char *s, cl_context context, json_value_t config, map_t filters, map_t binary_streams) {
 	filter_controller_t controller = map_get_cs(filter_map, s);
 	if(controller)
-		return filter_create_internal(controller, context, config, filters);
+		return filter_create_internal(controller, context, config, filters, binary_streams);
 	else
 		err_throw(e_filter_not_found);
 }

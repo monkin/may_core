@@ -111,12 +111,11 @@ void mclt_init() {
 
 			parser_t p_integer = parser_and(h,
 				parser_maybe(h, p_unsigned),
-				parser_or(h, p_bool,
-					parser_or(h, p_char,
-						parser_or(h, p_short,
-							parser_or(h, p_int, p_long)))));
+				parser_or(h, p_char,
+					parser_or(h, p_short,
+						parser_or(h, p_int, p_long))));
 			parser_t p_number = parser_or(h, p_integer, p_float);
-			parser_t p_numeric = parser_and(h, p_number,
+			parser_t p_numeric = parser_and(h, parser_or(h, p_number, p_bool),
 				parser_maybe(h,
 					parser_or(h, parser_named(h, 0x0200, parser_string(h, "2")),
 						parser_or(h, parser_named(h, 0x0400, parser_string(h, "4")),
@@ -140,7 +139,9 @@ void mclt_init() {
 
 			mclt_parser = parser_and(h, parser_maybe(h, p_spaces),
 				parser_and(h,
-					parser_or(h, p_pointer, parser_or(h, p_image, p_numeric)),
+					parser_or(h, p_pointer,
+						parser_or(h, p_image,
+							parser_or(h, p_void, p_numeric))),
 					parser_maybe(h, p_spaces)));
 		} err_catch {
 			type_heap = heap_delete(type_heap);
@@ -167,6 +168,7 @@ mclt_t mclt_parse(str_t s) {
 		for(i = syntree_begin(st); i; i=syntree_next(i))
 			type |= syntree_name(i);
 		syntree_delete(st);
+		return type;
 	} else {
 		syntree_delete(st);
 		err_throw(e_mclt_parsing_error);

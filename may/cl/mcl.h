@@ -2,13 +2,15 @@
 #ifndef MAY_MCL_H
 #define MAY_MCL_H
 
-#include "../lib/parser.h"
+#include "../lib/err.h"
+#include "../lib/str.h"
 #include <stdbool.h>
 
 /* mclt = mCL type */
 
 ERR_DECLARE(e_mcl_error);
 ERR_DECLARE(e_mclt_error);
+ERR_DECLARE(e_mclt_parsing_error);
 
 enum {
 	MCLT_VOID = 0,

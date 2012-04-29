@@ -1,9 +1,12 @@
 
 #include "mcl.h"
+#include "../lib/parser.h"
+#include "../lib/syntree.h"
 #include <CL/cl.h>
 
 ERR_DEFINE(e_mcl_error, "mCL error", 0);
 ERR_DEFINE(e_mclt_error, "Invalid mCL type operation", e_mcl_error);
+ERR_DEFINE(e_mclt_parsing_error, "Invalid type name", e_mclt_error);
 
 mclt_t mclt_vector(mclt_t t, int vector_size) {
 	if(!mclt_is_numeric(t) || !(vector_size==2 || vector_size==4 || vector_size==8 || vector_size==16))
@@ -157,15 +160,28 @@ str_t mclt_name(mclt_t t) {
 }
 
 mclt_t mclt_parse(str_t s) {
-	
+	syntree_t st = syntree_create(s);
+	if(parser_process(mclt_parser, st)) {
+		mclt_t type = 0;
+		syntree_node_t i;
+		for(i = syntree_begin(st); i; i=syntree_next(i))
+			type |= syntree_name(i);
+		syntree_delete(st);
+	} else {
+		syntree_delete(st);
+		err_throw(e_mclt_parsing_error);
+	}
 }
 
 mclt_t mclt_parse_cs(const char *s) {
-	
+	heap_t h = heap_create(128);
+	err_try {
+		mclt_t t = mclt_parse(str_from_cs(h, s));
+		heap_delete(h);
+		return t;
+	} err_catch {
+		heap_delete(h);
+		err_throw_down();
+	}
 }
-
-
-
-
-
 

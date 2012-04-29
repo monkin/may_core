@@ -69,10 +69,13 @@ static void insert_name_v(mclt_t t, const char *name, bool pointable) {
 	}
 }
 
+static parser_t mclt_parser;
+
 void mclt_init() {
 	if(!type_heap) {
 		err_try {
-			type_heap = heap_create(0);
+			/* Init types */
+			heap_t h = type_heap = heap_create(0);
 			type_names = map_create(type_heap);
 			insert_name(MCLT_VOID, "void");
 			insert_name_p(MCLT_VOID, "void");
@@ -88,6 +91,54 @@ void mclt_init() {
 			insert_name_v(MCLT_ULONG, "ulong", true);
 			insert_name(MCLT_IMAGE_R, "read_only image2d_t");
 			insert_name(MCLT_IMAGE_W, "write_only image2d_t");
+
+			/* Init parser */
+			parser_t p_spaces = parser_rep(h, parser_cset(h, " \t\r\n"), 1, 0);
+
+			parser_t p_void = parser_named(h, 0, parser_string(h, "void"));
+			parser_t p_bool = parser_named(h, MCLT_INTEGER, parser_string(h, "bool"));
+
+			parser_t p_char = parser_named(h, MCLT_CHAR, parser_string(h, "char"));
+			parser_t p_short = parser_named(h, MCLT_SHORT, parser_string(h, "short"));
+			parser_t p_int = parser_named(h, MCLT_INT, parser_string(h, "int"));
+			parser_t p_long = parser_named(h, MCLT_LONG, parser_string(h, "long"));
+			parser_t p_unsigned = parser_named(h, MCLT_UNSIGNED, parser_string(h, "u"));
+
+			parser_t p_float = parser_named(h, MCLT_FLOAT, parser_string(h, "float"));
+
+			parser_t p_integer = parser_and(h,
+				parser_maybe(h, p_unsigned),
+				parser_or(h, p_bool,
+					parser_or(h, p_char,
+						parser_or(h, p_short,
+							parser_or(h, p_int, p_long)))));
+			parser_t p_number = parser_or(h, p_integer, p_float);
+			parser_t p_numeric = parser_and(h, p_number,
+				parser_maybe(h,
+					parser_or(h, parser_named(h, 0x0200, parser_string(h, "2")),
+						parser_or(h, parser_named(h, 0x0400, parser_string(h, "4")),
+							parser_or(h, parser_named(h, 0x0800, parser_string(h, "8")),
+								parser_named(h, 0x1000, parser_string(h, "16")))))));
+
+			parser_t p_read_only = parser_named(h, MCLT_IMAGE_R, parser_string(h, "read_only"));
+			parser_t p_write_only = parser_named(h, MCLT_IMAGE_W, parser_string(h, "write_only"));
+			parser_t p_image = parser_and(h,
+				parser_or(h, p_read_only, p_write_only),
+				parser_and(h, p_spaces, parser_string(h, "image2d_t")));
+
+			parser_t p_global = parser_named(h, MCLT_P_GLOBAL | MCLT_POINTER, parser_string(h, "global"));
+			parser_t p_local = parser_named(h, MCLT_P_LOCAL | MCLT_POINTER, parser_string(h, "local"));
+			parser_t p_private = parser_named(h, MCLT_P_PRIVATE | MCLT_POINTER, parser_string(h, "private"));
+			parser_t p_mem_type = parser_or(h, p_global, parser_or(h, p_local, p_private));
+			parser_t p_pointer = parser_and(h, p_mem_type,
+				parser_and(h, p_spaces,
+					parser_and(h, p_numeric,
+						parser_and(h, parser_maybe(h, p_spaces), parser_string(h, "*")))));
+
+			mclt_parser = parser_and(h, parser_maybe(h, p_spaces),
+				parser_and(h,
+					parser_or(h, p_pointer, parser_or(h, p_image, p_numeric)),
+					parser_maybe(h, p_spaces)));
 		} err_catch {
 			type_heap = heap_delete(type_heap);
 			err_throw_down();
@@ -103,6 +154,14 @@ str_t mclt_name(mclt_t t) {
 		return r;
 	else
 		err_throw(e_mclt_error);
+}
+
+mclt_t mclt_parse(str_t s) {
+	
+}
+
+mclt_t mclt_parse_cs(const char *s) {
+	
 }
 
 

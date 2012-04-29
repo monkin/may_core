@@ -66,6 +66,8 @@ mclt_t mclt_vector_of(mclt_t t1);
 mclt_t mclt_vector_size(mclt_t t1);
 mclt_t mclt_pointer_to(mclt_t t1);
 str_t mclt_name(mclt_t);
+mclt_t mclt_parse(str_t);
+mclt_t mclt_parse_cs(const char *);
 void mclt_init();
 
 #include "ex.h"

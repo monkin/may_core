@@ -10,6 +10,7 @@
 #include <CL/cl.h>
 
 ERR_DECLARE(e_filter_not_found);
+ERR_DECLARE(e_filter_invalid_arguments);
 
 struct filter_ss;
 typedef struct filter_ss filter_s;

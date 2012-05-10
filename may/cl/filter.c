@@ -2,6 +2,7 @@
 #include "filter.h"
 
 ERR_DEFINE(e_filter_not_found, "Filter not found", e_mcl_error);
+ERR_DEFINE(e_filter_invalid_arguments, "Invalid filter arguments", e_mcl_error);
 
 static heap_t filter_heap = 0;
 static map_t filter_map = 0;
@@ -62,7 +63,8 @@ filter_t filter_create_cs(const char *s, cl_context context, json_value_t config
 
 filter_t filter_delete(filter_t filter) {
 	if(filter) {
-		filter->controller->destroy(filter);
+		if(filter->controller->destroy)
+			filter->controller->destroy(filter);
 		heap_delete(filter->heap);
 	}
 	return 0;
@@ -72,3 +74,7 @@ mcl_ex_t filter_get_expression(heap_t heap, filter_t filter, mcl_ex_t point,
 		void (*append_event)(cl_event)) {
 	return filter->controller->get_expression(heap, filter, point, create_arg, append_event);
 }
+
+#include "filters/const.c"
+
+

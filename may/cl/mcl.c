@@ -191,7 +191,7 @@ mclt_t mclt_parse_cs(const char *s) {
 long mclt_size(mclt_t t) {
 	if(mclt_is_vector(t))
 		return mclt_size(mclt_vector_of(t)) * mclt_vector_size(t);
-	else if(mclt_is_integer(t))
+	else if(mclt_is_integer(t) && !mclt_is_bool(t))
 		return mclt_integer_size(t);
 	else if(mclt_is_float(t))
 		return sizeof(cl_float);

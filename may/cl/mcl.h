@@ -11,6 +11,7 @@
 ERR_DECLARE(e_mcl_error);
 ERR_DECLARE(e_mclt_error);
 ERR_DECLARE(e_mclt_parsing_error);
+ERR_DECLARE(e_mclt_size_undefined);
 
 enum {
 	MCLT_VOID = 0,
@@ -70,6 +71,7 @@ mclt_t mclt_pointer_to(mclt_t t1);
 str_t mclt_name(mclt_t);
 mclt_t mclt_parse(str_t);
 mclt_t mclt_parse_cs(const char *);
+long mclt_size(mclt_t);
 void mclt_init();
 
 #include "ex.h"

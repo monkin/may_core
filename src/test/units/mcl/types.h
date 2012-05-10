@@ -33,6 +33,10 @@ void test_mcl_types() {
 			if(mclt_parse_cs(" read_only image2d_t")!=MCLT_IMAGE_R)
 				TEST_FAIL;
 		} TEST_END;
+		TEST_CHECK("type_size") {
+			if(mclt_size(mclt_vector(MCLT_USHORT, 4))!=8)
+				TEST_FAIL;
+		} TEST_END;
 		h = heap_delete(h);
 	} err_catch {
 		h = heap_delete(h);

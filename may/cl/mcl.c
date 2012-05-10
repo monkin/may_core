@@ -7,6 +7,7 @@
 ERR_DEFINE(e_mcl_error, "mCL error", 0);
 ERR_DEFINE(e_mclt_error, "Invalid mCL type operation", e_mcl_error);
 ERR_DEFINE(e_mclt_parsing_error, "Invalid type name", e_mclt_error);
+ERR_DEFINE(e_mclt_size_undefined, "Can't determine type size", e_mclt_error);
 
 mclt_t mclt_vector(mclt_t t, int vector_size) {
 	if(!mclt_is_numeric(t) || !(vector_size==2 || vector_size==4 || vector_size==8 || vector_size==16))
@@ -185,5 +186,16 @@ mclt_t mclt_parse_cs(const char *s) {
 		heap_delete(h);
 		err_throw_down();
 	}
+}
+
+long mclt_size(mclt_t t) {
+	if(mclt_is_vector(t))
+		return mclt_size(mclt_vector_of(t)) * mclt_vector_size(t);
+	else if(mclt_is_integer(t))
+		return mclt_integer_size(t);
+	else if(mclt_is_float(t))
+		return sizeof(cl_float);
+	else
+		err_throw(e_mclt_size_undefined);
 }
 

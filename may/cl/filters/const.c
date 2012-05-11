@@ -1,4 +1,8 @@
 
+#include "const.h"
+#include "../filter.h"
+#include "../mcl.h"
+
 #define flt_const_write_number_i(en, tp) case en: *((tp *)dst) = (tp)n; break;
 
 void flt_const_write_number(void *dst, double n, mclt_t t) {
@@ -14,6 +18,9 @@ void flt_const_write_number(void *dst, double n, mclt_t t) {
 	flt_const_write_number_i(MCLT_UINT, cl_uint);
 	flt_const_write_number_i(MCLT_LONG, cl_long);
 	flt_const_write_number_i(MCLT_ULONG, cl_ulong);
+	case MCLT_BOOL:
+		*((char *)dst) = n!=0;
+		break;
 	default:
 		err_throw(e_filter_invalid_arguments);
 	}
@@ -48,5 +55,10 @@ static void flt_const_init(filter_t f) {
 static mcl_ex_t flt_const_get_expression(heap_t h, filter_t f, mcl_ex_t point,
 		mcl_arg_t (*create_arg)(heap_t, size_t arg_size, const void *arg_value),
 		void (*append_event)(cl_event)) {
+	return mcl_const(h,  f->type, f->controller_data);
 }
+
+filter_controller_s flt_controller_const = {
+	"const", flt_const_init, 0, flt_const_get_expression
+};
 

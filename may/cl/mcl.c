@@ -195,6 +195,8 @@ long mclt_size(mclt_t t) {
 		return mclt_integer_size(t);
 	else if(mclt_is_float(t))
 		return sizeof(cl_float);
+	else if(mclt_is_bool(t))
+		return sizeof(cl_char);
 	else
 		err_throw(e_mclt_size_undefined);
 }

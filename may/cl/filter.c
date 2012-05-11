@@ -75,6 +75,6 @@ mcl_ex_t filter_get_expression(heap_t heap, filter_t filter, mcl_ex_t point,
 	return filter->controller->get_expression(heap, filter, point, create_arg, append_event);
 }
 
-#include "filters/const.c"
+#include "filters/const.h"
 
 

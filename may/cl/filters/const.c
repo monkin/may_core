@@ -26,7 +26,7 @@ void flt_const_write_number(void *dst, double n, mclt_t t) {
 	}
 }
 
-static void flt_const_init(filter_t f) {
+static void flt_init_const(filter_t f) {
 	map_t config = json_to_object(f->config);
 	json_value_t value = map_get_cs(config, "value");
 	long type_size;
@@ -52,13 +52,13 @@ static void flt_const_init(filter_t f) {
 		flt_const_write_number(f->controller_data, json_to_number(value), f->type);
 }
 
-static mcl_ex_t flt_const_get_expression(heap_t h, filter_t f, mcl_ex_t point,
+static mcl_ex_t flt_get_expression_const(heap_t h, filter_t f, mcl_ex_t point,
 		mcl_arg_t (*create_arg)(heap_t, size_t arg_size, const void *arg_value),
 		void (*append_event)(cl_event)) {
 	return mcl_const(h,  f->type, f->controller_data);
 }
 
 filter_controller_s flt_controller_const = {
-	"const", flt_const_init, 0, flt_const_get_expression
+	"const", flt_init_const, 0, flt_get_expression_const
 };
 

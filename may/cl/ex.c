@@ -38,21 +38,6 @@ static str_t pointer_to_name(heap_t h, char prefix, void *p) {
 	return r;
 }
 
-typedef enum {
-	MCLFT_FUNCTION = 0,
-	MCLFT_OPERATOR = 1,
-	MCLFT_CUSTOM = 2
-} mcl_function_type_t;
-
-typedef struct {
-	char *name;
-	int args_count;
-	mclt_t (*return_type)(size_t, const mclt_t *, mclt_t *);
-	mcl_function_type_t type;
-} mcl_stdfn_s;
-
-typedef mcl_stdfn_s *mcl_stdfn_t;
-
 #define mcl_rule(cnd, result) if(cnd) return (result)
 #define mcl_rulex(precnd, cnd, result, exception) if(precnd) { if(cnd) { return (result); } else { err_throw(exception); }; }
 #define mcl_else(result) return result
@@ -126,6 +111,7 @@ static void mcl_value_source(mcl_ex_t ex, ios_t s) {
 #include "ex/for.c"
 #include "ex/while.c"
 #include "ex/seq.c"
+#include "ex/random.c"
 
 #undef MAY_MCLEX_C_INCLUDE
 

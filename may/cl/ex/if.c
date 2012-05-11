@@ -11,7 +11,7 @@ typedef struct {
 
 typedef if_data_s *if_data_t;
 
-void if_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *dt) {
+static void if_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *dt) {
 	if_data_t ifd = data;
 	mcl_push_arguments(ifd->condition, push_fn, dt);
 	if(ifd->ex_true)
@@ -19,7 +19,7 @@ void if_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *dt)
 	if(ifd->ex_false)
 		mcl_push_arguments(ifd->ex_false, push_fn, dt);
 }
-void if_global_source(void *data, map_t m, ios_t s) {
+static void if_global_source(void *data, map_t m, ios_t s) {
 	if_data_t ifd = data;
 	mcl_global_source(ifd->condition, m, s);
 	if(ifd->ex_true)
@@ -27,7 +27,7 @@ void if_global_source(void *data, map_t m, ios_t s) {
 	if(ifd->ex_false)
 		mcl_global_source(ifd->ex_false, m, s);
 }
-void if_local_source(void *data, map_t m, ios_t s) {
+static void if_local_source(void *data, map_t m, ios_t s) {
 	if_data_t ifd = data;
 	mcl_local_source(ifd->condition, m, s);
 	if(ifd->ex_true)
@@ -35,7 +35,7 @@ void if_local_source(void *data, map_t m, ios_t s) {
 	if(ifd->ex_false)
 		mcl_local_source(ifd->ex_false, m, s);
 }
-void if_value_source(void *data, ios_t s) {
+static void if_value_source(void *data, ios_t s) {
 	if_data_t ifd = data;
 	if(ifd->ex_true) {
 		ios_write(s, "if(", 3);

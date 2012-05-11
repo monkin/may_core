@@ -36,11 +36,13 @@ static filter_t filter_create_internal(filter_controller_t controller, cl_contex
 	filter->binary_streams = binary_streams;
 	filter_t background = map_get_cs(filters, "_");
 	filter->type = background ? background->type : 0;
-	err_try {
-		controller->init(filter);
-	} err_catch {
-		h = heap_delete(h);
-		err_throw_down();
+	if(controller->init) {
+		err_try {
+			controller->init(filter);
+		} err_catch {
+			h = heap_delete(h);
+			err_throw_down();
+		}
 	}
 	return filter;
 }
@@ -76,5 +78,6 @@ mcl_ex_t filter_get_expression(heap_t heap, filter_t filter, mcl_ex_t point,
 }
 
 #include "filters/const.h"
+#include "filters/blur.h"
 
 

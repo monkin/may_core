@@ -12,26 +12,26 @@ typedef struct {
 
 typedef seq_data_s *seq_data_t;
 
-void seq_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *dt) {
+static void seq_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *dt) {
 	seq_data_t sd = data;
 	size_t i;
 	for(i=0; i<sd->ex_count; i++)
 		mcl_push_arguments(sd->ex[i], push_fn, dt);
 }
-void seq_global_source(void *data, map_t m, ios_t s) {
+static void seq_global_source(void *data, map_t m, ios_t s) {
 	seq_data_t sd = data;
 	size_t i;
 	for(i=0; i<sd->ex_count; i++)
 		mcl_global_source(sd->ex[i], m, s);
 }
-void seq_local_source(void *data, map_t m, ios_t s) {
+static void seq_local_source(void *data, map_t m, ios_t s) {
 	seq_data_t sd = data;
 	size_t i;
 	for(i=0; i<sd->ex_count; i++)
 		mcl_local_source(sd->ex[i], m, s);
 }
 
-void seq_value_source(void *data, ios_t s) {
+static void seq_value_source(void *data, ios_t s) {
 	seq_data_t sd = data;
 	size_t i;
 	ios_write(s, "{\n", 2);

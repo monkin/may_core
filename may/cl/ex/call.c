@@ -4,6 +4,21 @@
 
 #define type_is_arithmetic(t) (mclt_is_numeric(t) || mclt_is_vector(t))
 
+typedef enum {
+	MCLFT_FUNCTION = 0,
+	MCLFT_OPERATOR = 1,
+	MCLFT_CUSTOM = 2
+} mcl_function_type_t;
+
+typedef struct {
+	char *name;
+	int args_count;
+	mclt_t (*return_type)(size_t, const mclt_t *, mclt_t *);
+	mcl_function_type_t type;
+} mcl_stdfn_s;
+
+typedef mcl_stdfn_s *mcl_stdfn_t;
+
 static mclt_t ret_type_op_set(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	if(type_compatible(args[0], args[1]))
@@ -428,11 +443,11 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"read_image_fl", 2, ret_type_read_image_f, MCLFT_CUSTOM},
 	{"read_image_il", 2, ret_type_read_image_i, MCLFT_CUSTOM},
 	{"read_image_uil", 2, ret_type_read_image_ui, MCLFT_CUSTOM},
-	{"write_image_f", 3, 0, MCLFT_FUNCTION},
-	{"write_image_i", 3, 0, MCLFT_FUNCTION},
-	{"write_image_ui", 3, 0, MCLFT_FUNCTION},
-	{"get_image_width", 1, 0, MCLFT_FUNCTION},
-	{"get_image_height", 1, 0, MCLFT_FUNCTION},
+	{"write_image_f", 3, 0, 0},
+	{"write_image_i", 3, 0, 0},
+	{"write_image_ui", 3, 0, 0},
+	{"get_image_width", 1, 0, 0},
+	{"get_image_height", 1, 0, 0},
 	{0, 0, 0, 0}
 };
 

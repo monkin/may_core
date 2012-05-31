@@ -36,7 +36,7 @@ struct tar_ss {
 };
 
 tar_t tar_create(ios_t);
-ios_t tar_find(tar_t, str_t fname);
+ios_t tar_get_stream(tar_t, str_t fname);
 str_t tar_get(tar_t, heap_t, str_t fname);
 void tar_put(tar_t, str_t fname, str_t content);
 void tar_putf(tar_t, str_t fname, str_t path);

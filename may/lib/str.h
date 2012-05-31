@@ -66,6 +66,8 @@ typedef sbuilder_s *sbuilder_t;
  */
 sbuilder_t sbuilder_create(heap_t h);
 sbuilder_t sbuilder_append(sbuilder_t, str_t);
+/* sbuilder_t sbuilder_append_cs(sbuilder_t, const char *); */
+#define sbuilder_append_cs(sb, cs) sbuilder_append((sb), str_from_cs(sb->heap, (cs)));
 str_t sbuilder_get(heap_t h, sbuilder_t);
 
 

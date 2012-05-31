@@ -110,6 +110,7 @@ int err_stack_clear();
 void err_throw_down();
 #define err_try if((err_stack_size==err_stack_capacity ? err_stack_resize() : 0) ? !setjmp(err_stack[err_stack_size++]) : !setjmp(err_stack[err_stack_size++])) {
 #define err_catch err_stack_size--; if(!err_stack_size) err_stack_clear(); } else if((--err_stack_size) ? 1 : err_stack_clear())
+#define err_finally err_catch for(;; err_throw_down())
 #define err_throw(err_name) { err_replace(err_name); err_throw_down(); }
 
 

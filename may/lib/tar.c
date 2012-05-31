@@ -137,20 +137,20 @@ void tar_puts(tar_t tar, str_t fname, ios_t stream) {
 		tar->first = tar->last = item;
 }
 
-ios_t tar_find(tar_t tar, str_t fname) {
+ios_t tar_get_stream(tar_t tar, str_t fname) {
 	tar_item_t i = map_get(tar->files, fname);
 	return i ? i->range : 0;
 }
 
 str_t tar_get(tar_t tar, heap_t h, str_t fname) {
+	str_t r = 0;
 	tar_item_t i = map_get(tar->files, fname);
 	if(!i)
 		return 0;
 	ios_seek(i->range, 0, IOS_SEEK_END);
-	long long sz = ios_tell(i->range);
-	str_t r = str_create(h, sz);
+	r = str_create(h, ios_tell(i->range));
 	ios_seek(i->range, 0, IOS_SEEK_BEGIN);
-	ios_read(i->range, str_begin(r), sz);
+	ios_read(i->range, str_begin(r), str_length(r));
 	return r;
 }
 

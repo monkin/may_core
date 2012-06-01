@@ -15,6 +15,7 @@ typedef floader_s *floader_t;
 
 floader_t floader_create_tar(heap_t, tar_t, str_t);
 floader_t floader_create_dir(heap_t, str_t);
+floader_t floader_create_sub(heap_t, floader_t, str_t);
 
 ios_t floader_get_stream(floader_t, str_t);
 str_t floader_get_str(floader_t, heap_t, str_t);

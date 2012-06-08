@@ -223,6 +223,13 @@ static mclt_t ret_type_float_same(size_t argc, const mclt_t *args, mclt_t *cast_
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
+static mclt_t ret_type_sincos(size_t argc, const mclt_t *args, mclt_t *cast_to) {
+	mclt_t result = 	ret_type_float_same(argc, args, cast_to);
+	if(cast_to[1]!=args[1])
+		err_throw(e_mcl_ex_invalid_operand);
+	return result;
+}
+
 static mclt_t ret_type_float_length(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==1 && argc==2);
 	mclt_t atype = argc==1 ? args[0] : type_max(args[0], args[1]);
@@ -391,7 +398,7 @@ static mcl_stdfn_s stdfn_list[] = {
 	{"round", 1, ret_type_float_same, 0},
 	{"rsqrt", 1, ret_type_float_same, 0},
 	{"sin", 1, ret_type_float_same, 0},
-	{"sincos", 2, 0, 0},
+	{"sincos", 2, ret_type_sincos, MCLFT_CUSTOM},
 	{"sinh", 1, ret_type_float_same, 0},
 	{"sinpi", 1, ret_type_float_same, 0},
 	{"sqrt", 1, ret_type_float_same, 0},
@@ -571,6 +578,13 @@ static void call_internal_value_source(void *data, ios_t s) {
 			break;
 		case 'n': /* neg(x) - unary minus*/
 			ios_write_cs(s, "(-");
+			mcl_value_source(cid->args[1], s);
+			ios_write_cs(s, ")");
+			break;
+		case 's': /* sincos */
+			ios_write_cs(s, "sincos(");
+			mcl_value_source(cid->args[0], s);
+			ios_write_cs(s, ", &");
 			mcl_value_source(cid->args[1], s);
 			ios_write_cs(s, ")");
 			break;

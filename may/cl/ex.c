@@ -112,7 +112,12 @@ static void mcl_value_source(mcl_ex_t ex, ios_t s) {
 #include "ex/while.c"
 #include "ex/seq.c"
 #include "ex/random.c"
+#include "ex/vector.c"
 
 #undef MAY_MCLEX_C_INCLUDE
+
+bool mcl_is_lvalue(mcl_ex_t ex) {
+	return ex->vtable==&var_vtable;
+}
 
 

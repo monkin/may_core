@@ -51,6 +51,8 @@ struct mcl_ex_ss {
 
 void mcl_init();
 
+bool mcl_is_lvalue(mcl_ex_t);
+
 mcl_ex_t mcl_call(heap_t h, str_t nm);
 mcl_ex_t mcl_call_cs(heap_t h, const char *nm);
 mcl_ex_t mcl_call_1(heap_t h, str_t nm, mcl_ex_t);
@@ -69,7 +71,17 @@ mcl_ex_t mcl_for(heap_t h, mcl_ex_t var_init, mcl_ex_t var_cond, mcl_ex_t var_in
 mcl_ex_t mcl_while(heap_t h, mcl_ex_t condition, mcl_ex_t expression);
 mcl_ex_t mcl_cast(heap_t h, mclt_t, mcl_ex_t);
 
-mcl_ex_t mcl_random(heap_t h);
+mcl_ex_t mcl_vector_select(heap_t h, mcl_ex_t ex, unsigned int rsz, const unsigned int *indexes);
+mcl_ex_t mcl_vector_select1(heap_t h, mcl_ex_t ex, unsigned int i);
+mcl_ex_t mcl_vector_select2(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1);
+mcl_ex_t mcl_vector_select4(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3);
+mcl_ex_t mcl_vector_lo(heap_t h, mcl_ex_t ex);
+mcl_ex_t mcl_vector_hi(heap_t h, mcl_ex_t ex);
+mcl_ex_t mcl_vector_odd(heap_t h, mcl_ex_t ex);
+mcl_ex_t mcl_vector_even(heap_t h, mcl_ex_t ex);
+
+
+mcl_ex_t mcl_random(heap_t h, size_t vector_size);
 
 
 

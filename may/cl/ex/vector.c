@@ -78,20 +78,20 @@ mcl_ex_t mcl_vector_select8(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int
 	return mcl_vector_select(h, ex, 8, i);
 }
 mcl_ex_t mcl_vector_lo(heap_t h, mcl_ex_t ex) {
-	static unsigned int i[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+	static unsigned int i[] = {0, 1, 2, 3, 4, 5, 6, 7};
 	return mcl_vector_select(h, ex, mclt_vector_size(ex->return_type)/2, i);
 }
 mcl_ex_t mcl_vector_hi(heap_t h, mcl_ex_t ex) {
-	unsigned int i[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+	static unsigned int i[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 	unsigned int vsz = mclt_vector_size(ex->return_type)/2;
 	return mcl_vector_select(h, ex, vsz, i+vsz);
 }
 mcl_ex_t mcl_vector_odd(heap_t h, mcl_ex_t ex) {
-	static unsigned int i[8] = {1, 3, 5, 7, 9, 11, 13, 15};
+	static unsigned int i[] = {1, 3, 5, 7, 9, 11, 13, 15};
 	return mcl_vector_select(h, ex, mclt_vector_size(ex->return_type)/2, i);
 }
 mcl_ex_t mcl_vector_even(heap_t h, mcl_ex_t ex) {
-	static unsigned int i[8] = {0, 2, 4, 6, 8, 10, 12, 14};
+	static unsigned int i[] = {0, 2, 4, 6, 8, 10, 12, 14};
 	return mcl_vector_select(h, ex, mclt_vector_size(ex->return_type)/2, i);
 }
 

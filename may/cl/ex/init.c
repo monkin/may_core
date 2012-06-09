@@ -40,7 +40,7 @@ static mcl_ex_vtable_s init_vtable = {
 	init_value_source
 };
 
-mcl_ex_t mcl_init(heap_t h, mcl_ex_t init_ex, mcl_ex_t value_ex) {
+mcl_ex_t mcl_init_ex(heap_t h, mcl_ex_t init_ex, mcl_ex_t value_ex) {
 	assert(h && init_ex && value_ex);
 	init_data_t r = heap_alloc(h, sizeof(init_data_s));
 	r->init = init_ex;

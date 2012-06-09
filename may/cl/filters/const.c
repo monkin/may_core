@@ -52,9 +52,7 @@ static void flt_init_const(filter_t f) {
 		flt_const_write_number(f->controller_data, json_to_number(value), f->type);
 }
 
-static mcl_ex_t flt_get_expression_const(heap_t h, filter_t f, mcl_ex_t point,
-		mcl_arg_t (*create_arg)(heap_t, size_t arg_size, const void *arg_value),
-		void (*append_event)(cl_event)) {
+static mcl_ex_t flt_get_expression_const(heap_t h, filter_t f, mcl_ex_t point, filter_arguments_t fa) {
 	return mcl_const(h,  f->type, f->controller_data);
 }
 

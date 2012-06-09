@@ -89,8 +89,8 @@ static mclt_t ret_type_op_equal(size_t argc, const mclt_t *args, mclt_t *cast_to
 	if(!type_compatible(args[0], args[1]))
 		err_throw(e_mcl_ex_invalid_operand);
 	cast_to[0] = cast_to[1] = type_max(args[0], args[1]);
-	mcl_rule(mclt_is_vector(args[0]), mclt_vector(MCLT_BOOL, mclt_vector_size(args[0])));
-	mcl_rule(mclt_is_vector(args[1]), mclt_vector(MCLT_BOOL, mclt_vector_size(args[1])));
+	mcl_rule(mclt_is_vector(args[0]), mclt_vector(MCLT_INT, mclt_vector_size(args[0])));
+	mcl_rule(mclt_is_vector(args[1]), mclt_vector(MCLT_INT, mclt_vector_size(args[1])));
 	return MCLT_BOOL;
 }
 
@@ -100,9 +100,9 @@ static mclt_t ret_type_op_compare(size_t argc, const mclt_t *args, mclt_t *cast_
 		err_throw(e_mcl_ex_invalid_operand);
 	cast_to[0] = cast_to[1] = type_max(args[0], args[1]);
 	if(mclt_is_vector(args[0]))
-		return mclt_vector(MCLT_BOOL, mclt_vector_size(args[0]));
+		return mclt_vector(MCLT_INT, mclt_vector_size(args[0]));
 	if(mclt_is_vector(args[1]))
-		return mclt_vector(MCLT_BOOL, mclt_vector_size(args[1]));
+		return mclt_vector(MCLT_INT, mclt_vector_size(args[1]));
 	return MCLT_BOOL;
 }
 

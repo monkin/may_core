@@ -58,20 +58,20 @@ mcl_ex_t mcl_vector_select(heap_t h, mcl_ex_t ex, unsigned int rsz, const unsign
 	return &res->rexpr;
 }
 
-mcl_ex_t mcl_vector_select1(heap_t h, mcl_ex_t ex, unsigned int i) {
+mcl_ex_t mcl_vector_select_1(heap_t h, mcl_ex_t ex, unsigned int i) {
 	return mcl_vector_select(h, ex, 1, &i);
 }
-mcl_ex_t mcl_vector_select2(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1) {
+mcl_ex_t mcl_vector_select_2(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1) {
 	unsigned int i[2];
 	i[0] = i0; i[1] = i1;
 	return mcl_vector_select(h, ex, 2, i);
 }
-mcl_ex_t mcl_vector_select4(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3) {
+mcl_ex_t mcl_vector_select_4(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3) {
 	unsigned int i[4];
 	i[0] = i0; i[1] = i1; i[2] = i2; i[3] = i3;
 	return mcl_vector_select(h, ex, 4, i);
 }
-mcl_ex_t mcl_vector_select8(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3, unsigned int i4, unsigned int i5, unsigned int i6, unsigned int i7) {
+mcl_ex_t mcl_vector_select_8(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3, unsigned int i4, unsigned int i5, unsigned int i6, unsigned int i7) {
 	unsigned int i[8];
 	i[0] = i0; i[1] = i1; i[2] = i2; i[3] = i3;
 	i[4] = i4; i[5] = i5; i[6] = i6; i[7] = i7;

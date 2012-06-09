@@ -109,3 +109,60 @@ mcl_ex_t mcl_const(heap_t h, mclt_t tp, const void *val) {
 	r->self.vtable = &const_vtable;
 	return &r->self;
 }
+
+
+typedef struct {
+	const char *content;
+	mcl_ex_s self;
+} const_named_data_s;
+
+static void const_named_push_arguments(void *data, void (*push_fn)(void *, mcl_arg_t), void *dt) {}
+static void const_named_global_source(void *data, map_t m, ios_t s) {}
+static void const_named_local_source(void *data, map_t m, ios_t s) {}
+static void const_named_value_source(void *data, ios_t s) {
+	ios_write_cs(s, ((const_named_data_s *) data)->content);
+}
+
+static mcl_ex_vtable_s const_named_vtable = {
+	const_named_push_arguments,
+	const_named_global_source,
+	const_named_local_source,
+	const_named_value_source
+};
+
+
+#define mcl_const_named(suffix, name)  \
+mcl_ex_t mcl_const_ ## suffix () {     \
+	static const_named_data_s r;             \
+	static const char n[] = name;      \
+	static bool initialized = false;   \
+	if(!initialized) {       \
+		initialized = true;  \
+		r.content = n;       \
+		r.self.return_type = MCLT_FLOAT;     \
+		r.self.data = &r;                    \
+		r.self.vtable = &const_named_vtable;	 \
+	}               \
+	return &r.self; \
+}
+
+mcl_const_named(maxfloat, "MAXFLOAT");
+mcl_const_named(hugeval, "HUGE_VALF");
+mcl_const_named(infinity, "INFINITY");
+mcl_const_named(nan, "NAN");
+mcl_const_named(e, "M_E_F");
+mcl_const_named(log2e, "M_LOG2E_F");
+mcl_const_named(log10e, "M_LOG10E_F");
+mcl_const_named(ln2, "M_LN2_F");
+mcl_const_named(ln10, "M_LN10_F");
+mcl_const_named(pi, "M_PI_F");
+mcl_const_named(pi_2, "M_PI_2_F");
+mcl_const_named(pi_4, "M_PI_4_F");
+mcl_const_named(1_pi, "M_1_PI_F");
+mcl_const_named(2_pi, "M_2_PI_F");
+mcl_const_named(2pi, "2*M_PI_F");
+mcl_const_named(2_sqrtpi, "M_2_SQRTPI_F");
+mcl_const_named(sqrt2, "M_SQRT2_F");
+mcl_const_named(1_sqrt2, "M_SQRT1_2_F");
+
+

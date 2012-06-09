@@ -64,22 +64,40 @@ mcl_ex_t mcl_call_3_cs(heap_t h, const char *nm, mcl_ex_t, mcl_ex_t, mcl_ex_t);
 
 mcl_ex_t mcl_var(heap_t h, mcl_ex_t);
 mcl_ex_t mcl_arg(heap_t h, mclt_t tp, mcl_arg_s *);
-mcl_ex_t mcl_const(heap_t h, mclt_t tp, const void *val);
 mcl_ex_t mcl_seq(heap_t h, size_t n, ...);
 mcl_ex_t mcl_if(heap_t h, mcl_ex_t, mcl_ex_t, mcl_ex_t);
 mcl_ex_t mcl_for(heap_t h, mcl_ex_t var_init, mcl_ex_t var_cond, mcl_ex_t var_inc, mcl_ex_t ex);
 mcl_ex_t mcl_while(heap_t h, mcl_ex_t condition, mcl_ex_t expression);
 mcl_ex_t mcl_cast(heap_t h, mclt_t, mcl_ex_t);
 
+mcl_ex_t mcl_const(heap_t h, mclt_t tp, const void *val);
+mcl_ex_t mcl_const_maxfloat();
+mcl_ex_t mcl_const_hugeval();
+mcl_ex_t mcl_const_infinity();
+mcl_ex_t mcl_const_nan();
+mcl_ex_t mcl_const_e();
+mcl_ex_t mcl_const_log2e();
+mcl_ex_t mcl_const_log10e();
+mcl_ex_t mcl_const_ln2();
+mcl_ex_t mcl_const_ln10();
+mcl_ex_t mcl_const_pi();
+mcl_ex_t mcl_const_pi_2();
+mcl_ex_t mcl_const_pi_4();
+mcl_ex_t mcl_const_1_pi();
+mcl_ex_t mcl_const_2_pi();
+mcl_ex_t mcl_const_2_sqrtpi();
+mcl_ex_t mcl_const_sqrt2();
+mcl_ex_t mcl_const_1_sqrt2();
+
 mcl_ex_t mcl_vector_select(heap_t h, mcl_ex_t ex, unsigned int rsz, const unsigned int *indexes);
-mcl_ex_t mcl_vector_select1(heap_t h, mcl_ex_t ex, unsigned int i);
-mcl_ex_t mcl_vector_select2(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1);
-mcl_ex_t mcl_vector_select4(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3);
+mcl_ex_t mcl_vector_select_1(heap_t h, mcl_ex_t ex, unsigned int i);
+mcl_ex_t mcl_vector_select_2(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1);
+mcl_ex_t mcl_vector_select_4(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3);
+mcl_ex_t mcl_vector_select_8(heap_t h, mcl_ex_t ex, unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3, unsigned int i4, unsigned int i5, unsigned int i6, unsigned int i7);
 mcl_ex_t mcl_vector_lo(heap_t h, mcl_ex_t ex);
 mcl_ex_t mcl_vector_hi(heap_t h, mcl_ex_t ex);
 mcl_ex_t mcl_vector_odd(heap_t h, mcl_ex_t ex);
 mcl_ex_t mcl_vector_even(heap_t h, mcl_ex_t ex);
-
 
 mcl_ex_t mcl_random(heap_t h, size_t vector_size);
 

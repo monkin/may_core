@@ -39,7 +39,7 @@ static void seq_value_source(void *data, ios_t s) {
 		mcl_value_source(sd->ex[i], s);
 		ios_write(s, ";\n", 2);
 	}
-	ios_write(s, "}", 1);
+	ios_write(s, "}\n", 2);
 }
 
 static mcl_ex_vtable_s seq_vtable = {

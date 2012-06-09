@@ -92,6 +92,7 @@ static void write_const(ios_t s, mclt_t tp, const void *val) {
 #undef MCL_CONST_BYTE
 
 mcl_ex_t mcl_const(heap_t h, mclt_t tp, const void *val) {
+	assert(h && val);
 	const_data_s *r = heap_alloc(h, sizeof(const_data_s));
 	ios_t s = ios_mem_create();
 	str_t source = 0;
@@ -160,7 +161,7 @@ mcl_const_named(pi_2, "M_PI_2_F");
 mcl_const_named(pi_4, "M_PI_4_F");
 mcl_const_named(1_pi, "M_1_PI_F");
 mcl_const_named(2_pi, "M_2_PI_F");
-mcl_const_named(2pi, "2*M_PI_F");
+mcl_const_named(2pi, "(2*M_PI_F)");
 mcl_const_named(2_sqrtpi, "M_2_SQRTPI_F");
 mcl_const_named(sqrt2, "M_SQRT2_F");
 mcl_const_named(1_sqrt2, "M_SQRT1_2_F");

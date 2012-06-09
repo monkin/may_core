@@ -42,6 +42,7 @@ static mcl_ex_vtable_s var_vtable = {
 
 
 mcl_ex_t mcl_var(heap_t h, mcl_ex_t ex) {
+	assert(h && ex);
 	var_data_t data = heap_alloc(h, sizeof(var_data_s));
 	data->name = pointer_to_name(h, 'v', data);
 	data->expr = ex;

@@ -113,6 +113,7 @@ static void mcl_value_source(mcl_ex_t ex, ios_t s) {
 #include "ex/seq.c"
 #include "ex/random.c"
 #include "ex/vector.c"
+#include "ex/init.c"
 
 #undef MAY_MCLEX_C_INCLUDE
 

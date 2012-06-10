@@ -31,7 +31,6 @@ enum {
 #define MCLT_VECTOR_SHORTCUT(tp) tp ## _2 = tp | 0x0200, tp ## _4 = tp | 0x0400, tp ## _8 = tp | 0x0800, tp ## _16 = tp | 0x1000
 
 enum mclt_type_shortcuts {
-	MCLT_BOOL = MCLT_INTEGER,
 	MCLT_CHAR = MCLT_INTEGER | 1,
 	MCLT_UCHAR = MCLT_UNSIGNED | MCLT_INTEGER | 1,
 	MCLT_SHORT = MCLT_INTEGER | 2,
@@ -63,7 +62,6 @@ typedef long mclt_t;
 
 #define mclt_is_integer(t) (((t) & MCLT_INTEGER) && !((t) & MCLT_V_SIZE))
 #define mclt_is_float(t) ((t)==MCLT_FLOAT)
-#define mclt_is_bool(t) ((t)==MCLT_BOOL)
 #define mclt_is_pointer(t) ((t) & MCLT_POINTER)
 #define mclt_is_vector(t) (((t) & MCLT_V_SIZE) && !mclt_is_pointer(t))
 #define mclt_is_vector_of_integer(t) (mclt_is_vector(t) ? mclt_is_integer(mclt_vector_of(t)) : false)

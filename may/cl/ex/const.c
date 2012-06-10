@@ -51,9 +51,7 @@ static char hex_digits[] = "0123456789abcdef";
 }
 
 static void write_const(ios_t s, mclt_t tp, const void *val) {
-	if(mclt_is_bool(tp))
-		ios_write(s, (*((const char *) val)) ? "1" : "0", 1);
-	else if(mclt_is_integer(tp)) {
+	if(mclt_is_integer(tp)) {
 		int size = mclt_integer_size(tp);
 		ios_write(s, "((", 2);
 		MCL_CONST_WRITE_TYPE_NAME(s, tp);
@@ -67,11 +65,10 @@ static void write_const(ios_t s, mclt_t tp, const void *val) {
 	} else if(mclt_is_vector(tp)) {
 		mclt_t vt = mclt_vector_of(tp);
 		if(mclt_is_integer(vt)) {
-			int isize = mclt_is_bool(vt) ? 1 : mclt_integer_size(tp);
 			ios_write(s, "((", 2);
 			MCL_CONST_WRITE_TYPE_NAME(s, tp);
 			ios_write(s, ")(", 2);
-			MCL_CONST_WRITE_VECTOR(s, val, isize, mclt_vector_size(vt));
+			MCL_CONST_WRITE_VECTOR(s, val, mclt_integer_size(tp), mclt_vector_size(vt));
 			ios_write(s, "))", 2);
 		} else { /* float */
 			ios_write(s, "as_", 3);

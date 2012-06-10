@@ -31,6 +31,9 @@ void filter_arguments_push_argument(filter_arguments_t fa, mcl_arg_t arg, const 
 
 /* filter */
 
+#include "filters/const.h"
+#include "filters/blur.h"
+
 ERR_DEFINE(e_filter_not_found, "Filter not found", e_mcl_error);
 ERR_DEFINE(e_filter_invalid_arguments, "Invalid filter arguments", e_mcl_error);
 
@@ -49,6 +52,8 @@ void filter_init() {
 		filter_heap = heap_delete(filter_heap);
 		err_throw_down();
 	}
+	filter_register(&flt_controller_blur);
+	filter_register(&flt_controller_const);
 }
 void filter_register(filter_controller_t c) {
 	map_set_cs(filter_map, c->name, c);
@@ -104,8 +109,5 @@ filter_t filter_delete(filter_t filter) {
 mcl_ex_t filter_get_expression(heap_t heap, filter_t filter, mcl_ex_t point, filter_arguments_t fa) {
 	return filter->controller->get_expression(heap, filter, point, fa);
 }
-
-#include "filters/const.h"
-#include "filters/blur.h"
 
 

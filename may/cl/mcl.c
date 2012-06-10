@@ -56,11 +56,10 @@ static void insert_name_p(mclt_t t, const char *name) {
 	memset(buff, 0, 64); sprintf(buff, "local %s *", name);   TYPE_APPEND(mclt_pointer(t, MCLT_P_LOCAL), buff);
 	memset(buff, 0, 64); sprintf(buff, "private %s *", name); TYPE_APPEND(mclt_pointer(t, MCLT_P_PRIVATE), buff);
 }
-static void insert_name_v(mclt_t t, const char *name, bool pointable) {
+static void insert_name_v(mclt_t t, const char *name) {
 	int i;
 	TYPE_APPEND(t, name);
-	if(pointable)
-		insert_name_p(t, name);
+	insert_name_p(t, name);
 	for(i=1; i<=4; i++) {
 		char buff[64];
 		long vsz = 1 << i;
@@ -68,8 +67,7 @@ static void insert_name_v(mclt_t t, const char *name, bool pointable) {
 		memset(buff, 0, 64);
 		sprintf(buff, "%s%ld", name, vsz);
 		TYPE_APPEND(vt, buff);
-		if(pointable)
-			insert_name_p(vt, buff);
+		insert_name_p(vt, buff);
 	}
 }
 
@@ -83,16 +81,15 @@ void mclt_init() {
 			type_names = map_create(type_heap);
 			insert_name(MCLT_VOID, "void");
 			insert_name_p(MCLT_VOID, "void");
-			insert_name_v(MCLT_BOOL, "bool", false);
-			insert_name_v(MCLT_FLOAT, "float", true);
-			insert_name_v(MCLT_CHAR, "char", true);
-			insert_name_v(MCLT_UCHAR, "uchar", true);
-			insert_name_v(MCLT_SHORT, "short", true);
-			insert_name_v(MCLT_USHORT, "ushort", true);
-			insert_name_v(MCLT_INT, "int", true);
-			insert_name_v(MCLT_UINT, "uint", true);
-			insert_name_v(MCLT_LONG, "long", true);
-			insert_name_v(MCLT_ULONG, "ulong", true);
+			insert_name_v(MCLT_FLOAT, "float");
+			insert_name_v(MCLT_CHAR, "char");
+			insert_name_v(MCLT_UCHAR, "uchar");
+			insert_name_v(MCLT_SHORT, "short");
+			insert_name_v(MCLT_USHORT, "ushort");
+			insert_name_v(MCLT_INT, "int");
+			insert_name_v(MCLT_UINT, "uint");
+			insert_name_v(MCLT_LONG, "long");
+			insert_name_v(MCLT_ULONG, "ulong");
 			insert_name(MCLT_IMAGE_R, "read_only image2d_t");
 			insert_name(MCLT_IMAGE_W, "write_only image2d_t");
 
@@ -100,7 +97,6 @@ void mclt_init() {
 			parser_t p_spaces = parser_rep(h, parser_cset(h, " \t\r\n"), 1, 0);
 
 			parser_t p_void = parser_named(h, 0, parser_string(h, "void"));
-			parser_t p_bool = parser_named(h, MCLT_INTEGER, parser_string(h, "bool"));
 
 			parser_t p_char = parser_named(h, MCLT_CHAR, parser_string(h, "char"));
 			parser_t p_short = parser_named(h, MCLT_SHORT, parser_string(h, "short"));
@@ -116,7 +112,7 @@ void mclt_init() {
 					parser_or(h, p_short,
 						parser_or(h, p_int, p_long))));
 			parser_t p_number = parser_or(h, p_integer, p_float);
-			parser_t p_numeric = parser_and(h, parser_or(h, p_number, p_bool),
+			parser_t p_numeric = parser_and(h, p_number,
 				parser_maybe(h,
 					parser_or(h, parser_named(h, 0x0200, parser_string(h, "2")),
 						parser_or(h, parser_named(h, 0x0400, parser_string(h, "4")),
@@ -191,12 +187,10 @@ mclt_t mclt_parse_cs(const char *s) {
 long mclt_size(mclt_t t) {
 	if(mclt_is_vector(t))
 		return mclt_size(mclt_vector_of(t)) * mclt_vector_size(t);
-	else if(mclt_is_integer(t) && !mclt_is_bool(t))
+	else if(mclt_is_integer(t))
 		return mclt_integer_size(t);
 	else if(mclt_is_float(t))
 		return sizeof(cl_float);
-	else if(mclt_is_bool(t))
-		return sizeof(cl_char);
 	else
 		err_throw(e_mclt_size_undefined);
 }

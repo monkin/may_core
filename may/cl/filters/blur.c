@@ -26,6 +26,6 @@ static mcl_ex_t flt_get_expression_blur(heap_t h, filter_t f, mcl_ex_t point, fi
 	return filter_get_expression(h, (filter_t) map_get_cs(f->arguments, "_"), new_point, fa);
 }
 
-filter_controller_s flt_controller_const = {
+filter_controller_s flt_controller_blur = {
 	"blur", 0, 0, flt_get_expression_blur
 };

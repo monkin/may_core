@@ -29,17 +29,9 @@ static mclt_t ret_type_op_set(size_t argc, const mclt_t *args, mclt_t *cast_to) 
 
 static mclt_t ret_type_neg(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==1);
-	if(mclt_is_vector(args[0])) {
-		if(mclt_is_bool(mclt_vector_of(args[0])))
-			return cast_to[0] = mclt_vector(MCLT_INT, mclt_vector_size(args[0]));
-		else
+	if(mclt_is_vector(args[0]) || mclt_is_numeric(args[0]))
 			return args[0];
-	} else if(mclt_is_numeric(args[0])) {
-		if(mclt_is_bool(args[0]))
-			return cast_to[0] = MCLT_INT;
-		else
-			return args[0];
-	} else
+	else
 		err_throw(e_mcl_ex_invalid_operand);
 }
 
@@ -79,8 +71,8 @@ static mclt_t ret_type_op_minus(size_t argc, const mclt_t *args, mclt_t *cast_to
 
 static mclt_t ret_type_op_not(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==1);
-	mcl_rule(mclt_is_vector(args[0]), mclt_vector(MCLT_BOOL, mclt_vector_size(args[0])));
-	mcl_rule(mclt_is_pointer(args[0]) || mclt_is_numeric(args[0]), MCLT_BOOL);
+	mcl_rule(mclt_is_vector(args[0]), mclt_vector(MCLT_INT, mclt_vector_size(args[0])));
+	mcl_rule(mclt_is_pointer(args[0]) || mclt_is_numeric(args[0]), MCLT_INT);
 	err_throw(e_mcl_ex_invalid_operand);
 }
 
@@ -91,7 +83,7 @@ static mclt_t ret_type_op_equal(size_t argc, const mclt_t *args, mclt_t *cast_to
 	cast_to[0] = cast_to[1] = type_max(args[0], args[1]);
 	mcl_rule(mclt_is_vector(args[0]), mclt_vector(MCLT_INT, mclt_vector_size(args[0])));
 	mcl_rule(mclt_is_vector(args[1]), mclt_vector(MCLT_INT, mclt_vector_size(args[1])));
-	return MCLT_BOOL;
+	return MCLT_INT;
 }
 
 static mclt_t ret_type_op_compare(size_t argc, const mclt_t *args, mclt_t *cast_to) {
@@ -103,14 +95,14 @@ static mclt_t ret_type_op_compare(size_t argc, const mclt_t *args, mclt_t *cast_
 		return mclt_vector(MCLT_INT, mclt_vector_size(args[0]));
 	if(mclt_is_vector(args[1]))
 		return mclt_vector(MCLT_INT, mclt_vector_size(args[1]));
-	return MCLT_BOOL;
+	return MCLT_INT;
 }
 
 static mclt_t ret_type_op_compose(size_t argc, const mclt_t *args, mclt_t *cast_to) {
 	assert(argc==2);
 	if(type_is_arithmetic(args[0]) && type_is_arithmetic(args[1])) {
 		mclt_t t = cast_to[0] = cast_to[1] = type_max(args[0], args[1]);
-		return mclt_is_vector(t) ? mclt_vector(MCLT_BOOL, mclt_vector_size(t)) : MCLT_BOOL;
+		return mclt_is_vector(t) ? mclt_vector(MCLT_INT, mclt_vector_size(t)) : MCLT_INT;
 	}
 	err_throw(e_mcl_ex_invalid_operand);
 }
@@ -149,7 +141,7 @@ static mclt_t ret_type_op_ternary(size_t argc, const mclt_t *args, mclt_t *cast_
 	}
 	if(vector_size && mclt_is_vector_of_float(args[0]))
 		err_throw(e_mcl_ex_invalid_operand);
-	cast_to[0] = vector_size ? mclt_vector(MCLT_BOOL, vector_size) : MCLT_BOOL;
+	cast_to[0] = vector_size ? mclt_vector(MCLT_INT, vector_size) : MCLT_INT;
 	return cast_to[1] = cast_to[2] = type_max(args[1], args[2]);
 }
 

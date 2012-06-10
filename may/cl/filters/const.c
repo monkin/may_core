@@ -18,9 +18,6 @@ void flt_const_write_number(void *dst, double n, mclt_t t) {
 	flt_const_write_number_i(MCLT_UINT, cl_uint);
 	flt_const_write_number_i(MCLT_LONG, cl_long);
 	flt_const_write_number_i(MCLT_ULONG, cl_ulong);
-	case MCLT_BOOL:
-		*((char *)dst) = n!=0;
-		break;
 	default:
 		err_throw(e_filter_invalid_arguments);
 	}

@@ -52,7 +52,6 @@ static bool type_greater(mclt_t t1, mclt_t t2) {
 	mcl_rule(mclt_is_integer(t1), mclt_integer_size(t1)>=mclt_integer_size(t2));
 	mcl_rule(mclt_is_vector(t1), type_greater(mclt_vector_of(t1), t2));
 	mcl_rule(mclt_is_pointer(t1) && mclt_is_pointer(t2), (mclt_pointer_to(t1)==mclt_pointer_to(t2) || mclt_is_void(mclt_pointer_to(t1))) && mclt_pointer_type(t1)==mclt_pointer_type(t1));
-	mcl_rule(mclt_is_bool(t1), mclt_is_numeric(t2) || mclt_is_pointer(t2));
 	mcl_else(false);
 }
 
@@ -65,7 +64,6 @@ static bool type_compatible(mclt_t t1, mclt_t t2) {
 	mcl_rule(mclt_is_vector(t1) && mclt_is_vector(t2), mclt_vector_size(t1)==mclt_vector_size(t2));
 	mcl_rule(mclt_is_pointer(t1) && mclt_is_pointer(t2), mclt_pointer_type(t1)==mclt_pointer_type(t1));
 	mcl_rule(mclt_is_numeric(t1) && mclt_is_numeric(t2), true);
-	mcl_rule(mclt_is_bool(t1) && mclt_is_pointer(t2), true);
 	mcl_else(false);
 }
 

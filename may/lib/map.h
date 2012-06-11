@@ -19,6 +19,7 @@ typedef struct map_ss {
 	heap_t heap;
 	size_t length;
 	map_node_t node;
+	map_node_t node_pool;
 } map_s;
 
 typedef map_s *map_t;

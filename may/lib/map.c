@@ -11,6 +11,7 @@ map_t map_create(heap_t h) {
 	res->heap = h;
 	res->node = 0;
 	res->length = 0;
+	res->node_pool = 0;
 	return res;
 }
 
@@ -63,6 +64,15 @@ void *map_get_bin(map_t m, const void *key, size_t key_len) {
 	return 0;
 }
 
+static map_node_t map_create_node(map_t m) {
+	if(m->node_pool) {
+		map_node_t result = m->node_pool;
+		m->node_pool = m->node_pool->parent;
+		return result;
+	} else
+		return (map_node_t) heap_alloc(m->heap, sizeof(map_node_s));
+}
+
 static map_t map_set_internal(map_t m, str_t key, void *value) {
 	map_node_t i;
 	assert(m && key);
@@ -79,7 +89,7 @@ static map_t map_set_internal(map_t m, str_t key, void *value) {
 					i = i->children[ci];
 					continue;
 				} else {
-					map_node_t j = heap_alloc(m->heap, sizeof(map_node_s));
+					map_node_t j = map_create_node(m);
 					j->length = 1;
 					j->parent = i;
 					j->children[0] = 0;
@@ -95,7 +105,7 @@ static map_t map_set_internal(map_t m, str_t key, void *value) {
 			}
 		}
 	} else {
-		i = m->node = heap_alloc(m->heap, sizeof(map_node_s));
+		i = m->node = map_create_node(m);
 		m->length = i->length = 1;
 		i->parent = 0;
 		i->children[0] = 0;
@@ -154,6 +164,9 @@ map_t map_remove(map_t m, str_t key) {
 				else
 					m->node = 0;
 			}
+			i->parent = m->node_pool;
+			m->node_pool = i;
+			break;
 		} else
 			i = i->children[cr<0 ? 0 : 1];
 	}

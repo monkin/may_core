@@ -177,15 +177,30 @@ int str_compare(str_t s1, str_t s2) {
 	str_it_t i, j;
 	int c = s1->length>s2->length ? s2->length : s1->length;
 	for(i=s1->data, j=s2->data; c; c--, i++, j++)
-		if(*i<*j)
-			return -1;
-		else if(*i>*j)
-			return 1;
-	if(s1->length<s2->length)
-		return -1;
-	else if(s1->length>s2->length)
-		return 1;
+		if(*i!=*j)
+			return ((unsigned char)*i)>((unsigned char)*j) ? 1 : -1;
+	if(s1->length!=s2->length)
+		return s1->length>s2->length ? 1 :-1;
 	return 0;
+}
+
+int str_compare_cs(str_t s1, const char *s2) {
+	assert(s1 && s2);
+	int i;
+	for(i=0; i<s1->length; i++) {
+		if(s2[i]=='\0')
+			return 1;
+		if(s1->data[i]!=s2[i])
+			return ((unsigned char)s1->data[i])>((unsigned char)s2[i]) ? 1 : -1;
+	}
+	return -1;
+}
+
+int str_compare_bin(str_t s1, const void *data, size_t sz) {
+	may_str_s s2;
+	s2.data = (char *)data;
+	s2.length = sz;
+	return str_compare(s1, &s2);
 }
 
 int str_equal(str_t s1, str_t s2) {

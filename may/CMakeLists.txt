@@ -5,6 +5,6 @@ add_library(maylib STATIC maylib.c
 	lib/err.c  lib/heap.c  lib/map.c  lib/mem.c  lib/str.c lib/utf.c
 	lib/syntree.c lib/parser.c lib/json.c lib/stream.c lib/tar.c
 	lib/event.c lib/floader.c
-	cl/ex.c cl/mcl.c cl/program.c cl/error.c cl/image.c cl/filter.c
+	cl/ex.c cl/mcl.c cl/program.c cl/error.c cl/image.c cl/iloader.c cl/filter.c
 	cl/filters/const.c cl/filters/blur.c)
 target_link_libraries(maylib ${OPENCL_LIBRARIES} ${IL_LIBRARIES})

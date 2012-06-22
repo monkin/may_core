@@ -37,14 +37,7 @@ map_node_t map_next(map_node_t n) {
 }
 
 void *map_get(map_t m, str_t key) {
-	map_node_t i = m->node;
-	while(i) {
-		int cmp_res = str_compare(key, i->key);
-		if(cmp_res==0)
-			return i->value;
-		i = i->children[(cmp_res>0) ? 1 : 0];
-	}
-	return 0;
+	return map_get_bin(m, key->data, key->length);
 }
 
 void *map_get_cs(map_t m, const char *key) {
@@ -54,11 +47,9 @@ void *map_get_cs(map_t m, const char *key) {
 void *map_get_bin(map_t m, const void *key, size_t key_len) {
 	map_node_t i = m->node;
 	while(i) {
-		int cmp_res = memcmp(key, str_begin(i->key), key_len>str_length(i->key) ? str_length(i->key) : key_len);
-		if(cmp_res==0 && str_length(i->key)==key_len)
+		int cmp_res = str_compare_bin(i->key, key, key_len);
+		if(cmp_res==0)
 			return i->value;
-		else if(cmp_res==0)
-			cmp_res = key_len - str_length(i->key);
 		i = i->children[(cmp_res>0) ? 1 : 0];
 	}
 	return 0;

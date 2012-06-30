@@ -15,7 +15,7 @@ size_t tests_success = 0;
 size_t tests_failed = 0;
 
 #define TEST_MODULE(name) { test_module_name = name; }
-#define TEST_CHECK(name) { err_reset(); test_check_name = name; test_start_time = clock(); printf("%s.%s STARTED\n", test_module_name, test_check_name); test_check_status = true; err_try
+#define TEST_CHECK(name) { err_reset(); test_check_name = name; test_start_time = clock(); fprintf(stderr, "%s.%s STARTED\n", test_module_name, test_check_name); test_check_status = true; err_try
 #define TEST_END \
 	err_catch {  \
 		test_check_status = false; \
@@ -26,10 +26,10 @@ size_t tests_failed = 0;
 		tests_success++;  \
 	else                  \
 		tests_failed++;   \
-	printf("%s.%s %s %fs\n\n", test_module_name, test_check_name, test_check_status ? "SUCCESS" : "FAIL", (double)(test_end_time-test_start_time)/((double)CLOCKS_PER_SEC)); \
+	fprintf(stderr, "%s.%s %s %fs\n\n", test_module_name, test_check_name, test_check_status ? "SUCCESS" : "FAIL", (double)(test_end_time-test_start_time)/((double)CLOCKS_PER_SEC)); \
 }
 
-#define TEST_LOG(str) printf("log: %s\n", str)
+#define TEST_LOG(str) fprintf(stderr, "log: %s\n", str)
 #define TEST_FAIL test_check_status = false
 
 #include "units/heap.h"
@@ -46,13 +46,14 @@ size_t tests_failed = 0;
 
 int main() {
 	maylib_init();
+	test_str();
 	test_parser();
 	test_json();
 	test_tar();
 	test_mcl_types();
 	test_mcl_program();
 	test_mcl_image();
-	printf("Results: (%i/%i) %i%%\n", (int) tests_success, (int) (tests_success + tests_failed), (int) (tests_success*100/(tests_success + tests_failed)));
+	fprintf(stderr, "Results: (%i/%i) %i%%\n", (int) tests_success, (int) (tests_success + tests_failed), (int) (tests_success*100/(tests_success + tests_failed)));
 	return 0;
 }
 

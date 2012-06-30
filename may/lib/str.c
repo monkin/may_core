@@ -173,15 +173,7 @@ str_t sbuilder_get(heap_t h, sbuilder_t sb) {
 }
 
 int str_compare(str_t s1, str_t s2) {
-	assert(s1 && s2);
-	str_it_t i, j;
-	int c = s1->length>s2->length ? s2->length : s1->length;
-	for(i=s1->data, j=s2->data; c; c--, i++, j++)
-		if(*i!=*j)
-			return ((unsigned char)*i)>((unsigned char)*j) ? 1 : -1;
-	if(s1->length!=s2->length)
-		return s1->length>s2->length ? 1 :-1;
-	return 0;
+	return str_compare_bin(s1, s2->data, s2->length);
 }
 
 int str_compare_cs(str_t s1, const char *s2) {
@@ -197,10 +189,13 @@ int str_compare_cs(str_t s1, const char *s2) {
 }
 
 int str_compare_bin(str_t s1, const void *data, size_t sz) {
-	may_str_s s2;
-	s2.data = (char *)data;
-	s2.length = sz;
-	return str_compare(s1, &s2);
+	int cmp_res = memcmp(s1->data, data, s1->length<sz ? s1->length : sz);
+	if(cmp_res!=0)
+		return cmp_res<0 ? -1 : 1;
+	else if(s1->length==sz)
+		return 0;
+	else
+		return s1->length>sz ? 1 : -1;
 }
 
 int str_equal(str_t s1, str_t s2) {

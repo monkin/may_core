@@ -34,9 +34,9 @@ size_t tests_failed = 0;
 
 #include "units/heap.h"
 #include "units/str.h"
+#include "units/map.h"
 #include "units/parser.h"
 #include "units/stream.h"
-#include "units/map.h"
 #include "units/json.h"
 #include "units/tar.h"
 #include "units/mcl/types.h"
@@ -47,6 +47,7 @@ size_t tests_failed = 0;
 int main() {
 	maylib_init();
 	test_str();
+	test_map();
 	test_parser();
 	test_json();
 	test_tar();

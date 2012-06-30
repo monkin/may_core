@@ -50,7 +50,7 @@ void *map_get_bin(map_t m, const void *key, size_t key_len) {
 		int cmp_res = str_compare_bin(i->key, key, key_len);
 		if(cmp_res==0)
 			return i->value;
-		i = i->children[(cmp_res>0) ? 1 : 0];
+		i = i->children[(cmp_res>0) ? 0 : 1];
 	}
 	return 0;
 }

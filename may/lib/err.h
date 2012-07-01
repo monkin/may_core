@@ -20,7 +20,6 @@
 		// do something with err_throw(err_name)
 	} err_ctach {
 		printf("fail");
-		err_reset();
 	}
  
 */
@@ -28,8 +27,8 @@
 #ifdef ERR_HAVE_BACKTRACE
 #	include <execinfo.h>
 #	define ERR_TRACE_INFO_SIZE 50
-	extern size_t err_trace_size;
-	extern void *err_trace_info[ERR_TRACE_INFO_SIZE];
+	extern __thread size_t err_trace_size;
+	extern __thread void *err_trace_info[ERR_TRACE_INFO_SIZE];
 #	define ERR_TRACE_STORE { err_trace_size = backtrace(err_trace_info, ERR_TRACE_INFO_SIZE); }
 #	define ERR_TRACE_CLEAR { err_trace_size = 0; }
 #	define ERR_TRACE_PRINT { backtrace_symbols_fd(err_trace_info, err_trace_size, STDERR_FILENO); }

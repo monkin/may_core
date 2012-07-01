@@ -4,8 +4,8 @@
 #include <assert.h>
 
 #ifdef ERR_HAVE_BACKTRACE
-	void *err_trace_info[ERR_TRACE_INFO_SIZE];
-	size_t err_trace_size = 0;
+	__thread void *err_trace_info[ERR_TRACE_INFO_SIZE];
+	__thread size_t err_trace_size = 0;
 #endif
 
 __thread const err_t *err_ = 0;

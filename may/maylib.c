@@ -11,6 +11,7 @@ static bool initialized = false;
 
 void maylib_init() {
 	if(!initialized) {
+		mem_init();
 		json_init();
 		mclt_init();
 		mcl_init();

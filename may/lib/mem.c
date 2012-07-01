@@ -22,6 +22,7 @@ mem_check_item_t mem_check_root = 0;
 long long mem_check_alloc_count = 0;
 long long mem_check_free_count = 0;
 long long mem_check_allocated_size = 0;
+long long mem_check_max_allocated_size = 0;
 	
 void mem_check_insert(void *ptr, size_t sz, mem_check_item_t removed_item) {
 	mem_check_item_t item = removed_item ? removed_item : malloc(sizeof(mem_check_item_s));
@@ -47,9 +48,11 @@ void mem_check_insert(void *ptr, size_t sz, mem_check_item_t removed_item) {
 					it = it->children[index];
 			}
 		}
-	pthread_mutex_unlock(&mem_check_mutex);
 	mem_check_alloc_count++;
 	mem_check_allocated_size += sz;
+	if(mem_check_allocated_size>mem_check_max_allocated_size)
+		mem_check_max_allocated_size = mem_check_allocated_size;
+	pthread_mutex_unlock(&mem_check_mutex);
 }
 
 mem_check_item_t mem_check_remove(void *ptr) {
@@ -64,7 +67,7 @@ mem_check_item_t mem_check_remove(void *ptr) {
 				while(j->children[1])
 					j = j->children[1];
 				j->children[1] = i->children[1];
-				i->children[1]->parent = j;
+				j->children[1]->parent = j;
 				i->children[1] = 0;
 			}
 			if(i==mem_check_root) {
@@ -72,23 +75,24 @@ mem_check_item_t mem_check_remove(void *ptr) {
 				mem_check_root = i->children[i->children[0] ? 0 : 1];
 			} else {
 				int ci = i->parent->children[0]==i ? 0 : 1;
-				if(i->children[0] || i->children[1]) {
-					i->parent->children[ci] = i->children[0] ? i->children[0] : i->children[1];
+				i->parent->children[ci] = i->children[0] ? i->children[0] : i->children[1];
+				if(i->parent->children[ci])
 					i->parent->children[ci]->parent = i->parent; 
-				} else
-					i->parent->children[ci] = 0;
 				removed_item = i;
 			}
 			break;
 		} else
 			i = i->children[ptr>i->item ? 1 : 0];
 	}
-	pthread_mutex_unlock(&mem_check_mutex);
-	if(!removed_item)
+	if(!removed_item) {
+		pthread_mutex_unlock(&mem_check_mutex);
 		err_throw(e_invalid_memory_block);
-	mem_check_free_count++;
-	mem_check_allocated_size -= removed_item->item_size; 
-	return removed_item;
+	} else {
+		mem_check_free_count++;
+		mem_check_allocated_size -= removed_item->item_size;
+		pthread_mutex_unlock(&mem_check_mutex);
+		return removed_item;
+	}
 }
 
 void mem_check_log(mem_check_item_t i) {
@@ -101,7 +105,7 @@ void mem_check_log(mem_check_item_t i) {
 }
 
 void mem_check_close() {
-	fprintf(stderr, "Memory statistic\n%llu bytes in %llu blocks\n%llu mem_allocs, %llu mem_frees\n", mem_check_allocated_size, mem_check_alloc_count-mem_check_free_count, mem_check_alloc_count, mem_check_free_count);
+	fprintf(stderr, "---\nMemory statistic\nUsed at exit %llu bytes in %llu blocks\n%llu mem_allocs, %llu mem_frees\nMax mem used %llu bytes\n---\n", mem_check_allocated_size, mem_check_alloc_count-mem_check_free_count, mem_check_alloc_count, mem_check_free_count, mem_check_max_allocated_size);
 	mem_check_log(mem_check_root);
 }
 
@@ -141,7 +145,9 @@ void *mem_free(void *p) {
 void *mem_realloc(void *p, size_t sz) {
 	if(!sz)
 		return mem_free(p);
-	else {
+	else if(!p) {
+		return mem_alloc(sz);
+	} else {
 		void *res = realloc(p, sz);
 		if(!res)
 			err_throw(e_out_of_memory);
@@ -151,3 +157,10 @@ void *mem_realloc(void *p, size_t sz) {
 		return res;
 	}
 }
+
+void mem_init() {
+#	ifdef MEM_CHECK
+	atexit(mem_check_close);
+#	endif
+}
+

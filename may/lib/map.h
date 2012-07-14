@@ -19,7 +19,6 @@ typedef struct map_ss {
 	heap_t heap;
 	size_t length;
 	map_node_t node;
-	map_node_t node_pool;
 } map_s;
 
 typedef map_s *map_t;
@@ -32,7 +31,6 @@ map_t map_set_bin(map_t, const void *key, size_t key_len, void *value);
 void *map_get(map_t, str_t key);
 void *map_get_cs(map_t, const char *key);
 void *map_get_bin(map_t, const void *key, size_t key_len);
-map_t map_remove(map_t, str_t key);
 map_node_t map_begin(map_t);
 map_node_t map_next(map_node_t);
 #define map_length(m) ((m)->length)

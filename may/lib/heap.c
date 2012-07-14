@@ -9,7 +9,7 @@ ERR_DEFINE(e_heap_invalid_pointer, "Pointer referers to memory out of heap.", 0)
 heap_t heap_create(size_t block_size) {
 	heap_t res;
 	if(block_size==0)
-		block_size = 64*1024;
+		block_size = 8*1024;
 	res = mem_alloc(sizeof(heap_s) + block_size);
 	res->block_size = block_size;
 	res->last = &res->first;

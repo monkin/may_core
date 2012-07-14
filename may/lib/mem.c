@@ -23,7 +23,7 @@ long long mem_check_alloc_count = 0;
 long long mem_check_free_count = 0;
 long long mem_check_allocated_size = 0;
 long long mem_check_max_allocated_size = 0;
-	
+
 void mem_check_insert(void *ptr, size_t sz, mem_check_item_t removed_item) {
 	mem_check_item_t item = removed_item ? removed_item : malloc(sizeof(mem_check_item_s));
 	if(!item)
@@ -161,6 +161,7 @@ void *mem_realloc(void *p, size_t sz) {
 void mem_init() {
 #	ifdef MEM_CHECK
 	atexit(mem_check_close);
+	pthread_mutex_destroy(&mem_check_mutex);
 #	endif
 }
 

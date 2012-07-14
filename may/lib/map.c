@@ -11,7 +11,6 @@ map_t map_create(heap_t h) {
 	res->heap = h;
 	res->node = 0;
 	res->length = 0;
-	res->node_pool = 0;
 	return res;
 }
 
@@ -55,15 +54,6 @@ void *map_get_bin(map_t m, const void *key, size_t key_len) {
 	return 0;
 }
 
-static map_node_t map_create_node(map_t m) {
-	if(m->node_pool) {
-		map_node_t result = m->node_pool;
-		m->node_pool = m->node_pool->parent;
-		return result;
-	} else
-		return (map_node_t) heap_alloc(m->heap, sizeof(map_node_s));
-}
-
 static map_t map_set_internal(map_t m, str_t key, void *value) {
 	map_node_t i;
 	assert(m && key);
@@ -80,7 +70,7 @@ static map_t map_set_internal(map_t m, str_t key, void *value) {
 					i = i->children[ci];
 					continue;
 				} else {
-					map_node_t j = map_create_node(m);
+					map_node_t j = (map_node_t) heap_alloc(m->heap, sizeof(map_node_s));
 					j->length = 1;
 					j->parent = i;
 					j->children[0] = 0;
@@ -96,7 +86,7 @@ static map_t map_set_internal(map_t m, str_t key, void *value) {
 			}
 		}
 	} else {
-		i = m->node = map_create_node(m);
+		i = m->node = (map_node_t) heap_alloc(m->heap, sizeof(map_node_s));
 		m->length = i->length = 1;
 		i->parent = 0;
 		i->children[0] = 0;
@@ -117,51 +107,6 @@ map_t map_set_cs(map_t m, const char *key, void *value) {
 
 map_t map_set_bin(map_t m, const void *key, size_t key_len, void *value) {
 	return map_set_internal(m, str_from_bin(m->heap, key, key_len), value);
-}
-
-map_t map_remove(map_t m, str_t key) {
-	map_node_t i = m->node;
-	while(i) {
-		int cr = str_compare(key, i->key);
-		if(cr==0) {
-			map_node_t j;
-			for(j=i; j; j=j->parent)
-				j->length--;
-			if(i->children[0] && i->children[1]) {
-				j=i->children[1];
-				do {
-					j->length += i->children[0]->length;
-					if(j->children[0])
-						j=j->children[0];
-					else
-						break;
-				} while(1);
-				j->children[0] = i->children[0];
-				i->children[1]->parent = i->parent;
-				if(i->parent)
-					i->parent->children[branch_i(i, i->parent)] = i->children[1];
-				else
-					m->node = i->children[1];
-			} else if(i->children[0] || i->children[1]) {
-				int ch_i = i->children[0] ? 0 : 1;
-				i->children[ch_i]->parent = i->parent;
-				if(i->parent)
-					i->parent->children[branch_i(i, i->parent)] = i->children[ch_i];
-				else
-					m->node = i->children[ch_i];
-			} else {
-				if(i->parent)
-					i->parent->children[branch_i(i, i->parent)] = 0;
-				else
-					m->node = 0;
-			}
-			i->parent = m->node_pool;
-			m->node_pool = i;
-			break;
-		} else
-			i = i->children[cr<0 ? 0 : 1];
-	}
-	return m;
 }
 
 typedef struct node_list_ss {

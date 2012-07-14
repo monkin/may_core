@@ -21,14 +21,30 @@ typedef struct {
 
 typedef flcontext_s *flcontext_t;
 
+typedef struct {
+	mutex_t mutex;
+	size_t ref_count;
+	void *value;
+	void (*destruction_callback)(void *, void *);
+	void destruction_callback_data;
+} flcontext_object_s;
+
+typedef flcontext_object_s *flcontext_object_t;
+
 flcontext_t flcontext_create();
 flcontext_t flcontext_delete(flcontext_t);
 
-cl_mem flcontext_lock_object(str_t); /* lock and return memory object */
-cl_mem flcontext_unlock_object(str_t); /* unlock object and return NULL */
-cl_mem flcontext_set_object(str_t, cl_mem);
-cl_mem flcontext_retain_object(cl_mem); /* increment reference counter */
-cl_mem flcontext_release_object(cl_mem); /*  decrement reference counter */
+flcontext_object_t flcontext_lock_object(flcontext_t, str_t); /* lock and return memory object */
+flcontext_object_t flcontext_unlock_object(flcontext_object_t); /* unlock object and return NULL */
+
+void flcontext_set_object(flcontext_object_t, void *, void (*destruction_callback)(void *, void *), void *destruction_callback_data);
+void flcontext_get_object(flcontext_object_t);
+
+void flcontext_retain_object(flcontext_object_t); /* increment reference counter */
+void flcontext_release_object(flcontext_object_t); /* decrement reference counter */
+
+cl_mem flcontext_load_image(flcontext_t, str_t);
+cl_mem flcontext_unload_image(flcontext_t, cl_mem);
 
 #endif /* MAY_MCL_FILTER_CONTEXT_H */
 

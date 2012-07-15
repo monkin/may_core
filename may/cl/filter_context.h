@@ -31,7 +31,7 @@ typedef struct {
 
 typedef flcontext_object_s *flcontext_object_t;
 
-flcontext_t flcontext_create();
+flcontext_t flcontext_create(cl_context, floader_t);
 flcontext_t flcontext_delete(flcontext_t);
 
 flcontext_object_t flcontext_lock_object(flcontext_t, str_t); /* lock and return memory object */

@@ -8,9 +8,14 @@
 ERR_DECLARE(e_heap_invalid_size);
 ERR_DECLARE(e_heap_invalid_pointer);
 
+enum {
+	HEAP_DEFAULT_BLOCK_SIZE = 8*1024
+}
+
 typedef struct heap_block_s {
 	size_t size;
 	size_t used;
+	size_t count;
 	struct heap_block_s *next;
 	struct heap_block_s *previous;
 	char data[1];
@@ -19,7 +24,7 @@ typedef struct heap_block_s {
 typedef struct {
 	size_t block_size;
 	heap_block_t *last;
-	heap_block_t first;
+	heap_block_t *first;
 } heap_s;
 
 typedef heap_s *heap_t;
@@ -27,15 +32,7 @@ typedef heap_s *heap_t;
 heap_t heap_create(size_t block_size);
 heap_t heap_delete(heap_t);
 
-/* void *heap_alloc(heap_t, size_t); */
-void *heap_slow_alloc(heap_t, size_t);
-#define heap_alloc(h, sz) ((((h)->last->size - (h)->last->used)>=(sz)) \
-	? (((h)->last->used+=(sz)),&((h)->last->data[(h)->last->used-(sz)])) \
-	: heap_slow_alloc(h,(sz)))
-void heap_release_to(heap_t, void *);
-/*void heap_position(heap_t);*/
-#define heap_position(h) ((h)->last->data + (h)->last->used)
-void heap_clear(heap_t);
+void *heap_alloc(heap_t, size_t);
 
 
 #endif /* MAY_HEAP_H */

@@ -18,6 +18,7 @@ typedef may_str_s *str_t;
 typedef char *str_it_t;
 
 str_t str_create(heap_t, size_t);
+#define str_delete(s) ((str_t) heap_free(s))
 
 str_t str_from_cs(heap_t, const char *s);
 str_t str_from_bin(heap_t, const void *s, size_t sz);

@@ -2,10 +2,10 @@
 #include "syntree.h"
 
 syntree_t syntree_create(str_t s) {
-	volatile heap_t h = heap_create(64*1024);
+	volatile heap_t h = heap_create(2048);
 	syntree_t r = 0;
 	err_try {
-		r = heap_alloc(h, sizeof(struct syntree_node_s));
+		r = heap_alloc(h, sizeof(syntree_node_s));
 		r->heap = h;
 		r->first = r->last = 0;
 		r->parent = 0;
@@ -19,7 +19,7 @@ syntree_t syntree_create(str_t s) {
 }
 
 syntree_t syntree_transaction(syntree_t st) {
-	syntree_t r = heap_alloc(st->heap, sizeof(struct syntree_s));
+	syntree_t r = heap_alloc(st->heap, sizeof(syntree_s));
 	r->heap = st->heap;
 	r->position = st->position;
 	r->max_position = st->max_position;
@@ -30,6 +30,7 @@ syntree_t syntree_transaction(syntree_t st) {
 }
 
 syntree_t syntree_commit(syntree_t st) {
+	syntree_t r = st->parent;
 	if(st->first) {
 		if(st->parent->last) {
 			st->parent->last->next = st->first;
@@ -41,17 +42,23 @@ syntree_t syntree_commit(syntree_t st) {
 	}
 	st->parent->position = st->position;
 	st->parent->max_position = st->max_position;
-	return st->parent;
+	heap_free(st);
+	return r;
 }
 
 syntree_t syntree_rollback(syntree_t st) {
 	syntree_t r = st->parent;
-	heap_release_to(st->heap, st);
+	syntree_node_t i = st->first;
+	while(i) {
+		syntree_node_t j = i->next;
+		heap_free(i);
+		i = j;
+	}
 	return r;
 }
 
 void syntree_named_start(syntree_t st, int nm) {
-	syntree_node_t nd = heap_alloc(st->heap, sizeof(struct syntree_node_s));
+	syntree_node_t nd = heap_alloc(st->heap, sizeof(syntree_node_s));
 	nd->is_start = 1;
 	nd->name = nm;
 	nd->value = 0;
@@ -66,7 +73,7 @@ void syntree_named_start(syntree_t st, int nm) {
 }
 
 void syntree_named_end(syntree_t st) {
-	syntree_node_t nd = heap_alloc(st->heap, sizeof(struct syntree_node_s));
+	syntree_node_t nd = heap_alloc(st->heap, sizeof(syntree_node_s));
 	nd->is_start = 0;
 	nd->name = 0;
 	nd->value = 0;

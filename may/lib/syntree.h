@@ -4,28 +4,28 @@
 #include "str.h"
 #include "heap.h"
 
-struct syntree_node_s {
+typedef struct syntree_node_ss {
 	int is_start;
 	str_it_t position;
 	heap_t heap;
-	struct syntree_node_s *next;
+	struct syntree_node_ss *next;
 	int name;
 	str_t value;
-};
+} syntree_node_s;
 
-typedef struct syntree_node_s *syntree_node_t;
+typedef syntree_node_s *syntree_node_t;
 
-struct syntree_s {
+typedef struct syntree_ss {
 	heap_t heap;
 	syntree_node_t first;
 	syntree_node_t last;
-	struct syntree_s *parent;
+	struct syntree_ss *parent;
 	str_t str;
 	str_it_t position;
 	str_it_t max_position;
-};
+} syntree_s;
 
-typedef struct syntree_s *syntree_t;
+typedef syntree_s *syntree_t;
 
 syntree_t syntree_create(str_t);
 syntree_t syntree_delete(syntree_t);

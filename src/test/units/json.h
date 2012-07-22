@@ -37,11 +37,10 @@ void test_json() {
 		}
 	} TEST_END;
 	TEST_CHECK("simple_parse") {
-		volatile heap_t h = 0;
-		volatile syntree_t st = 0;
+		heap_t h = 0;
+		syntree_t st = 0;
 		err_try {
 			h = heap_create(0);
-			void *hpos = heap_position(h);
 			
 			st = syntree_create(str_from_cs(h, "{}"));
 			if(parser_process(json_parser(), st)) {
@@ -55,7 +54,6 @@ void test_json() {
 			} else
 				TEST_FAIL;
 			st = syntree_delete(st);
-			heap_release_to(h, hpos);
 			
 			st = syntree_create(str_from_cs(h, "[]"));
 			if(parser_process(json_parser(), st)) {
@@ -69,7 +67,6 @@ void test_json() {
 			} else
 				TEST_FAIL;
 			st = syntree_delete(st);
-			heap_release_to(h, hpos);
 			
 			st = syntree_create(str_from_cs(h, "12"));
 			if(parser_process(json_parser(), st)) {
@@ -83,7 +80,6 @@ void test_json() {
 			} else
 				TEST_FAIL;
 			st = syntree_delete(st);
-			heap_release_to(h, hpos);
 			
 			st = syntree_create(str_from_cs(h, "\"\\n12test\\u0030\""));
 			if(parser_process(json_parser(), st)) {
@@ -97,7 +93,6 @@ void test_json() {
 			} else
 				TEST_FAIL;
 			st = syntree_delete(st);
-			heap_release_to(h, hpos);
 			
 			h = heap_delete(h);
 			st = syntree_delete(st);

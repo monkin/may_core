@@ -1,14 +1,14 @@
 
 #include "mem.h"
-#include "lock.h"
+#include "mutex.h"
 #include <pthread.h>
 
-ERR_DEFINE(e_mutex_error, "Mutex init/lock/unlock error");
+ERR_DEFINE(e_mutex_error, "Mutex init/lock/unlock error", 0);
 
 mutex_t mutex_create(heap_t h, bool is_recursive) {
 	pthread_mutexattr_t attr;
 	pthread_mutex_t *mutex;
-	mutex = heap_alloc(h, sizeof(mutex_s));
+	mutex = heap_alloc(h, sizeof(pthread_mutex_t));
 	if(pthread_mutexattr_init(&attr))
 		err_throw(e_mutex_error);
 	if(pthread_mutexattr_settype(&attr, is_recursive ? PTHREAD_MUTEX_RECURSIVE : PTHREAD_MUTEX_ERRORCHECK))
@@ -29,7 +29,7 @@ void mutex_unlock(mutex_t m) {
 		err_throw(e_mutex_error);
 }
 mutex_t mutex_delete(mutex_t m) {
-	if(l)
+	if(m)
 		pthread_mutex_destroy((pthread_mutex_t *) m);
 	return 0;
 }

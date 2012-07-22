@@ -13,8 +13,6 @@ void test_parser() {
 			st = syntree_delete(st);
 		} TEST_END;
 		
-		heap_clear(h);
-		
 		TEST_CHECK("named/or/and") {
 			parser_t p = parser_and(h, parser_string(h, "value_"), parser_rep(h, parser_or(h, parser_named(h, 1, parser_crange(h, 'a', 'z')), parser_named(h, 2, parser_crange(h, '0', '9'))) , 0, 0));
 			st = syntree_create(str_from_cs(h, "value_v1"));

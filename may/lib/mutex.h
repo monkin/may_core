@@ -2,8 +2,8 @@
 #ifndef MAY_LOCK_H
 #define MAY_LOCK_H
 
-#include "err.h";
-#include "heap.h";
+#include "err.h"
+#include "heap.h"
 #include <stdbool.h>
 
 ERR_DECLARE(e_mutex_error);

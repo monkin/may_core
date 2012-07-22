@@ -35,6 +35,23 @@ map_node_t map_next(map_node_t n) {
 	}
 }
 
+map_node_t map_find(map_t m, str_t s) {
+	return map_find_bin(m, str_begin(s), str_length(s));
+}
+map_node_t map_find_cs(map_t m, const char *key) {
+	return map_find_bin(m, key, strlen(key));
+}
+map_node_t map_find_bin(map_t m, const void *key, size_t key_len) {
+	map_node_t i = m->node;
+	while(i) {
+		int cmp_res = str_compare_bin(i->key, key, key_len);
+		if(cmp_res==0)
+			return i;
+		i = i->children[(cmp_res>0) ? 0 : 1];
+	}
+	return 0;
+}
+
 void *map_get(map_t m, str_t key) {
 	return map_get_bin(m, key->data, key->length);
 }
@@ -55,27 +72,36 @@ void *map_get_bin(map_t m, const void *key, size_t key_len) {
 }
 
 static map_t map_set_internal(map_t m, str_t key, void *value) {
-	map_node_t i;
-	assert(m && key);
-	i = m->node;
+
+}
+
+map_t map_set(map_t m, str_t key, void *value) {
+	return map_set_bin(m, str_begin(key), str_length(key), value);
+}
+
+map_t map_set_cs(map_t m, const char *key, void *value) {
+	return map_set_bin(m, key, strlen(key), value);
+}
+
+map_t map_set_bin(map_t m, const void *key, size_t key_len, void *value) {
+	map_node_t i = m->node;
 	if(i) {
 		while(1) {
-			int cmp_res = str_compare(key, i->key);
+			int cmp_res = str_compare_bin(i->key, key, key_len);
 			if(cmp_res==0) {
 				i->value = value;
 				break;
 			} else {
-				int ci = cmp_res<0 ? 0 : 1;
-				if(i->children[ci]) {
+				int ci = cmp_res<0 ? 1 : 0;
+				if(i->children[ci])
 					i = i->children[ci];
-					continue;
-				} else {
+				else {
 					map_node_t j = (map_node_t) heap_alloc(m->heap, sizeof(map_node_s));
 					j->length = 1;
 					j->parent = i;
 					j->children[0] = 0;
 					j->children[1] = 0;
-					j->key = key;
+					j->key = str_from_bin(m->heap, key, key_len);
 					j->value = value;
 					i->children[ci] = j;
 					for(; i; i=i->parent)
@@ -91,22 +117,48 @@ static map_t map_set_internal(map_t m, str_t key, void *value) {
 		i->parent = 0;
 		i->children[0] = 0;
 		i->children[1] = 0;
-		i->key = key;
+		i->key = str_from_bin(m->heap, key, key_len);
 		i->value = value;
 	}
 	return m;
 }
 
-map_t map_set(map_t m, str_t key, void *value) {
-	return map_set_internal(m, str_clone(m->heap, key), value);
+void map_remove(map_t m, str_t key) {
+	map_remove_node(m, map_find_bin(m, str_begin(key), str_length(key)));
 }
-
-map_t map_set_cs(map_t m, const char *key, void *value) {
-	return map_set_internal(m, str_from_cs(m->heap, key), value);
+void map_remove_cs(map_t m, const char *key) {
+	map_remove_node(m, map_find_bin(m, key, strlen(key)));
 }
-
-map_t map_set_bin(map_t m, const void *key, size_t key_len, void *value) {
-	return map_set_internal(m, str_from_bin(m->heap, key, key_len), value);
+void map_remove_bin(map_t m, const void *key, size_t key_len) {
+	map_remove_node(m, map_find_bin(m, key, key_len));
+}
+map_node_t map_remove_node(map_t m, map_node_t node) {
+	if(node) {
+		if(node->children[0] && node->children[1]) {
+			size_t rlen = node->children[1]->length;
+			map_node_t i = node->children[0];
+			while(i->children[1]) {
+				i->length += rlen;
+				i = i->children[1];
+			}
+			i->length += rlen;
+			i->children[1] = node->children[1];
+			i->children[1]->parent = i;
+			node->children[1] = 0;
+		}
+		if(node->parent) {
+			map_node_t p = node->parent;
+			int cn = p->children[0]==node ? 0 : 1;
+			p->children[cn] = node->children[0] ? node->children[0] : node->children[1];
+			p->children[cn]->parent = p;
+			for(; p; p = p->parent)
+				p->length--;
+		}
+		str_delete(node->key);
+		heap_free(node);
+		m->length--;
+	}
+	return 0;
 }
 
 typedef struct node_list_ss {

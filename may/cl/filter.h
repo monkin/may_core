@@ -2,13 +2,17 @@
 #ifndef MAY_MCL_FILTER_H
 #define MAY_MCL_FILTER_H
 
+#include "filter_context.h"
 #include "ex.h"
 #include "mcl.h"
 #include "../lib/json.h"
 #include "../lib/map.h"
 #include "../lib/floader.h"
+#include "iloader.h"
 #include <stdbool.h>
 #include <CL/cl.h>
+
+/* filter_arguments */
 
 typedef struct filter_arguments_event_ss {
 	cl_event event;
@@ -40,6 +44,8 @@ filter_arguments_t filter_arguments_create(heap_t);
 void filter_arguments_push_event(filter_arguments_t, cl_event);
 void filter_arguments_push_argument(filter_arguments_t, mcl_arg_t, const void *, size_t);
 
+/* filter */
+
 ERR_DECLARE(e_filter_not_found);
 ERR_DECLARE(e_filter_invalid_arguments);
 
@@ -61,16 +67,15 @@ struct filter_controller_ss {
 struct filter_ss {
 	mclt_t type;
 	heap_t heap;
+	flcontext_t context;
 	filter_controller_t controller;
 	void *controller_data;
-	cl_context context;
 	json_value_t config;
 	map_t arguments;
-	floader_t file_loader;
 };
 
-filter_t filter_create(str_t, cl_context, json_value_t config, map_t arguments, floader_t file_loader);
-filter_t filter_create_cs(const char *, cl_context, json_value_t config, map_t arguments, floader_t file_loader);
+filter_t filter_create(str_t, flcontext_t, json_value_t config, map_t arguments);
+filter_t filter_create_cs(const char *, flcontext_t, json_value_t config, map_t arguments);
 filter_t filter_delete(filter_t);
 mcl_ex_t filter_get_expression(heap_t, filter_t, mcl_ex_t point, filter_arguments_t);
 

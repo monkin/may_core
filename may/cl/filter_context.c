@@ -17,7 +17,7 @@ flcontext_t flcontext_create(cl_context ctx, floader_t fl) {
 	}
 }
 flcontext_t flcontext_delete(flcontext_t ctx) {
-	mutex_delete(ctx->mutex);
+	assert(map_length(ctx->objects)==0);
 	heap_delete(ctx->heap);
 	return 0;
 }

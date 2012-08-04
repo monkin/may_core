@@ -73,15 +73,19 @@ void *heap_free(void *p) {
 		assert(block->count);
 		block->count--;
 		if(!block->count) {
-			if(block->next)
-				block->next->previous = block->previous;
-			else
-				block->heap->last = block->previous;
-			if(block->previous)
-				block->previous->next = block->next;
-			else
-				block->heap->first = block->next;
-			heap_delete_block(block);
+			if(!block->next && block->size==block->heap->block_size)
+				block->used = 0;
+			else {
+				if(block->next)
+					block->next->previous = block->previous;
+				else
+					block->heap->last = block->previous;
+				if(block->previous)
+					block->previous->next = block->next;
+				else
+					block->heap->first = block->next;
+				heap_delete_block(block);
+			}
 		}
 	}
 	return 0;

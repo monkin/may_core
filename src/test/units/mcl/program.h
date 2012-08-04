@@ -48,7 +48,16 @@ void test_mcl_program() {
 							mcl_call_2_cs(h, "*",
 								mcl_arg(h, MCLT_UINT, &mul_arg),
 								global_id)));
-						mcl_throw_if_error(clBuildProgram(program, 0, 0, 0, 0, 0));
+						err_try {
+							mcl_program_build(program);
+						} err_catch {
+							TEST_LOG("\n--- source ---\n");
+							TEST_LOG(str_begin(mcl_program_source(h, program)));
+							TEST_LOG("\n--- build log ---\n");
+							TEST_LOG(str_begin(mcl_program_log(h, program)));
+							TEST_LOG("\n--- end ---\n");
+							err_throw_down();
+						}
 						kernel = mcl_kernel_create(program);
 						buff = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(float[items_count]), 0, &code);
 						mcl_throw_if_error(code);

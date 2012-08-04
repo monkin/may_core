@@ -7,7 +7,11 @@
 #include <CL/cl.h>
 
 cl_program mcl_program_create(cl_context, mcl_ex_t);
+cl_program mcl_program_build(cl_program);
 cl_program mcl_program_delete(cl_program);
+str_t mcl_program_source(heap_t, cl_program);
+cl_device_id mcl_program_device(cl_program);
+str_t mcl_program_log(heap_t, cl_program);
 
 cl_kernel mcl_kernel_create(cl_program);
 cl_kernel mcl_kernel_delete(cl_kernel);

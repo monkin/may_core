@@ -154,7 +154,7 @@ map_node_t map_remove_node(map_t m, map_node_t node) {
 			for(; p; p = p->parent)
 				p->length--;
 		}
-		str_delete(node->key);
+		str_free(node->key);
 		heap_free(node);
 		m->length--;
 	}

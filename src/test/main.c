@@ -57,4 +57,3 @@ int main() {
 	fprintf(stderr, "Results: (%i/%i) %i%%\n", (int) tests_success, (int) (tests_success + tests_failed), (int) (tests_success*100/(tests_success + tests_failed)));
 	return 0;
 }
-

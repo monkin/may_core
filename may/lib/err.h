@@ -7,6 +7,10 @@
 #	include <unistd.h>
 #endif
 
+/**
+ * Don't use 'return' in err_try/err_catch block.
+ */
+
 #include <stdio.h>
 #include <stddef.h>
 #include <assert.h>
@@ -15,7 +19,6 @@
 
 /**
  * Example
-	
 	err_try {
 		// do something with err_throw(err_name)
 	} err_ctach {

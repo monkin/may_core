@@ -506,7 +506,7 @@ static void call_internal_push_arguments(void *data, void (*push_fn)(void *, mcl
 }
 static void call_internal_global_source(void *data, map_t m, ios_t s) {
 	int i;
-	static char *samplers_code = "sampler_t sampler_linear = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_LINEAR;\nsampler_t sampler_nearest = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;\n";
+	static char *samplers_code = "const sampler_t sampler_linear = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_LINEAR;\nconst sampler_t sampler_nearest = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;\n";
 	if(mcl_insert_ptr(m, samplers_code))
 		ios_write_cs(s, samplers_code);
 	call_internal_data_t cid = (call_internal_data_t) data;

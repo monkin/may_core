@@ -1,7 +1,4 @@
 
-#include <may/lib/tar.h>
-#include <may/lib/stream.h>
-
 void test_tar() {
 	TEST_MODULE("tar");
 	TEST_CHECK("tar") {

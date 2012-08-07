@@ -1,11 +1,13 @@
-find_package(OpenCL REQUIRED)
-find_package(DevIL REQUIRED)
 find_package (Threads REQUIRED)
-include_directories(${OPENCL_INCLUDE_DIRS} ${IL_INCLUDE_DIR})
-add_library(maylib STATIC maylib.c
-	lib/err.c  lib/heap.c  lib/map.c  lib/mem.c  lib/str.c lib/utf.c
-	lib/syntree.c lib/parser.c lib/json.c lib/stream.c lib/tar.c
-	lib/event.c lib/floader.c lib/mutex.c lib/test.c
-	cl/ex.c cl/mcl.c cl/program.c cl/error.c cl/image.c cl/iloader.c cl/filter.c
-	cl/filters/const.c cl/filters/blur.c cl/filters/image.c)
-target_link_libraries(maylib ${OPENCL_LIBRARIES} ${IL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(HEADERS
+	lib.h err.h  heap.h  map.h  mem.h  str.h
+	utf.h syntree.h parser.h json.h stream.h
+	tar.h event.h floader.h mutex.h test.h)
+add_library(may_core STATIC
+	lib.c err.c  heap.c  map.c  mem.c  str.c
+	utf.c syntree.c parser.c json.c stream.c
+	tar.c event.c floader.c mutex.c test.c)
+target_link_libraries(may_core ${CMAKE_THREAD_LIBS_INIT})
+
+install(TARGETS may_core DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION include/may/core)

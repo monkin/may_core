@@ -1,6 +1,4 @@
 
-#include <may/lib/str.h>
-
 void test_json() {
 	TEST_MODULE("json");
 	TEST_CHECK("to_string") {

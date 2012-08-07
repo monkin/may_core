@@ -1,4 +1,3 @@
-#include <may/lib/parser.h>
 
 void test_parser() {
 	volatile heap_t h = heap_create(0);

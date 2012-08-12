@@ -143,6 +143,23 @@ sbuilder_t sbuilder_create(heap_t h) {
 	return r;
 }
 
+sbuilder_t sbuilder_merge(sbuilder_t sb1, sbuilder_t *psb2) {
+	sbuilder_t sb2 = *psb2;
+	if(sb2->length) {
+		if(sb1->last) {
+			sb1->last->next = sb2->first;
+			sb1->last = sb2->last;
+			sb1->length += sb2->length;
+		} else {
+			sb1->first = sb2->first;
+			sb1->last = sb2->last;
+			sb1->length = sb2->length;
+		}
+	}
+	*psb2 = 0;
+	return sb1;
+}
+
 sbuilder_t sbuilder_append(sbuilder_t sb, str_t s) {
 	assert(sb);
 	sbuilder_item_t *i = heap_alloc(sb->heap, sizeof(sbuilder_item_t));

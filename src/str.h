@@ -49,30 +49,33 @@ int str_equal(str_t, str_t);
 #define str_length(s) ((s)->length)
 
 
-typedef struct sbuilder_item_s {
+typedef struct sb_item_s {
 	str_t data;
-	struct sbuilder_item_s *next;
-} sbuilder_item_t;
+	struct sb_item_s *next;
+} sb_item_t;
 
 typedef struct {
 	heap_t heap;
-	sbuilder_item_t *first;
-	sbuilder_item_t *last;
+	sb_item_t *first;
+	sb_item_t *last;
 	size_t length;
-} sbuilder_s;
+} sb_s;
 
-typedef sbuilder_s *sbuilder_t;
+typedef sb_s *sb_t;
 
 /**
  * Something like Java StringBuilder
- * All appended strings must exist when sbuilder_get called.
+ * All appended strings must exist when sb_get called.
  */
-sbuilder_t sbuilder_create(heap_t h);
-sbuilder_t sbuilder_merge(sbuilder_t, sbuilder_t *);
-sbuilder_t sbuilder_append(sbuilder_t, str_t);
-/* sbuilder_t sbuilder_append_cs(sbuilder_t, const char *); */
-#define sbuilder_append_cs(sb, cs) sbuilder_append((sb), str_from_cs(sb->heap, (cs)));
-str_t sbuilder_get(heap_t h, sbuilder_t);
+sb_t sb_create(heap_t h);
+sb_t sb_merge(sb_t, sb_t *);
+sb_t sb_append(sb_t, str_t);
+/* sb_t sb_append_cs(sb_t, const char *); */
+#define sb_append_cs(sb, cs) sb_append((sb), str_from_cs(sb->heap, (cs)));
+sb_t sb_preppend(sb_t, str_t);
+/* sb_t sb_preppend_cs(sb_t, const char *); */
+#define sb_preppend_cs(sb, cs) sb_preppend((sb), str_from_cs(sb->heap, (cs)));
+str_t sb_get(heap_t h, sb_t);
 
 
 

@@ -135,16 +135,16 @@ str_t str_clone(heap_t h, str_t s) {
 	return r;
 }
 
-sbuilder_t sbuilder_create(heap_t h) {
-	sbuilder_t r = (sbuilder_t) heap_alloc(h, sizeof(sbuilder_s));
+sb_t sb_create(heap_t h) {
+	sb_t r = (sb_t) heap_alloc(h, sizeof(sb_s));
 	r->length = 0;
 	r->heap = h;
 	r->first = r->last = 0;
 	return r;
 }
 
-sbuilder_t sbuilder_merge(sbuilder_t sb1, sbuilder_t *psb2) {
-	sbuilder_t sb2 = *psb2;
+sb_t sb_merge(sb_t sb1, sb_t *psb2) {
+	sb_t sb2 = *psb2;
 	if(sb2->length) {
 		if(sb1->last) {
 			sb1->last->next = sb2->first;
@@ -160,27 +160,40 @@ sbuilder_t sbuilder_merge(sbuilder_t sb1, sbuilder_t *psb2) {
 	return sb1;
 }
 
-sbuilder_t sbuilder_append(sbuilder_t sb, str_t s) {
+sb_t sb_append(sb_t sb, str_t s) {
 	assert(sb);
-	sbuilder_item_t *i = heap_alloc(sb->heap, sizeof(sbuilder_item_t));
-	if(i) {
-		i->data = s;
+	sb_item_t *i = heap_alloc(sb->heap, sizeof(sb_item_t));
+	i->data = s;
+	i->next = 0;
+	sb->length += s->length;
+	if(sb->first) {
+		sb->last->next = i;
+		sb->last = i;
+	} else
+		sb->first = sb->last = i;
+	return sb;
+}
+
+sb_t sb_preppend(sb_t sb, str_t s) {
+	assert(sb);
+	sb_item_t *i = heap_alloc(sb->heap, sizeof(sb_item_t));
+	i->data = s;
+	sb->length += s->length;
+	if(sb->first) {
+		i->next = sb->first;
+		sb->first = i;
+	} else {
 		i->next = 0;
-		sb->length += s->length;
-		if(sb->first) {
-			sb->last->next = i;
-			sb->last = i;
-		} else
-			sb->first = sb->last = i;
+		sb->first = sb->last = i;
 	}
 	return sb;
 }
 
-str_t sbuilder_get(heap_t h, sbuilder_t sb) {
+str_t sb_get(heap_t h, sb_t sb) {
 	assert(sb);
 	assert(h);
 	str_t r = str_create(h, sb->length);
-	sbuilder_item_t *i;
+	sb_item_t *i;
 	str_it_t p = str_begin(r);
 	for(i = sb->first; i; i=i->next) {
 		memcpy(p, i->data->data, i->data->length);

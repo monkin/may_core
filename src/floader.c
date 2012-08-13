@@ -9,11 +9,11 @@ static str_t floader_join_path(heap_t h, str_t p1, str_t p2) {
 			else if(*str_begin(p2) == '/')
 				return str_cat(h, p1, p2);
 			else {
-				sbuilder_t sb = sbuilder_create(h);
-				sbuilder_append(sb, p1);
-				sbuilder_append_cs(sb, "/");
-				sbuilder_append(sb, p2);
-				return sbuilder_get(h, sb);
+				sb_t sb = sb_create(h);
+				sb_append(sb, p1);
+				sb_append_cs(sb, "/");
+				sb_append(sb, p2);
+				return sb_get(h, sb);
 			}
 		} else
 			return str_clone(h, p1);

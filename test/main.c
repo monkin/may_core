@@ -1,11 +1,5 @@
 
 #include "../src/lib.h"
-#include "../src/json.h"
-#include "../src/stream.h"
-#include "../src/test.h"
-#include "../src/tar.h"
-#include "../src/stream.h"
-#include "../src/parser.h"
 
 #include "units/heap.h"
 #include "units/str.h"

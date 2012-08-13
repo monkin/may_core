@@ -17,6 +17,19 @@ void test_str() {
 				TEST_FAIL;
 			}
 		} TEST_END;
+		TEST_CHECK("string_builder") {
+			sb_t sb1 = sb_create(h);
+			sb_append_cs(sb1, "s1");
+			
+			sb_t sb2 = sb_create(h);
+			sb_append_cs(sb2, "sb1");
+			sb_append_cs(sb2, "sb2");
+			
+			sb_preppend_sb(sb1, sb2);
+			sb_preppend_cs(sb1, "s2");
+			if(str_compare_cs(sb_get(h, sb1), "s2sb1sb2s1"))
+				TEST_FAIL;
+		} TEST_END;
 		h = heap_delete(h);
 	} err_catch {
 		h = heap_delete(h);

@@ -143,62 +143,68 @@ sb_t sb_create(heap_t h) {
 	return r;
 }
 
-sb_t sb_merge(sb_t sb1, sb_t *psb2) {
-	sb_t sb2 = *psb2;
-	if(sb2->length) {
-		if(sb1->last) {
-			sb1->last->next = sb2->first;
-			sb1->last = sb2->last;
-			sb1->length += sb2->length;
-		} else {
-			sb1->first = sb2->first;
-			sb1->last = sb2->last;
-			sb1->length = sb2->length;
-		}
-	}
-	*psb2 = 0;
-	return sb1;
+static sb_t sb_append_node(sb_t sb, sb_item_t i) {
+	sb->length += i->str ? i->str->length : i->sb->length;
+	if(sb->first)
+		sb->last = sb->last->next = i;
+	else
+		sb->first = sb->last = i;
+	return sb;
+}
+
+static sb_t sb_preppend_node(sb_t sb, sb_item_t i) {
+	sb->length += i->str ? i->str->length : i->sb->length;
+	i->next = sb->first;
+	if(sb->first)
+		sb->first = i;
+	else
+		sb->first = sb->last = i;
+	return sb;
+}
+
+static sb_item_t sb_create_node(sb_t sb, str_t data_str, sb_t data_sb) {
+	sb_item_t i = heap_alloc(sb->heap, sizeof(sb_item_s));
+	i->str = data_str;
+	i->sb = data_sb;
+	i->next = 0;
+	return i;
 }
 
 sb_t sb_append(sb_t sb, str_t s) {
-	assert(sb);
-	sb_item_t *i = heap_alloc(sb->heap, sizeof(sb_item_t));
-	i->data = s;
-	i->next = 0;
-	sb->length += s->length;
-	if(sb->first) {
-		sb->last->next = i;
-		sb->last = i;
-	} else
-		sb->first = sb->last = i;
-	return sb;
+	return sb_append_node(sb, sb_create_node(sb, s, 0));
+}
+
+sb_t sb_append_sb(sb_t sb, sb_t data_sb) {
+	return sb_append_node(sb, sb_create_node(sb, 0, data_sb));
 }
 
 sb_t sb_preppend(sb_t sb, str_t s) {
-	assert(sb);
-	sb_item_t *i = heap_alloc(sb->heap, sizeof(sb_item_t));
-	i->data = s;
-	sb->length += s->length;
-	if(sb->first) {
-		i->next = sb->first;
-		sb->first = i;
-	} else {
-		i->next = 0;
-		sb->first = sb->last = i;
+	return sb_preppend_node(sb, sb_create_node(sb, s, 0));
+}
+
+sb_t sb_preppend_sb(sb_t sb, sb_t data_sb) {
+	return sb_preppend_node(sb, sb_create_node(sb, 0, data_sb));
+}
+
+static str_it_t sb_write(sb_t sb, str_it_t s_position, str_it_t s_end) {
+	sb_item_t i;
+	for(i=sb->first; i; i=i->next) {
+		if(i->str) {
+			assert((s_end - s_position) >= i->str->length);
+			memcpy(s_position, i->str->data, i->str->length);
+			s_position += i->str->length;
+		} else {
+			assert((s_end - s_position) >= i->sb->length);
+			s_position = sb_write(i->sb, s_position, s_end);
+		}
 	}
-	return sb;
+	return s_position;
 }
 
 str_t sb_get(heap_t h, sb_t sb) {
-	assert(sb);
-	assert(h);
 	str_t r = str_create(h, sb->length);
-	sb_item_t *i;
-	str_it_t p = str_begin(r);
-	for(i = sb->first; i; i=i->next) {
-		memcpy(p, i->data->data, i->data->length);
-		p += i->data->length;
-	}
+	str_it_t s_end = sb_write(sb, str_begin(r), str_end(r));
+	assert(s_end == str_end(r));
 	return r;
 }
 
@@ -207,15 +213,7 @@ int str_compare(str_t s1, str_t s2) {
 }
 
 int str_compare_cs(str_t s1, const char *s2) {
-	assert(s1 && s2);
-	int i;
-	for(i=0; i<s1->length; i++) {
-		if(s2[i]=='\0')
-			return 1;
-		if(s1->data[i]!=s2[i])
-			return ((unsigned char)s1->data[i])>((unsigned char)s2[i]) ? 1 : -1;
-	}
-	return -1;
+	return str_compare_bin(s1, s2, strlen(s2));
 }
 
 int str_compare_bin(str_t s1, const void *data, size_t sz) {

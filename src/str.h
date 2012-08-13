@@ -49,32 +49,38 @@ int str_equal(str_t, str_t);
 #define str_length(s) ((s)->length)
 
 
-typedef struct sb_item_s {
-	str_t data;
-	struct sb_item_s *next;
-} sb_item_t;
-
-typedef struct {
-	heap_t heap;
-	sb_item_t *first;
-	sb_item_t *last;
-	size_t length;
-} sb_s;
-
-typedef sb_s *sb_t;
-
 /**
  * Something like Java StringBuilder
  * All appended strings must exist when sb_get called.
  */
+struct sb_ss;
+typedef struct sb_ss sb_s;
+typedef sb_s *sb_t;
+
+typedef struct sb_item_ss {
+	str_t str;
+	sb_t sb;
+	struct sb_item_ss *next;
+} sb_item_s;
+
+typedef sb_item_s *sb_item_t;
+
+struct sb_ss {
+	heap_t heap;
+	sb_item_t first;
+	sb_item_t last;
+	size_t length;
+};
+
 sb_t sb_create(heap_t h);
-sb_t sb_merge(sb_t, sb_t *);
 sb_t sb_append(sb_t, str_t);
 /* sb_t sb_append_cs(sb_t, const char *); */
 #define sb_append_cs(sb, cs) sb_append((sb), str_from_cs(sb->heap, (cs)));
+sb_t sb_append_sb(sb_t, sb_t);
 sb_t sb_preppend(sb_t, str_t);
 /* sb_t sb_preppend_cs(sb_t, const char *); */
 #define sb_preppend_cs(sb, cs) sb_preppend((sb), str_from_cs(sb->heap, (cs)));
+sb_t sb_preppend_sb(sb_t, sb_t);
 str_t sb_get(heap_t h, sb_t);
 
 

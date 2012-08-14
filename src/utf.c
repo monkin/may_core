@@ -29,7 +29,7 @@ ERR_DEFINE(e_utf_conversion, "Invalid UTF string or encoding.", 0);
 		(*((long *)(p)))==0								\
 	) : (												\
 		((enc)==UTF_16_LE || (enc)==UTF_16_BE) ? (		\
-			(*((short *)(p)))==0						\
+			(*((short *)(p)))==0							\
 		) : (											\
 			(*((char *)(p)))==0							\
 		)												\
@@ -167,43 +167,35 @@ ERR_DEFINE(e_utf_conversion, "Invalid UTF string or encoding.", 0);
 	)
 
 
-size_t utf_length(void *s, int enc) {
-	int res = 0;
-	if(!s)
-		return 0;
-	for(; !CHAR_IS_LAST(s, enc); s = C_OFFSET(s, CHAR_LEN(s,enc)), res++);
-	return res;
-}
-
-size_t utf_char_length(void *s, int enc) {
-	assert(s);
-	return CHAR_LEN(s,enc);
-}
-
-/*
-define UTF_8     1
-define UTF_16_LE 2
-define UTF_16_BE 3
-define UTF_32_LE 4
-define UTF_32_BE 5
-*/
-
-
-void *utf_convert(heap_t h, void *src, int src_enc, int dest_enc) {
-	void *res;
-	void *i;
-	int len;
-	len = utf_length(src, src_enc) + 1;
-	i = res = heap_alloc(h, len*4);
-	while(!CHAR_IS_LAST(src, src_enc)) {
-		long c = CHAR_TO_LONG(src, src_enc);
-		src = C_OFFSET(src, CHAR_LEN(src, src_enc));
-		i = LONG_TO_UTF(c, i, dest_enc);
+size_t utf_length(str_t s, int enc) {
+	size_t res = 0;
+	str_it_t i = str_begin(s);
+	str_it_t e = str_end(s);
+	while(i<e) {
+		int cl = CHAR_LEN(i, enc);
+		res++;
+		i += cl;
+		if(i>e)
+			err_throw(e_utf_conversion);
 	}
-	i = UTF_WRITE4(i, 0, 0, 0, 0);
 	return res;
 }
 
-int utf_detect(void *s, size_t sz) {
-	return 0;
+str_it_t utf_next(str_it_t i, int enc) {
+	return i + CHAR_LEN(i, enc);
+}
+
+str_t utf_convert(heap_t h, str_t src, int src_enc, int dest_enc) {
+	str_t res = str_create(h, utf_length(src, src_enc)*4);
+	str_it_t src_i = str_begin(src),
+		src_e = str_end(src),
+		res_i = str_begin(res);
+	while(src_i<src_e) {
+		long c = CHAR_TO_LONG(src_i, src_enc);
+		src_i += CHAR_LEN(src_i, src_enc);
+		res_i = LONG_TO_UTF(c, res_i, dest_enc);
+	}
+	res->length = res_i - str_begin(res);
+	*res_i = 0;
+	return res;
 }

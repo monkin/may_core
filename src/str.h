@@ -44,6 +44,9 @@ str_t str_clone(heap_t, str_t);
 int str_compare(str_t, str_t);
 int str_compare_cs(str_t, const char *);
 int str_compare_bin(str_t, const void *, size_t);
+#define str_cmp str_compare
+#define str_cmp_cs str_compare_cs
+#define str_cmp_bin str_compare_bin
 int str_equal(str_t, str_t);
 /*size_t str_length(str_t);*/
 #define str_length(s) ((s)->length)

@@ -28,6 +28,13 @@ arr_t arr_free(arr_t);
 void *arr_end(arr_t);
 
 arr_t arr_concat(heap_t, arr_t, arr_t);
-arr_t arr_slice(heap_t, arr_t, size_t, size_t);
+
+/**
+ * This function don't clone memory, just return a pointer to array part.
+ * Be carefull. Use arr_clone(). 
+ */
+arr_t arr_slice(heap_t, arr_t, size_t i1, size_t i2);
+
+arr_t arr_clone(heap_t, arr_t);
 
 #endif /* MAY_ARR_H */

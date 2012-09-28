@@ -110,7 +110,7 @@ str_t str_cat(heap_t h, str_t s1, str_t s2) {
 	assert(s1 && s2);
 	str_t r = str_create(h, s1->length + s2->length);
 	memcpy(r->data, s1->data, s1->length);
-	memcpy(r->data+s1->length, s2->data, s2->length+1);
+	memcpy(r->data+s1->length, s2->data, s2->length);
 	return r;
 }
 
